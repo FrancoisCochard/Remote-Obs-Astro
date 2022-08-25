@@ -1,7 +1,7 @@
 # Remote-Obs-Astro
 This is a fork from RemoteObservatory (Thibault Notagiacomo) : https://github.com/gnthibault/RemoteObservatory
 
-# RemoteObservatory
+### RemoteObservatory
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
 
