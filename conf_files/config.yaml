@@ -5,6 +5,7 @@ observatory:
     latitude: 43.56 # Degrees
     longitude: 5.43 # Degrees
     elevation: 150.0 # Meters
+    timezone: Europe/Paris #This is not mandatory, just speeds up startup
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
     utc_offset: 1 # Hours
@@ -157,9 +158,8 @@ guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
-    publish_port : 6510
-    profile_id : 1
-    #profile_id : 2
+    #profile_id : 1 # For IRL setup
+    profile_id : 2
     exposure_time_sec : 2
     settle :
         pixels : 1.5
@@ -174,8 +174,11 @@ weather_service :
     module : IndiWeather
     service_name : Weather Simulator
     key_path : /var/RemoteObservatory/keys.json
-    publish_port : 6510
     delay_sec : 60
+    observatory:
+        latitude: 43.56 # Degrees
+        longitude: 5.43 # Degrees
+        elevation: 150.0 # Meters
     limits :
         MAX_WEATHER_WIND_SPEED_KPH : 25
         MAX_WEATHER_WIND_GUST_KPH : 30
@@ -186,9 +189,8 @@ weather_service :
 time_service :
     module : HostTimeService
 messaging:
-    # Must match ports in peas.yaml.
-    cmd_port: 6500
-    msg_port: 6510
+    mqtt_host: 192.168.0.48
+    mqtt_port: 1883
 #Enable to output POCS messages to social accounts
 # social_accounts:
 #     twitter:

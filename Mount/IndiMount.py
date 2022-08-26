@@ -4,7 +4,6 @@ import json
 import logging
 
 # Indi stuff
-import PyIndi
 from helper.IndiDevice import IndiDevice
 
 # Astropy stuff
@@ -44,23 +43,22 @@ class IndiMount(IndiDevice):
             PIER_EAST : Mount on the East side of pier (Pointing West).
             PIER_WEST : Mount on the West side of pier (Pointing East).
     """
-    def __init__(self, connect_on_create=True, logger=None,
-                 config=None):
-        logger = logger or logging.getLogger(__name__)
-        
-        assert (config is not None) and (type(config)==dict), ("Please provide "
+    def __init__(self, config=None, connect_on_create=True):
+
+        assert (config is not None) and (type(config) == dict), ("Please provide "
             "config as dictionary, with mount_name")
         device_name = config['mount_name']
-        logger.debug('Indi Mount, mount name is: {}'.format(
-            device_name))
+        logging.debug(f"Indi Mount, mount name is: {device_name}")
+
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, device_name=device_name,
-            indi_client_config=config["indi_client"])
+        IndiDevice.__init__(self, device_name=device_name,
+                            indi_client_config=config["indi_client"])
+
         try:
             #try to get timezone from config file
-            self.gps = dict(latitude = self.config['observatory']['latitude'],
-                            longitude = self.config['observatory']['longitude'],
-                            elevation = self.config['observatory']['elevation'])
+            self.gps = dict(latitude=self.config['observatory']['latitude'],
+                            longitude=self.config['observatory']['longitude'],
+                            elevation=self.config['observatory']['elevation'])
         except:
             self.gps = None
 
@@ -126,19 +124,23 @@ class IndiMount(IndiDevice):
         """
         self.logger.debug('Setting ON_COORD_SET behaviour: {}'.format(
                           what_to_do))
-        self.set_switch('ON_COORD_SET', [what_to_do])
+        self.set_switch('ON_COORD_SET', [what_to_do], sync=True, timeout=self.defaultTimeout)
 
     def abort_motion(self):
         self.logger.debug('Abort Motion')
-        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
+        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'], sync=True, timeout=self.defaultTimeout)
 
     def park(self):
+        """
+        Timeout is much higher here, because the telescope might need to move to its parking position at a low speed
+        :return:
+        """
         self.logger.debug('Slewing to Park')
-        self.set_switch('TELESCOPE_PARK', ['PARK'])
+        self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180)
 
     def unpark(self):
         self.logger.debug('unpark')
-        self.set_switch('TELESCOPE_PARK', ['UNPARK'])
+        self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=self.defaultTimeout)
 
     def get_guide_rate(self):
         """
@@ -163,8 +165,8 @@ class IndiMount(IndiDevice):
         guide_dict = self.get_number('GUIDE_RATE')
         self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
         guide_rate = {}
-        guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']['value']
-        guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']['value']
+        guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']
+        guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']
         self.logger.debug(f"Got mount guiding rate: {guide_rate}")
         return guide_rate
 
@@ -188,13 +190,10 @@ class IndiMount(IndiDevice):
         """
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
         self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
-        slew_rate = [v for k,v in slew_dict.items() if
-                         ('value' in v and v['value'])]
-        self.logger.debug(f"Got mount slewing rate: {slew_rate}")
-        if len(slew_rate) == 1:
-            return slew_rate[0]
+        if len(slew_dict) > 0:
+            return [k for k, v in slew_dict.items() if v == "On"][0]
         else:
-            return {'name': None, 'label': None, 'value': None}
+            return None
 
     def set_slew_rate(self, slew_rate='3x'):
         """
@@ -208,7 +207,7 @@ class IndiMount(IndiDevice):
         self.logger.debug(f"Setting mount slewing rate: {slew_rate} while "
                           f"dictionary is {slew_dict}")
         if slew_rate in slew_dict:
-            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate])
+            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate], sync=True, timeout=self.defaultTimeout)
         else:
             msg = f"Trying to set mount slewing rate: {slew_rate} while "\
                   f"dictionary is {slew_dict}"
@@ -218,11 +217,10 @@ class IndiMount(IndiDevice):
         ''' GEM Pier Side
             PIER_EAST Mount on the East side of pier (Pointing West).
             PIER_WEST Mount on the West side of pier (Pointing East).
-            WARNING: does not work with simulator
         '''
         pier_side = self.get_switch('TELESCOPE_PIER_SIDE')
         self.logger.debug(f"Got mount pier side: {pier_side}")
-        return ret
+        return pier_side
 
     def get_track_mode(self):
         ''' Track mode switch looks like this
@@ -234,14 +232,10 @@ class IndiMount(IndiDevice):
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
         self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
-        track_mode = [v for k,v in track_dict.items() if
-                         ('value' in v and v['value'])]
-        self.logger.debug(f"Got mount tracking mode: {track_mode}")
-        if len(track_mode) == 1:
-            return track_mode[0]
+        if len(track_dict) > 0:
+            return [k for k, v in track_dict.items() if v == "On"][0]
         else:
-            return {'name': None, 'label': None, 'value': None}
-
+            return None
 
     # This does not work with simulator
     def set_track_mode(self, track_mode='TRACK_SIDEREAL'):
@@ -264,10 +258,9 @@ class IndiMount(IndiDevice):
 
     @property
     def is_parked(self):
-        ret = None
         status = self.get_switch('TELESCOPE_PARK')
         self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
-        if status['PARK']['value']:
+        if status['PARK'] == 'On':
             ret = True
         else:
             ret = False
@@ -278,8 +271,8 @@ class IndiMount(IndiDevice):
             self.device_name)) 
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
         self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
-        ret = SkyCoord(ra=rahour_decdeg['RA']['value']*u.hourangle,
-                       dec=rahour_decdeg['DEC']['value']*u.degree,
+        ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,
+                       dec=rahour_decdeg['DEC']*u.degree,
                        frame='cirs',
                        obstime=Time.now())
         self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: "

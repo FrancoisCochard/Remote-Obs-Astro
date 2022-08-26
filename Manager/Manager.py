@@ -342,7 +342,7 @@ class Manager(Base):
 
     def slew(self):
         """Slew to current target"""
-        self.mount.set_slew_rate()
+        self.mount.set_slew_rate("3x")
         self.mount.slew_to_target()
 
 
@@ -406,8 +406,8 @@ class Manager(Base):
             'ra_mnt': mnt_coord.ra.to(u.deg).value,
             'ha_mnt': mnt_coord.ra.to(u.hourangle).value,
             'dec_mnt': mnt_coord.dec.to(u.deg).value,
-            'track_mode_mnt': self.mount.get_track_mode()['name'],
-            'slew_rate_mnt': self.mount.get_slew_rate()['name'],
+            'track_mode_mnt': self.mount.get_track_mode(),
+            'slew_rate_mnt': self.mount.get_slew_rate(),
             'guide_rate_ns_mnt': guide_rate['NS'],
             'guide_rate_we_mnt': guide_rate['WE'],
             #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
@@ -506,7 +506,6 @@ class Manager(Base):
         try:
             # close actual dome + everything managed by obsy
             self.observatory.close_everything()
-
             return True
         except Exception as e:
             self.logger.error(f"Problem closing observatory: {e}")
@@ -569,7 +568,10 @@ class Manager(Base):
             raise RuntimeError('Problem setting up services')
 
     def _setup_messaging(self):
-        self.messaging = PanMessaging.create_publisher(self.config["messaging"]["msg_port"])
+        try:
+            self.messaging = PanMessaging.create_client(**self.config["messaging"])
+        except Exception:
+            raise RuntimeError('Problem setting up messaging service')
 
     def _setup_weather_service(self):
         """
@@ -579,7 +581,7 @@ class Manager(Base):
             weather_name = self.config['weather_service']['module']
             weather_module = load_module('Service.'+weather_name)
             self.serv_weather = getattr(weather_module, weather_name)(
-                config = self.config['weather_service'],
+                config=self.config['weather_service'],
                 serv_time=self.serv_time,
                 connect_on_create=True,
                 loop_on_create=True)
@@ -618,12 +620,12 @@ class Manager(Base):
             mount_name = self.config['mount']['module']
             mount_module = load_module('Mount.'+mount_name)
             self.mount = getattr(mount_module, mount_name)(
-                location = self.earth_location,
-                serv_time = self.serv_time,
-                config = self.config['mount'])
+                location=self.earth_location,
+                serv_time=self.serv_time,
+                config=self.config['mount'])
         except Exception as e:
-            self.logger.warning("Cannot load mount module: {}".format(e))
-            raise error.MountNotFound('Problem setting up mount')
+            self.logger.error(f"Cannot load mount module: {e}")
+            raise error.MountNotFound(f"Problem setting up mount")
 
     def _setup_cameras(self, **kwargs):
         """

@@ -43,7 +43,7 @@ class IndiScopeController(IndiDevice, Base):
                      f"{self.port}")
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger,
+        IndiDevice.__init__(self, ,
                             device_name=config["controller_name"],
                             indi_client_config=config["indi_client"])
         if connect_on_create:
@@ -267,9 +267,9 @@ class IndiScopeController(IndiDevice, Base):
         if self.is_connected:
             status = self.statuses.copy()
             status["finder_dustcap_open"] = self.get_switch(
-                'FINDER_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']['value']
+                'FINDER_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']
             status["scope_dustcap_open"] = self.get_switch(
-                'SCOPE_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']['value']
+                'SCOPE_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']
             return status
         else:
             return self.statuses

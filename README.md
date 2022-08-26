@@ -1,4 +1,7 @@
-# RemoteObservatory
+# Remote-Obs-Astro
+This is a fork from RemoteObservatory (Thibault Notagiacomo) : https://github.com/gnthibault/RemoteObservatory
+
+### RemoteObservatory
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
 
@@ -18,6 +21,8 @@ This project either uses, or is directly inspired by:
 * SpectroStars from Serge Golovanow: https://github.com/serge-golovanow/SpectroStars
 * Astroalign: https://github.com/toros-astro/astroalign
 * Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
+* MMTO Observatory indi client: https://github.com/MMTObservatory/indiclient
+* Meshcat: https://github.com/rdeits/meshcat-python but we might want to replace meshcat with scenepic in the future: https://microsoft.github.io/scenepic/python/
 
 # Install
 
@@ -96,6 +101,16 @@ pip install django Pillow
 
 ## Arduino stuff
 If you are interested in compiling/using the arduino stuff here, please download the official Arduino IDE, and define the following environment variable: $ARDUINO_SDK_PATH
+
+```console
+  export ARDUINO_SDK_PATH="/opt/arduino-1.8.19/"
+  cd Arduino
+  mkdir build && cd build
+  cmake ..
+  make
+  cd ..
+  ./upload.sh
+```
 
 ## Building 3D support for virtual telescope
 pip install PyQt5 PyQt3D pyqtgraph
@@ -182,7 +197,7 @@ For now, RemoteObservatory uses some web service to acquire data, so ensure that
 PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 
 
-## TODO: WORK IN PROGRESS: DO NOT USE BEFORE THIS IS DONE (or just do)
+## TODO: WORK IN PROGRESS: Check before calling this a production software
 * make sure we are correctly scoring all constraints (not only binary values) in ObservationPlanner/Scheduler
 * Correct the stub inside of launch_remote_observatory that returns safe even if not safe
 * re-integrate the simulator mode that returns fine, even if not fine
@@ -206,6 +221,8 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * the publisher_port parameter in weather config should be refactored with messaging parameter
 * PHD2 is not closed properly / two instance might be launched which cause error
 * Transform the Manager.acquire_calibration into a generator, so that every acquisition is yielded toward the State, and it may issue messages in the meantime
+* AbstractCamera (and potentially other classes based on BASE) have its self.config attribute overwritten somewhere ? it evaluates to None at some point, so it needs investigation
+* indiclient parser and PHD2 client parser are almost the same... You need to abstract away the XML client part and make a single class for this
 
 
 

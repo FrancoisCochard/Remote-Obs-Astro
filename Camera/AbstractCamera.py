@@ -24,6 +24,7 @@ class AbstractCamera(Base):
 
         self.serv_time = serv_time
         self.is_primary = primary
+        self.camera_name = kwargs["camera_name"]
         self.filter_type = 'no-filter'
         self._file_extension = 'fits'
         self._serial_number = '0123456789'
@@ -36,11 +37,6 @@ class AbstractCamera(Base):
     def uid(self):
         """ A six-digit serial number for the camera """
         return self._serial_number
-
-    @property
-    def is_connected(self):
-        """ Is the camera available vai gphoto2 """
-        return self._connected
 
     @property
     def file_extension(self):
@@ -104,7 +100,7 @@ class AbstractCamera(Base):
         # Process the exposure once readout is complete
         t = Thread(target=self.process_exposure, args=(metadata,
                    observation_event, exposure_event))
-        t.name = f"{self.name}Thread"
+        t.name = f"{self.camera_name}Thread"
         t.start()
 
         return observation_event
@@ -117,7 +113,7 @@ class AbstractCamera(Base):
 
         # Get the filepath
         image_dir = "{}/targets/{}/{}/{}".format(
-            self.config['directories']['images'],
+            self._image_dir,
             observation.name,
             self.uid,
             observation.seq_time,
@@ -140,14 +136,14 @@ class AbstractCamera(Base):
             file_path = filename
 
         image_id = '{}_{}_{}'.format(
-            self.config['name'],
+            self.camera_name,
             self.uid,
             start_time
         )
         self.logger.debug("image_id: {}".format(image_id))
 
         sequence_id = '{}_{}_{}'.format(
-            self.config['name'],
+            self.camera_name,
             self.uid,
             observation.seq_time
         )
@@ -163,7 +159,7 @@ class AbstractCamera(Base):
 
         # Camera metadata
         metadata = {
-            'camera_name': self.name,
+            'camera_name': self.camera_name,
             'observation_id': observation.id,
             'camera_uid': self.uid,
             'target_name': observation.name,
@@ -197,7 +193,7 @@ class AbstractCamera(Base):
         # Process the exposure once readout is complete
         t = Thread(target=self.process_calibration, args=(metadata,
             calib_event, exposure_event))
-        t.name = f"{self.name}_Thread"
+        t.name = f"{self.camera_name}_Thread"
         t.start()
 
         return calib_event
@@ -214,7 +210,7 @@ class AbstractCamera(Base):
 
         # Get the filepath
         image_dir = "{}/calibration/{}/{}".format(
-            self.config['directories']['images'],
+            self._image_dir,
             calibration_name,
             self.uid
         )
@@ -252,7 +248,7 @@ class AbstractCamera(Base):
 
         # Camera metadata
         metadata = {
-            'camera_name': self.name,
+            'camera_name': self.camera_name,
             'camera_uid': self.uid,
             'calibration_name': calibration_name,
             'file_path': file_path,
@@ -326,7 +322,7 @@ class AbstractCamera(Base):
         self.logger.debug(f"Processing {image_id}")
 
         try:
-            latest_path = f"{self.config['directories']['images']}/latest.jpg"
+            latest_path = f"{self._image_dir}/latest.jpg"
             fits_utils.update_thumbnail(file_path, latest_path)
         except Exception as e:
             self.logger.warning(f"Problem with extracting pretty image: {e}")

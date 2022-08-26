@@ -3,8 +3,10 @@ import logging
 import json
 import io
 
+# Numerical stuff
+import numpy as np
+
 #Indi stuff
-import PyIndi
 from Camera.IndiCamera import IndiCamera
 
 class IndiASI120MCCamera(IndiCamera):
@@ -19,7 +21,7 @@ class IndiASI120MCCamera(IndiCamera):
             config_filename = './conf_files/IndiASI120MCCamera.json'
 
         # device related intialization
-        IndiCamera.__init__(self, indi_client, logger=logger,
+        IndiCamera.__init__(self, indi_client,
                             config_filename=config_filename)
 
         # Finished configuring
@@ -47,17 +49,17 @@ class IndiASI120MCCamera(IndiCamera):
         pass
 
     def get_current_format(self):
-        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val['value']]
+        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val == "On"]
 
     def get_maximum_dynamic(self):
-        return self.get_number('ADC_DEPTH')['BITS']['value']
+        return self.get_number('ADC_DEPTH')['BITS']
 
     def set_gain(self, value):
         self.set_number('CCD_CONTROLS', {'Gain':value})
         pass
 
     def get_gain(self):
-        return self.get_number('CCD_CONTROLS')['Gain']['value']
+        return self.get_number('CCD_CONTROLS')['Gain']
 
     def get_temperature(self):
         return np.nan

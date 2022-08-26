@@ -29,7 +29,6 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         if config is None:
             config = dict(
                 service_name="AAG Cloud Watcher",
-                publish_port=6510,
                 delay_sec=60,
                 indi_client=dict(
                     indi_host="localhost",
@@ -43,7 +42,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         logger.debug(f"Indi Weather service, name is: {config['service_name']}")
 
         # device related intialization
-        IndiDevice.__init__(self, logger=logger,
+        IndiDevice.__init__(self, ,
                             device_name=config['service_name'],
                             indi_client_config=config["indi_client"])
 
@@ -53,7 +52,6 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
 
         # we broadcast data throught a message queue style mecanism
         self.messaging = None
-        self.publish_port = config["publish_port"]
 
         # store result in a database
         self.serv_time = serv_time
@@ -85,7 +83,8 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
 
     def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
-            self.messaging = PanMessaging.create_publisher(self.publish_port)
+            # TODO TN: if it breaks, checkout IndiWeather code instead
+            self.messaging = PanMessaging.create_client(**self.config["messaging"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):
@@ -173,15 +172,15 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         # Generic indi state for this property, can be OK, IDLE, BUSY, ALERT
         data["state"] = features["state"]
         # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
-        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
+        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]
         # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
-        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]['value']
+        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]
         # name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
-        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]['value']
+        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]
         # name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
-        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]['value']
+        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]
         # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
-        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]
         data["safe"] = self._make_safety_decision(data)
         return data
 
