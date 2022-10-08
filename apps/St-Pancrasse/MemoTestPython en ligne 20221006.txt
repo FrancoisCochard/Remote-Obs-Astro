@@ -1,0 +1,99 @@
+(INDI) observatoire@bureau-st-pancrasse:~/Obs-St-Pancrasse/INDI-Python/Remote-Obs-Astro$ python
+Python 3.8.10 (default, Jun 22 2022, 20:18:18) 
+[GCC 9.4.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from astroquery.simbad import Simbad
+WARNING: AstropyDeprecationWarning: The update_default_config function is deprecated and may be removed in a future version. [astroquery._astropy_init]
+>>> result_table = Simbad.query_object("M1")
+WARNING: AstropyDeprecationWarning: "pedantic" was deprecated in version 5.0 and will be removed in a future version. Use argument "verify" instead. [astropy.io.votable.table]
+>>> print(result_table)
+MAIN_ID    RA      DEC    RA_PREC DEC_PREC COO_ERR_MAJA COO_ERR_MINA COO_ERR_ANGLE COO_QUAL COO_WAVELENGTH COO_BIBCODE SCRIPT_NUMBER_ID
+        "h:m:s"  "d:m:s"                       mas          mas           deg                                                          
+------- -------- -------- ------- -------- ------------ ------------ ------------- -------- -------------- ----------- ----------------
+  M   1 05 34 32 +22 00.8       4        4           --           --             0        E              R                            1
+>>> result_table
+<Table length=1>
+MAIN_ID    RA      DEC    RA_PREC DEC_PREC COO_ERR_MAJA COO_ERR_MINA COO_ERR_ANGLE COO_QUAL COO_WAVELENGTH COO_BIBCODE SCRIPT_NUMBER_ID
+        "h:m:s"  "d:m:s"                       mas          mas           deg                                                          
+ object  str13    str13    int16   int16     float32      float32        int16       str1        str1         object        int32      
+------- -------- -------- ------- -------- ------------ ------------ ------------- -------- -------------- ----------- ----------------
+  M   1 05 34 32 +22 00.8       4        4           --           --             0        E              R                            1
+
+>>> result_table[0]
+<Row index=0>
+MAIN_ID    RA      DEC    RA_PREC DEC_PREC COO_ERR_MAJA COO_ERR_MINA COO_ERR_ANGLE COO_QUAL COO_WAVELENGTH COO_BIBCODE SCRIPT_NUMBER_ID
+        "h:m:s"  "d:m:s"                       mas          mas           deg                                                          
+ object  str13    str13    int16   int16     float32      float32        int16       str1        str1         object        int32      
+------- -------- -------- ------- -------- ------------ ------------ ------------- -------- -------------- ----------- ----------------
+  M   1 05 34 32 +22 00.8       4        4           --           --             0        E              R                            1
+>>> result_table
+<Table length=5>
+MAIN_ID      RA         DEC     RA_PREC DEC_PREC COO_ERR_MAJA COO_ERR_MINA COO_ERR_ANGLE COO_QUAL COO_WAVELENGTH     COO_BIBCODE     SCRIPT_NUMBER_ID
+          "h:m:s"     "d:m:s"                        mas          mas           deg                                                                  
+ object    str13       str13     int16   int16     float32      float32        int16       str1        str1             object            int32      
+------- ----------- ----------- ------- -------- ------------ ------------ ------------- -------- -------------- ------------------- ----------------
+  M   1    05 34 32    +22 00.8       4        4           --           --             0        E              R                                    1
+  M   2 21 33 27.02 -00 49 23.7       6        6      100.000      100.000            90        C              O 2010AJ....140.1830G                1
+  M   3 13 42 11.62 +28 22 38.2       6        6      200.000      200.000            90        C              O 2010AJ....140.1830G                1
+  M   4 16 23 35.22 -26 31 32.7       6        6      400.000      400.000            90        C              O 2010AJ....140.1830G                1
+  M   5 15 18 33.22 +02 04 51.7       6        6           --           --             0        C              O 2010AJ....140.1830G                1
+>>> result_table[1]
+<Row index=1>
+MAIN_ID      RA         DEC     RA_PREC DEC_PREC COO_ERR_MAJA COO_ERR_MINA COO_ERR_ANGLE COO_QUAL COO_WAVELENGTH     COO_BIBCODE     SCRIPT_NUMBER_ID
+          "h:m:s"     "d:m:s"                        mas          mas           deg                                                                  
+ object    str13       str13     int16   int16     float32      float32        int16       str1        str1             object            int32      
+------- ----------- ----------- ------- -------- ------------ ------------ ------------- -------- -------------- ------------------- ----------------
+  M   2 21 33 27.02 -00 49 23.7       6        6      100.000      100.000            90        C              O 2010AJ....140.1830G                1
+>>> result_table[3]
+<Row index=3>
+MAIN_ID      RA         DEC     RA_PREC DEC_PREC COO_ERR_MAJA COO_ERR_MINA COO_ERR_ANGLE COO_QUAL COO_WAVELENGTH     COO_BIBCODE     SCRIPT_NUMBER_ID
+          "h:m:s"     "d:m:s"                        mas          mas           deg                                                                  
+ object    str13       str13     int16   int16     float32      float32        int16       str1        str1             object            int32      
+------- ----------- ----------- ------- -------- ------------ ------------ ------------- -------- -------------- ------------------- ----------------
+  M   4 16 23 35.22 -26 31 32.7       6        6      400.000      400.000            90        C              O 2010AJ....140.1830G                1
+>>> result_table["RA"][3]
+'16 23 35.22'
+>>> result_table["RA"]
+<MaskedColumn name='RA' dtype='str13' unit='"h:m:s"' description='Right ascension' length=5>
+   05 34 32
+21 33 27.02
+13 42 11.62
+16 23 35.22
+15 18 33.22
+>>> import astropy.coordinates as coord
+>>> a = coord(0,0)
+>>> import astropy.units as u
+>>> import astropy.coordinates as SkyCoord
+>>> from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
+>>> from astropy.coordinates import Angle, Latitude, Longitude  # Angles
+
+>>> from astropy.coordinates import SkyCoord  # High-level coordinates
+>>> c = SkyCoord(10, 20, unit="deg")  # defaults to ICRS frame
+>>> c
+<SkyCoord (ICRS): (ra, dec) in deg
+    (10., 20.)>
+>>> result_table["RA"]
+<MaskedColumn name='RA' dtype='str13' unit='"h:m:s"' description='Right ascension' length=5>
+   05 34 32
+21 33 27.02
+13 42 11.62
+16 23 35.22
+15 18 33.22
+>>> result_table["RA"][0]
+'05 34 32'
+>>> len(result_table)
+5
+>>> type(result_table["RA"][0])
+<class 'numpy.str_'>
+>>> str(result_table["RA"][0])
+'05 34 32'
+>>> a = str(result_table["RA"][0]) + str(result_table["DEC"][0])
+>>> a
+'05 34 32+22 00.8'
+>>> a = str(result_table["RA"][0]) + " " + str(result_table["DEC"][0])
+>>> a
+'05 34 32 +22 00.8'
+>>> c = SkyCoord(a, unit='deg')
+>>> c
+<SkyCoord (ICRS): (ra, dec) in deg
+    (5.57555556, 22.01333333)>

@@ -28,11 +28,11 @@ if __name__ == '__main__':
             focuser_name="Focuser Simulator",
             port="/dev/ttyUSB0",
             focus_range=dict(
-                min=1,
-                max=100000),
+                min=5000,
+                max=7000),
             autofocus_step=dict(
-                coarse=10000,
-                fine=500),
+                coarse=500,
+                fine=200),
             autofocus_range=dict(
                 coarse=100000,
                 fine=20000),

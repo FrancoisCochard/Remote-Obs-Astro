@@ -1,3 +1,5 @@
+# F. Cochard, Sept. 2022, based on IndiMount (T. Notargiacomo)
+
 # Basic stuff
 import io
 import json
@@ -16,7 +18,7 @@ from astropy.coordinates import EarthLocation
 from astropy.coordinates import FK5
 #c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs', equinox='J2000.0')
 
-class IndiMount(IndiDevice):
+class Indi10micronMount(IndiDevice):
     """
         We recall that, with indi, telescopes can be adressed using JNow/J2000
         coordinates, see:
