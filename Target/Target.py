@@ -30,7 +30,7 @@ class Target:
 		print(f'Extended: {self.Extended}')
 		print(f'Moving: {self.Moving}')
 		print(f'Select: {self.Select}')
-		print(f'Priority: {self.Priority}\n')
+		print(f'Priority: {self.Priority}')
 		
 if __name__ == "__main__":
     print("... Machin à propos de main()")

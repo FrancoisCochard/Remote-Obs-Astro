@@ -72,4 +72,4 @@ class TargetBase():
 		result = cursor.execute(request)
 		tdb.commit()
 		cursor.close()
-		print(f"The new name is added in the local database (ID : {TargetID}.\n------\n")
+		print(f"The new name is added in the local database (ID : {TargetID}).\n------\n")
