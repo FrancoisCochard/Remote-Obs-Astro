@@ -1597,7 +1597,7 @@ class device(ABC):
             # This is way to verbose, even in debug mode
             if self.device_name == "10micron":
                 d = {e.name: e._value for e in vector.elements}
-                logging.debug(
+                logging.warning(
                     f"UPDATE Got vector {d} with light {vector._light._value} and transfertype {vector.tag.get_transfertype()} and valid {vector.is_valid()}")
             if vector.is_valid():
                 if vector.device != self.device_name:
@@ -1724,7 +1724,7 @@ class device(ABC):
         if len(xml_str) > 0:
             # This is just too verbose, even for debug
             if self.device_name == "10micron":
-                logging.debug(f"Device {self.device_name} just received following str {xml_str}")
+                logging.warning(f"Device {self.device_name} just received following str {xml_str}")
             try:
                 self.expat.Parse(xml_str, 0)
             except ExpatError as e:
@@ -1747,7 +1747,7 @@ class device(ABC):
         vector._light._set_value("Busy")
         # This is just too verbose, even for debug
         if self.device_name == "10micron":
-            logging.debug(f"Device {self.device_name} About to update vector {vector.name} with busy value")
+            logging.warning(f"Device {self.device_name} About to update vector {vector.name} with busy value")
         try:
             with self.property_vectors_lock:
                 self.property_vectors[vector.name].updateByVector(

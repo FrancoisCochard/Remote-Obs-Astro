@@ -22,8 +22,8 @@ if __name__ == '__main__':
 
     # Build the Mount
     mount_config = {
-        # ~ "mount_name":"10micron",
-        "mount_name": "Telescope Simulator",
+        "mount_name":"10micron",
+        # ~ "mount_name": "Telescope Simulator",
         "indi_client": indi_config
     }
     mount = IndiMount(config=mount_config)
@@ -57,13 +57,15 @@ if __name__ == '__main__':
     print(f"Should be: ra:{c.ra.to(u.hourangle)}, dec:{c.dec.to(u.degree)}")
 
     # Sync
-    ra = random.randint(0, 12)
-    dec = random.randint(-90, 90)
+    # ~ ra = random.randint(0, 12)
+    # ~ dec = random.randint(-90, 90)
+    ra = 20.0
+    dec = 42.5
     c = SkyCoord(ra=ra*u.hour, dec=dec*u.degree, frame='icrs')
     mount.sync_to_coord(c)
 
     #Do a slew and stop
-    c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
+    c = SkyCoord(ra=15*u.hour, dec=35*u.degree, frame='icrs')
     mount.slew_to_coord_and_stop(c)
 
     # Park before standby
