@@ -76,7 +76,7 @@ class Observations(object):
 	def start_pointing(self):
 		print(f">> Current state: {self.state}")
 		PointScope(self.NextTarget)
-		time.sleep(1.5)
+		#time.sleep(1.5)
 		print("Pointage terminé")
 		self.Acquire()
 		
@@ -189,7 +189,7 @@ def AcquireGuiding(Exposure):
     PdfFileName = FileName + ".pdf"
     print(f"Fichier sauvé : {PdfFileName}")
     #fitsGuidage.writeto('new1.fits', overwrite=True)
-    fitsGuidage.writeto(FitsFileName, overwrite=True)
+    fitsGuidage.writeto(FitsFileName)
 
     # Show images
     # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, figsize=(16, 9))
