@@ -28,6 +28,8 @@ from helper.IndiClient import IndiClient
 
 # Local stuff: Service
 from Service.NovaAstrometryService import NovaAstrometryService
+#TODO TN TO BE FIXED
+from Service.PanMessagingZMQ import PanMessagingZMQ
 
 # Local stuff: Utils
 from utils import error
@@ -214,15 +216,15 @@ class Manager(Base):
 
     def acquire_calibration(self):
         obs_list = [obs for seq_t, obs in self.scheduler.observed_list.items()]
-        self.logger.debug(f"Acquiring calibratrions for {obs_list}")
+        self.logger.debug(f"Acquiring calibratrions for {[obs_list.target.name]}")
 
         for cam_name, camera in self.acquisition_cameras.items():
             self.logger.debug(f"Going to start calibration of camera {cam_name}"
                               f"[{camera.uid}]")
-            calibration = self._get_calibration(camera)
-            calibration.calibrate(self.scheduler.observed_list)
-            #calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
-            #yield from calib_event_generator
+            # calibration = self._get_calibration(camera)
+            # calibration.calibrate(self.scheduler.observed_list)
+            ####calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
+            ####yield from calib_event_generator
         self.scheduler.set_observed_to_calibrated()
         #raise StopIteration
 
@@ -568,10 +570,12 @@ class Manager(Base):
 
     def _setup_messaging(self):
         try:
-            messaging_name = self.config['messaging_service']['module']
-            messaging_module = load_module('Service.'+messaging_name)
-            self.messaging = getattr(messaging_module, messaging_name)(
-                config=self.config['messaging_service'])
+            messaging_name = self.config['messaging']['module']
+            #messaging_module = load_module('Service.'+messaging_name)
+            # self.messaging = getattr(messaging_module, messaging_name)(
+            #     config=self.config['messaging'])
+            #TODO TN: TO BE FIXED
+            self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging"]["msg_port"])
         except Exception:
             raise RuntimeError('Problem setting up messaging service')
 
