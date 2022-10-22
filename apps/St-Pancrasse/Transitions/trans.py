@@ -6,6 +6,8 @@ from helper.IndiClient import IndiClient
 from Mount.Indi10micronMount import Indi10micronMount
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.wcs import WCS
 # Viz stuff
 import matplotlib.pyplot as plt
 from skimage import img_as_float
@@ -20,11 +22,12 @@ import time
 import os
 import sys
 # ~ import random
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 class Observations(object):
 	
 	NextTarget = Target()
+	NextTargetCorrected = Target()
 
 	# Define some states. Most of the time, narcoleptic superheroes are just like
 	# everyone else. Except for...
@@ -75,14 +78,18 @@ class Observations(object):
 		
 	def start_pointing(self):
 		print(f">> Current state: {self.state}")
-		PointScope(self.NextTarget)
-		#time.sleep(1.5)
-		print("Pointage terminé")
+		ra = self.NextTarget.RA
+		dec = self.NextTarget.DEC
+		print(f"Target coordinates: ra:{ra}, dec:{dec}")
+		TargetCoord = SkyCoord(ra, dec, frame='icrs')
+		TargetCorrectedCoord = TargetCoordinatesCorrection(TargetCoord)
+		PointScope(TargetCorrectedCoord)
+		# ~ print("Pointage terminé")
 		self.Acquire()
 		
 	def start_acquisition(self):
 		print(f">> Current state: {self.state}")
-		AcquireGuiding(3.0)
+		TakeSeriesGuidingImage(self.NextTarget.MyName, 1, "FRAME_LIGHT", 3.0)
 		self.Process()
 		
 	def start_processing(self):
@@ -97,9 +104,8 @@ class Observations(object):
 		self.Sleep()
 		exit
 
-		
 class ObservingProgram():
-	Targets = ["Vega", "om Her", "tet Lyr", "Albireo", "sheliak"]
+	Targets = ["Vega", "Albireo", "sheliak", "Dubhe"]
 	Index = 0
 	MaxIndex = len(Targets)
 	
@@ -121,92 +127,85 @@ def DefineNextTarget():
 		Object = Prog.NextObject()
 		print(Object)
 		Nb, NextTarget = DataBase.query_get(Object)
-		# ~ Nb, NextTarget = DataBase.query_get("Vega")
-		print(Nb, NextTarget)
 	else:
 		NextTarget = ""
 	# Penser à vérifier qu'il n'y a qu'un seul résultat...
 	return(NextTarget)
-
-def PointScope(Target):
-    # Build the Mount    
-    print(f"Monture connectée... {mount.is_connected}")    
-    print("Unparking the mount.")
-    mount.unpark()
-
+	
+def TargetCoordinatesCorrection(TargetCoord):
+	'''This functions calculates the cordinates to put the target in the slit (instead of the image center).'''
+	print(f"Coordonnées : {TargetCoord}")
+	# On teste le côté du pilier
+	PierSide = mount.get_pier_side()
+	print(f"{PierSide}...")
+	if (PierSide['PIER_WEST'] == "On"):
+		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(SlitOffsetRA, SlitOffsetDEC) # already given in *u.arcmin
+	else:
+		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(-SlitOffsetRA, -SlitOffsetDEC) # already given in *u.arcmin		
+	print(f"Coordonnées corrigées : {TargetCorrectedCoord}")
+	return TargetCorrectedCoord
+	
+def PointScope(TargetCoord):
     # Starting coordinates
     c_true = mount.get_current_coordinates()
     print("BEFORE SLEWING --------------------------")
     print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
 
-    ra = Target.RA
-    dec = Target.DEC
-    print(f"Target coordinates: ra:{ra}, dec:{dec}")
-    c = SkyCoord(ra, dec, frame='icrs')
-    # ~ print(c)
-    # ~ print(c.to_string('hmsdms'))
-    # ~ print(f"Nouvelle cible: ra:{c.ra.to(u.hourangle)}, dec:{c.dec.to(u.degree)}")
     print("SLEWING ---------------------------------")
-    mount.slew_to_coord_and_track(c)
+    mount.slew_to_coord_and_track(TargetCoord)
     print("After SLEWING --------------------------")
-    print(f"Coordinates are now: ra:{c.ra.to(u.hourangle)}, dec:{c.dec.to(u.degree)}")
-    # time.sleep(2); # On attend un peu pour que la monture se stabilise
+    print(f"Coordinates are now: ra:{TargetCoord.ra.to(u.hourangle)}, dec:{TargetCoord.dec.to(u.degree)}")
 
-    # ~ print("Je parke !")
-    # ~ mount.park()    
-    # ~ print(f"Status parking : {mount.is_parked}")
-
-def AcquireGuiding(Exposure):
-    print("\n---> Caméra Guidage")
+def TakeSeriesGuidingImage(Target, Number, FrameType, ExpTime):
+	# Get current ISO 8601 datetime in string format
+	Now_ISO_UTC = datetime.now(timezone.utc).isoformat()
+	# ~ print('ISO DateTime:', Now_ISO_UTC)
+	GenericFileName = SessionFolder + "/" + UniqueRootFileName(Now_ISO_UTC, Target, FrameType, ExpTime)
+	for Index in range(Number):
+		TakeOneGuidingImage(Target, GenericFileName, Index+1, FrameType, ExpTime)
+		
+def TakeOneGuidingImage(Target, GenericName, Index, Type, Exposure):
+    print("---> Take a guiding image.")
 
     # set frame type (mostly for simulation purpose
-    camGuidage.set_frame_type('FRAME_LIGHT')
-    print("Passé en frame Light")
-
-    # set gain
-    # ~ camGuidage.set_gain(100)
-    # ~ print(f"gain is {camGuidage.get_gain()}")
-    
-    # ~ # Profondeur d'image
-    # ~ print(f"Depth is {camGuidage.get_frame_depth()}")
-    # ~ # Je passe en 16 bits
-    # ~ # camGuidage.set_frame_depth(16)
-    # ~ camGuidage.set_frame_depth(8)
-    # ~ print(f"Depth is now {camGuidage.get_frame_depth()}")
+    camGuidage.set_frame_type(Type)
     
     # Acquire image Guidage
     camGuidage.prepare_shoot()
     camGuidage.setExpTimeSec(Exposure)
     camGuidage.shoot_async()
-
     camGuidage.synchronize_with_image_reception()
     fitsGuidage = camGuidage.get_received_image()
-    FileName = SessionFolder + "/" + UniqueFileName("DateObs", Obs.NextTarget.MyName, "Object", 3) + "1"
-    FitsFileName = FileName + ".fits"
-    print(f"Fichier sauvé : {FitsFileName}")
-    PNGFileName = FileName + ".png"
-    print(f"Fichier sauvé : {PNGFileName}")
-    PdfFileName = FileName + ".pdf"
-    print(f"Fichier sauvé : {PdfFileName}")
-    #fitsGuidage.writeto('new1.fits', overwrite=True)
+    
+    # Je remplis
+    fitsGuidage[0].header['OBJECT'] = Target
+    Object = fitsGuidage[0].header['OBJECT']
+    # ~ print(f"Objet : {Object}")
+
+    FitsFileName = GenericName + str(Index) + ".fits"
+    print(f"File name: {FitsFileName}")
     fitsGuidage.writeto(FitsFileName)
+
+    # ~ PNGFileName = FileName + ".png"
+    # ~ print(f"Fichier sauvé : {PNGFileName}")
+    # ~ plt.savefig(PNGFileName, format="png")
+
+    # ~ PdfFileName = FileName + ".pdf"
+    # ~ print(f"Fichier sauvé : {PdfFileName}")
+    # ~ plt.savefig(PdfFileName, format="pdf")    
 
     # Show images
     # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, figsize=(16, 9))
-    fig, ((ax1, ax2)) = plt.subplots(nrows=1, ncols=2, figsize=(16, 9))
-    
-    imgGuide = fitsGuidage[0].data
-    img_eqGuide = exposure.equalize_hist(imgGuide)
-    print_ready_imgGuide = img_as_float(img_eqGuide)
-    ax1.imshow(print_ready_imgGuide, cmap='gray')
-
-    #plt.show()
-    plt.savefig(PNGFileName, format="png")
-    plt.savefig(PdfFileName, format="pdf")    
+    # ~ fig, ((ax1, ax2)) = plt.subplots(nrows=1, ncols=2, figsize=(16, 9))
+    # ~ imgGuide = fitsGuidage[0].data
+    # ~ img_eqGuide = exposure.equalize_hist(imgGuide)
+    # ~ print_ready_imgGuide = img_as_float(img_eqGuide)
+    # ~ ax1.imshow(print_ready_imgGuide, cmap='gray')
+    # plt.show()
 
 def SetSessionFolder(Instrument):
 	# This function defines the Session Folder - and create it if it does'nt exist yet
-	base = "/media/observatoire/Observations/"
+	base = "/media/observatoire/TR-002-Astro/"
 	# In the HDD, we've one folder per year
 	currentYear = str(date.today().year)
 	YearFolder = "Observations-" + currentYear + "/"
@@ -228,84 +227,155 @@ def SetSessionFolder(Instrument):
 		print(f"Session folder already existing: {FolderName}")
 	return(FolderName)
 	
-def UniqueFileName(DateObs, Target, FrameType, ExpTime):
-	FileName = Target.replace(" ", "") + "-" + FrameType + "-" + str(ExpTime) + "s-" + DateObs +"-" 
-	print(FileName)
+def UniqueRootFileName(DateObs, Target, FrameType, ExpTime):
+	DateObs = ExtractDateObs(DateObs) # To adapt the date-time format to a file name
+	FileName = Target.replace(" ", "") + "-" + FrameType + "-" + str(int(ExpTime)) + "s-" + DateObs +"-" 
 	return FileName
+	
+def ExtractDateObs(DateObs):
+	"""Extract the Date & time from DATEOBS Fits keyword, for unique file name creation. DATEOBS is like '2022-10-20T16:41:04.749'. Result is '20221020T164104'."""
+	DatetimeStr = DateObs.split('.')[0] # To remove decimals in the seconds (no need for such a precision)
+	DatetimeStr = DatetimeStr.replace('-', '') # To remove '-' in date
+	DatetimeStr = DatetimeStr.replace(':', '') # To remove ':' in time
+	return DatetimeStr
+	
+def FetchRefGuidingImage():
+	'''Copies the guiriding reference image to the working directory'''
+	base = "/media/observatoire/TR-002-Astro/Reference-images/Guiding/"	
+	FileName = "HD153344.fits"
+	File = base + FileName
+	if (os.path.exists(File)):
+		return File
+	else:
+		return "Toto.fits"
+	
+def MeasureSlitOffsets(SlitSkyImageRef, SlitCenterX, SlitCenterY):
+	'''Measures the RaDec offset of the slit center vs Guiding image center'''
+	RefGuidingFile = FetchRefGuidingImage()
+	print(f"Firchier de ref : {RefGuidingFile}")
+	hdu_list = fits.open(RefGuidingFile)
+	header = hdu_list[0].header
+	w = WCS(header)
 
+	CenterPixX = int(header['NAXIS1'] /2)
+	CenterPixY = int(header['NAXIS2'] /2)
+	print(f"Centre (pixels) : {CenterPixX}, {CenterPixY}")
+		
+	CenterSkyX, CenterSkyY = w.wcs_pix2world(CenterPixX, CenterPixY, 1)
+	Center = SkyCoord(CenterSkyX, CenterSkyY, frame='icrs', unit='deg')
+	print(f"Coords centre image direct : {Center}")
+	print(f"Coords centre image : {Center.to_string('hmsdms')}")
+	
+	SlitSkyX, SlitSkyY = w.wcs_pix2world(SlitCenterX, SlitCenterY, 1)
+	Slit = SkyCoord(SlitSkyX, SlitSkyY, frame='icrs', unit='deg')
+	print(f"Coords slit: {Slit}")
+	print(f"Coords slit: {Slit.to_string('hmsdms')}")
+	
+	ddec, dra = Center.spherical_offsets_to(Slit)
+	# ~ PierSide = mount.get_pier_side()
+	# We must take the pier side into account
+	# ... à vérifier... peut-être que ce n'est pas à prendre en compte à ce stade ??
+	PierSide = header['PIERSIDE']
+	print(f"Pilier : {PierSide}")
+	if (PierSide == "WEST"):
+		dra = -dra # A confirmer dans la durée... dépend du côté du méridien ? 
+	else:
+		ddec = -ddec # A confirmer dans la durée... dépend du côté du méridien ? 		
+	print(f"Delta RA direct : {dra}") 
+	print(f"Delta DEC direct : {ddec}") 
+	print(f"Delta RA : {dra.to(u.arcmin)}") 
+	print(f"Delta DEC : {ddec.to(u.arcmin)}") 
+	return dra, ddec
 
+#---------------------------------------
 # Program start
-print('To run the script in Simulator mode, run it with argument "simu"')
+#---------------------------------------
+
+RunMode = "" # To define the actual mode (simu or real)
 
 if (len(sys.argv) == 2):
-	# We run the simulation mode (local Kstars Indi server)
-	RunMode = "Simu"
-	print("Run in mode SIMULATOR (run Kstars with simulators config)")
-else:
-	RunMode = "real"
-	print("Run in mode REAL (make sure remote Indi server is running)")
+	if (sys.argv[1] == "simu"):
+		# We run the simulation mode (local Kstars Indi server)
+		RunMode = "simu"
+		print("Run in mode SIMULATOR (run Kstars with simulators config)")
+	if (sys.argv[1] == "real"):
+		RunMode = "real"
+		print("Run in mode REAL (make sure remote Indi server is running)")
+if (RunMode == ""):
+	print("Requires an argument: 'real' to run in real environment or 'simu' to run in simulator mode.")
+	print("In 'real' mode, make sure the remote INDI server is running.")
+	print("In 'simu' mode, make sure the local INDI server is running.")
+	exit()
 
-# A effacer : test local
-a = UniqueFileName("20220612T124158", "Vega", "Object", 15)
-
+# Defines the session folder
 SessionFolder = SetSessionFolder("TestGuidage")
 
+# Starts the observing program
 Prog = ObservingProgram()
-
+	
 # Configuration du serveur INDI
-if (RunMode == "Simu"):
+if (RunMode == "simu"):
 	indi_config = {
 		"indi_host": "localhost",
 		"indi_port": 7624
-	}
-else: 
-	indi_config = {
-		"indi_host": "192.168.144.32",
-		"indi_port": 7624
-	}
-# ~ print("Hey...", indi_config)
-
-indi_cli = IndiClient(config=indi_config)
-
-if (RunMode == "Simu"):
+		}
 	mount_config = {
 		"mount_name": "Telescope Simulator",
 		"indi_client": indi_config
-	}
-else: 
+		}
+	configGuidage = dict(
+		autofocus_seconds=5,
+		pointing_seconds=5,
+		autofocus_size=500,
+		indi_client = indi_config,
+		camera_name = 'CCD Simulator')
+	camGuidage = IndiCamera(config=configGuidage, connect_on_create=False)
+	# Define the shift of the slit in the guiding image
+	SlitSkyImageRef = "HD153344.fits" # A reference guiding image (made with the same setup as the whole session), with WCS keywords (= made on the sky)
+	SlitFlatImageRef = "HD153344.fits" # A reference guiding image (flat or calib, for instance), in which we can measure the X,Y position of the slit center
+	SlitCenterX = 947 # in pixels
+	SlitCenterY = 689 # in pixels
+	# ~ SlitCenterX = 400 # in pixels
+	# ~ SlitCenterY = 1000	 # in pixels
+	# ~ SlitCenterX = 968 # in pixels
+	# ~ SlitCenterY = 608	 # in pixels	SlitOffsetRA = 0.0 # in Arcmin - will be calculated from ref images
+	SlitOffsetRA = 0.0 # in Arcmin
+	SlitOffsetDEC = 0.0 # in Arcmin - will be calculated from ref images
+	
+if (RunMode == "real"):
+	indi_config = {
+		"indi_host": "192.168.144.32",
+		"indi_port": 7624
+		}
 	mount_config = {
 		"mount_name": "10micron",
 		"indi_client": indi_config
-	}
-# ~ print("Hello...", mount_config)
+		}
+	configGuidage = dict(
+		autofocus_seconds=5,
+		pointing_seconds=5,
+		autofocus_size=500,
+		indi_client = indi_config,
+		camera_name = 'ZWO CCD ASI174MM Mini')
+	camGuidage = IndiZwoASI174MiniCamera(config=configGuidage, connect_on_create=False)
+	# Define the shift of the slit in the guiding image
+	SlitOffsetRA = 3.0 # in Arcmin
+	SlitOffsetDEC = 5.0 # in Arcmin
+	
+indi_cli = IndiClient(config=indi_config)
 
 mount = Indi10micronMount(config=mount_config)
+mount.unpark()
 
-configGuidage = dict(
-	autofocus_seconds=5,
-	pointing_seconds=5,
-	autofocus_size=500,
-	indi_client = indi_config)
-
-if (RunMode == "Simu"):
-	configGuidage["camera_name"] = 'CCD Simulator'
-else: 
-	configGuidage["camera_name"] = 'ZWO CCD ASI174MM Mini'
-
-# test indi virtual camera class
-if (RunMode == "Simu"):
-	camGuidage = IndiCamera(config=configGuidage, connect_on_create=False)
-else: 
-	camGuidage = IndiZwoASI174MiniCamera(config=configGuidage, connect_on_create=False)
+SlitOffsetRA, SlitOffsetDEC = MeasureSlitOffsets(SlitSkyImageRef, SlitCenterX, SlitCenterY)
 
 camGuidage.connect()
     
 Obs = Observations("St-Pancrasse")
-print(f">> Current state: {Obs.state}")
-# ~ machine = GraphMachine(model=Obs, states=Observations.states, transitions=Observations.transitions, initial=Obs.state)
-# ~ Obs.get_graph().draw("test.png", prog='dot')
+# ~ print(f">> Current state: {Obs.state}")
+machine = GraphMachine(model=Obs, states=Observations.states, transitions=Observations.transitions, initial=Obs.state)
+Obs.get_graph().draw("test.png", prog='dot')
 
 Obs.start_obs()
 
-# ~ SessionFolder = SetSessionFolder("UVEX")
 
