@@ -73,7 +73,7 @@ class Observations(object):
 	def start_next_target(self):
 		print(f">> Current state: {self.state}")
 		self.NextTarget = DefineNextTarget()
-		self.NextTarget.display()
+		# ~ self.NextTarget.display()
 		self.Point()
 		
 	def start_pointing(self):
@@ -82,6 +82,7 @@ class Observations(object):
 		dec = self.NextTarget.DEC
 		print(f"Target coordinates: ra:{ra}, dec:{dec}")
 		TargetCoord = SkyCoord(ra, dec, frame='icrs')
+		PointScope(TargetCoord)
 		TargetCorrectedCoord = TargetCoordinatesCorrection(TargetCoord)
 		PointScope(TargetCorrectedCoord)
 		# ~ print("Pointage terminé")
@@ -105,7 +106,7 @@ class Observations(object):
 		exit
 
 class ObservingProgram():
-	Targets = ["Vega", "Albireo", "sheliak", "Dubhe"]
+	Targets = ["Vega", "Albireo", "sheliak", "Alpheratz"]
 	Index = 0
 	MaxIndex = len(Targets)
 	
@@ -138,7 +139,7 @@ def TargetCoordinatesCorrection(TargetCoord):
 	# On teste le côté du pilier
 	PierSide = mount.get_pier_side()
 	print(f"{PierSide}...")
-	if (PierSide['PIER_WEST'] == "On"):
+	if (PierSide['PIER_WEST'] == "Off"):
 		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(SlitOffsetRA, SlitOffsetDEC) # already given in *u.arcmin
 	else:
 		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(-SlitOffsetRA, -SlitOffsetDEC) # already given in *u.arcmin		
@@ -250,7 +251,7 @@ def FetchRefGuidingImage():
 		return "Toto.fits"
 	
 def MeasureSlitOffsets(SlitSkyImageRef, SlitCenterX, SlitCenterY):
-	'''Measures the RaDec offset of the slit center vs Guiding image center'''
+	'''Measures the RaDec offset of the slit center vs Guiding image center. Based on a Reference image (taken in a previous observation).'''
 	RefGuidingFile = FetchRefGuidingImage()
 	print(f"Firchier de ref : {RefGuidingFile}")
 	hdu_list = fits.open(RefGuidingFile)
@@ -271,16 +272,16 @@ def MeasureSlitOffsets(SlitSkyImageRef, SlitCenterX, SlitCenterY):
 	print(f"Coords slit: {Slit}")
 	print(f"Coords slit: {Slit.to_string('hmsdms')}")
 	
-	ddec, dra = Center.spherical_offsets_to(Slit)
+	dra, ddec = Center.spherical_offsets_to(Slit)
 	# ~ PierSide = mount.get_pier_side()
 	# We must take the pier side into account
 	# ... à vérifier... peut-être que ce n'est pas à prendre en compte à ce stade ??
 	PierSide = header['PIERSIDE']
 	print(f"Pilier : {PierSide}")
-	if (PierSide == "WEST"):
-		dra = -dra # A confirmer dans la durée... dépend du côté du méridien ? 
-	else:
-		ddec = -ddec # A confirmer dans la durée... dépend du côté du méridien ? 		
+	# ~ if (PierSide == "EAST"):
+		# ~ dra = -dra # A confirmer dans la durée... dépend du côté du méridien ? 
+	# ~ else:
+		# ~ ddec = -ddec # A confirmer dans la durée... dépend du côté du méridien ? 		
 	print(f"Delta RA direct : {dra}") 
 	print(f"Delta DEC direct : {ddec}") 
 	print(f"Delta RA : {dra.to(u.arcmin)}") 
@@ -333,10 +334,10 @@ if (RunMode == "simu"):
 	# Define the shift of the slit in the guiding image
 	SlitSkyImageRef = "HD153344.fits" # A reference guiding image (made with the same setup as the whole session), with WCS keywords (= made on the sky)
 	SlitFlatImageRef = "HD153344.fits" # A reference guiding image (flat or calib, for instance), in which we can measure the X,Y position of the slit center
-	SlitCenterX = 947 # in pixels
-	SlitCenterY = 689 # in pixels
-	# ~ SlitCenterX = 400 # in pixels
-	# ~ SlitCenterY = 1000	 # in pixels
+	# ~ SlitCenterX = 947 # in pixels
+	# ~ SlitCenterY = 689 # in pixels
+	SlitCenterX = 400 # in pixels
+	SlitCenterY = 1000	 # in pixels
 	# ~ SlitCenterX = 968 # in pixels
 	# ~ SlitCenterY = 608	 # in pixels	SlitOffsetRA = 0.0 # in Arcmin - will be calculated from ref images
 	SlitOffsetRA = 0.0 # in Arcmin
@@ -359,8 +360,16 @@ if (RunMode == "real"):
 		camera_name = 'ZWO CCD ASI174MM Mini')
 	camGuidage = IndiZwoASI174MiniCamera(config=configGuidage, connect_on_create=False)
 	# Define the shift of the slit in the guiding image
-	SlitOffsetRA = 3.0 # in Arcmin
-	SlitOffsetDEC = 5.0 # in Arcmin
+	SlitSkyImageRef = "HD153344.fits" # A reference guiding image (made with the same setup as the whole session), with WCS keywords (= made on the sky)
+	SlitFlatImageRef = "HD153344.fits" # A reference guiding image (flat or calib, for instance), in which we can measure the X,Y position of the slit center
+	# ~ SlitCenterX = 947 # in pixels
+	# ~ SlitCenterY = 689 # in pixels
+	SlitCenterX = 400 # in pixels
+	SlitCenterY = 1000	 # in pixels
+	# ~ SlitCenterX = 968 # in pixels
+	# ~ SlitCenterY = 608	 # in pixels	SlitOffsetRA = 0.0 # in Arcmin - will be calculated from ref images
+	SlitOffsetRA = 0.0 # in Arcmin
+	SlitOffsetDEC = 0.0 # in Arcmin - will be calculated from ref images
 	
 indi_cli = IndiClient(config=indi_config)
 
@@ -373,8 +382,8 @@ camGuidage.connect()
     
 Obs = Observations("St-Pancrasse")
 # ~ print(f">> Current state: {Obs.state}")
-machine = GraphMachine(model=Obs, states=Observations.states, transitions=Observations.transitions, initial=Obs.state)
-Obs.get_graph().draw("test.png", prog='dot')
+# ~ machine = GraphMachine(model=Obs, states=Observations.states, transitions=Observations.transitions, initial=Obs.state)
+# ~ Obs.get_graph().draw("test.png", prog='dot')
 
 Obs.start_obs()
 
