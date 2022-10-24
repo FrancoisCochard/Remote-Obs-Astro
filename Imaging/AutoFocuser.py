@@ -354,30 +354,34 @@ class AutoFocuser(Base):
         # initial_path = os.path.join(file_path_root, initial_fn)
         #
         initial_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
+        self.logger.debug(f"Autofocusing: initial thumbnail size is {initial_thumbnail.shape}")
 
         # Set up encoder positions for autofocus sweep, truncating at focus travel
         # limits if required.
         if coarse:
-            focus_range = focus_range["coarse"]
-            focus_step = focus_step["coarse"]
+            cur_focus_range = focus_range["coarse"]
+            cur_focus_step = focus_step["coarse"]
         else:
-            focus_range = focus_range["fine"]
-            focus_step = focus_step["fine"]
+            cur_focus_range = focus_range["fine"]
+            cur_focus_step = focus_step["fine"]
 
         self.logger.debug(f"Initial focus is {initial_focus} minus range/2 "
-                          f"gives {initial_focus - focus_range / 2}")
+                          f"gives {initial_focus - cur_focus_range / 2}")
         self.logger.debug(f"Initial focus is {initial_focus} plus range/2 gives "
-                          f"{initial_focus + focus_range / 2}")
+                          f"{initial_focus + cur_focus_range / 2}")
         self.logger.debug(f"Min position is {self.min_position} and "
                           f"Max position is {self.max_position}")
-        self.logger.debug(f"Focus step is {focus_step}")
+        self.logger.debug(f"Focus step is {cur_focus_step}")
 
-        focus_positions = np.arange(max(initial_focus - focus_range / 2, self.min_position),
-                                    min(initial_focus + focus_range / 2, self.max_position) + 1,
-                                    focus_step, dtype=np.int)
+        if not (self.min_position <= initial_focus <= self.max_position):
+            central_position = (self.min_position+self.max_position)/2
+            self.move_to(central_position)
+            initial_focus = self.position
+        focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
+                                    min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
+                                    cur_focus_step, dtype=np.int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
-                          f"following positions for autofocusing "
-                          f"{focus_positions}")
+                          f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
 
         thumbnails = np.zeros((n_positions, thumbnail_size, thumbnail_size),
@@ -410,16 +414,33 @@ class AutoFocuser(Base):
             #thumbnail = np.ma.array(thumbnail, mask=master_mask)
             metric[i] = self.focus_metric(
                 thumbnail, merit_function, **merit_function_kwargs)
+            assert np.isfinite(metric[i]), f"Issue with values from merit function {merit_function}, with arguments " \
+                                           f"{merit_function_kwargs}, at focus position {focus_positions[i]}: " \
+                                           f"{metric[i]} "
         fitted = False
 
         # Find best values
         ibest = metric.argmin()
 
         if ibest == 0 or ibest == (n_positions - 1):
-            # TODO: have this automatically switch to coarse focus mode if this happens
-            self.logger.warning(f"Best focus outside sweep range, aborting "
-                                f"autofocus on {self.camera}!")
             best_focus = focus_positions[ibest]
+            self.logger.warning(f"Best focus likely to be outside sweep range {focus_positions}. Sampled metrics " \
+                                f"were {metric}, restarting autofocus on {self.camera} from position {best_focus}")
+            self.move_to(best_focus)
+
+            return self._autofocus(
+               seconds=seconds,
+               focus_range=focus_range,
+               focus_step=focus_step,
+               thumbnail_size=thumbnail_size,
+               keep_files=keep_files,
+               take_dark=take_dark,
+               merit_function=merit_function,
+               merit_function_kwargs=merit_function_kwargs,
+               structuring_element=structuring_element,
+               make_plots=make_plots,
+               coarse=coarse,
+               focus_event=focus_event)
 
         elif not coarse:
             # Fit data around the maximum value to determine best focus position.
@@ -465,7 +486,7 @@ class AutoFocuser(Base):
             # Coarse focus, just use max value.
             best_focus = focus_positions[ibest]
 
-        # This allows to remove effects of backlas
+        # This allows to remove effects of backlash
         reset_focus = self.move_to(focus_positions[0])
         final_focus = self.move_to(best_focus)
 
@@ -474,6 +495,7 @@ class AutoFocuser(Base):
         #                                "final",
         #                                self.camera.file_extension)
         final_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
+        self.logger.debug(f"Autofocusing: final thumbnail size is {final_thumbnail.shape}")
 
         if make_plots:
             initial_thumbnail = initial_thumbnail #self.mask_saturated(initial_thumbnail)
@@ -482,7 +504,7 @@ class AutoFocuser(Base):
             #    initial_thumbnail = initial_thumbnail - dark_thumb
             #    final_thumbnail = final_thumbnail - dark_thumb
 
-            fig, ax = plt.subplots(1,3,figsize=(22, 7))
+            fig, ax = plt.subplots(1, 3, figsize=(22, 7))
 
             #im1 = ax[0].imshow(initial_thumbnail, interpolation='none',
             #                 cmap=self.get_palette(), norm=colours.LogNorm())
@@ -496,7 +518,7 @@ class AutoFocuser(Base):
                                  100)
                 ax[1].plot(fs, fit(fs), 'b-', label='Polynomial fit')
 
-            ax[1].set_xlim(focus_positions[0] - focus_step / 2, focus_positions[-1] + focus_step / 2)
+            ax[1].set_xlim(focus_positions[0] - cur_focus_step / 2, focus_positions[-1] + cur_focus_step / 2)
             l_limit = min(0.95 * metric.min(), 1.05 * metric.min())
             u_limit = 1.10 * metric.max()
             ax[1].set_ylim(l_limit, u_limit)

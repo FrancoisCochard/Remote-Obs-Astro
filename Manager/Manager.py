@@ -282,15 +282,12 @@ class Manager(Base):
 
         # Take exposure with each camera
         for cam_name, camera in self.acquisition_cameras.items():
-            self.logger.debug("Exposing for camera: {}".format(cam_name))
-
+            self.logger.debug(f"Exposing for camera: {cam_name}")
             try:
                 # Start the exposures
                 cam_event = camera.take_observation(
                     observation=self.current_observation, headers=headers)
-
                 camera_events[cam_name] = cam_event
-
             except Exception as e:
                 self.logger.error(f"Problem waiting for images, {e}: "
                                   f"{traceback.format_exc()}")
@@ -602,7 +599,7 @@ class Manager(Base):
             time_name = self.config['time_service']['module']
             time_module = load_module('Service.'+time_name)
             self.serv_time = getattr(time_module, time_name)(
-                config = self.config['time_service'])
+                config=self.config['time_service'])
         except Exception:
             raise RuntimeError('Problem setting up time service')
 
