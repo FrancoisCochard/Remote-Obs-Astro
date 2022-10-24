@@ -40,6 +40,7 @@ class IndiCamera(IndiDevice):
                 autofocus_seconds=5,
                 pointing_seconds=30,
                 autofocus_size=500,
+                autofocus_merit_function="vollath_F4",
                 focuser=dict(
                     module="IndiFocuser",
                     focuser_name=""),
@@ -51,6 +52,7 @@ class IndiCamera(IndiDevice):
         self.autofocus_seconds = float(config['autofocus_seconds'])
         self.pointing_seconds = float(config['pointing_seconds'])
         self.autofocus_size = int(config['autofocus_size'])
+        self.autofocus_merit_function = config['autofocus_merit_function']
         # If scope focuser is specified in the config, load
         try:
             cfg = config['focuser']
@@ -116,7 +118,8 @@ class IndiCamera(IndiDevice):
 
     def synchronize_with_image_reception(self):
         try:
-            self.logger.debug('synchronize_with_image_reception: Start waiting')
+            self.logger.debug(f"synchronize_with_image_reception: Start waiting for " \
+                              f"{self.exp_time_sec}s with margin {self.READOUT_TIME_MARGIN}s")
             self.wait_for_incoming_blob_vector(timeout=self.exp_time_sec + self.READOUT_TIME_MARGIN)
             self.logger.debug('synchronize_with_image_reception: Done')
         except Exception as e:
@@ -317,7 +320,10 @@ class IndiCamera(IndiDevice):
         """
         self.logger.info(f"Camera {self.device_name} is going to start "
                          f"autofocus with device {self.focuser.device_name}...")
-        af = IndiAutoFocuser(camera=self)
+        af = IndiAutoFocuser(
+            camera=self,
+            autofocus_size=self.autofocus_size,
+            autofocus_merit_function=self.autofocus_merit_function)
         autofocus_event = af.autofocus(coarse=coarse, blocking=False,
                                        make_plots=True)
         self.logger.info(f"Camera {self.device_name} just launched async "
