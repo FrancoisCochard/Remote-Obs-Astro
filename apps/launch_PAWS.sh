@@ -1,2 +1,3 @@
-PRJ_DIR=/home/gnthibault/projects/RemoteObservatory
-PYTHONPATH=$PRJ_DIR python $PRJ_DIR/../PAWS/app.py
+PRJ_DIR=/home/observatoire/Obs-St-Pancrasse/INDI-Python/Remote-Obs-Astro
+export PAWS=/home/observatoire/Obs-St-Pancrasse/INDI-Python/PAWS
+python /home/observatoire/Obs-St-Pancrasse/INDI-Python/PAWS/app.py
