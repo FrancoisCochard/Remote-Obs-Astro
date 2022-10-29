@@ -9,6 +9,7 @@ states:
     - ready
     - scheduling
     - slewing
+    - totoFC
     - pointing
     - tracking
     - focusing
@@ -81,7 +82,13 @@ transitions:
         trigger: adjust_pointing
         conditions: mount_is_tracking
     -
-        source: pointing
+        source: slewing
+        dest: totoFC
+        trigger: adjust_TEST
+        conditions: mount_is_tracking
+    -
+        # source: pointing
+        source: totoFC
         dest: slewing
         trigger: start_slewing
         conditions: mount_is_tracking

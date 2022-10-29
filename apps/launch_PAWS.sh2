@@ -1,2 +1,0 @@
-PRJ_DIR=/home/observatoire/Obs-St-Pancrasse/INDI-Python/Remote-Obs-Astro
-python /home/observatoire/Obs-St-Pancrasse/INDI-Python/PAWS/app.py
