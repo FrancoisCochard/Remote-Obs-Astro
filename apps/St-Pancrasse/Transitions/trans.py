@@ -107,6 +107,7 @@ class Observations(object):
 
 class ObservingProgram():
 	Targets = ["Vega", "Albireo", "sheliak", "Alpheratz"]
+	# ~ Targets = ["Vega", "Alpheratz"]
 	Index = 0
 	MaxIndex = len(Targets)
 	
@@ -139,9 +140,11 @@ def TargetCoordinatesCorrection(TargetCoord):
 	# On teste le côté du pilier
 	PierSide = mount.get_pier_side()
 	print(f"{PierSide}...")
-	if (PierSide['PIER_WEST'] == "Off"):
-		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(SlitOffsetRA, SlitOffsetDEC) # already given in *u.arcmin
+	if (PierSide['PIER_WEST'] == "On"):
+		# ~ TargetCorrectedCoord = TargetCoord.spherical_offsets_by(SlitOffsetRA, SlitOffsetDEC) # already given in *u.arcmin
+		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(-SlitOffsetRA, SlitOffsetDEC) # already given in *u.arcmin		
 	else:
+		# ~ TargetCorrectedCoord = TargetCoord.spherical_offsets_by(SlitOffsetRA, SlitOffsetDEC) # already given in *u.arcmin
 		TargetCorrectedCoord = TargetCoord.spherical_offsets_by(-SlitOffsetRA, -SlitOffsetDEC) # already given in *u.arcmin		
 	print(f"Coordonnées corrigées : {TargetCorrectedCoord}")
 	return TargetCorrectedCoord
@@ -362,10 +365,10 @@ if (RunMode == "real"):
 	# Define the shift of the slit in the guiding image
 	SlitSkyImageRef = "HD153344.fits" # A reference guiding image (made with the same setup as the whole session), with WCS keywords (= made on the sky)
 	SlitFlatImageRef = "HD153344.fits" # A reference guiding image (flat or calib, for instance), in which we can measure the X,Y position of the slit center
-	# ~ SlitCenterX = 947 # in pixels
-	# ~ SlitCenterY = 689 # in pixels
-	SlitCenterX = 400 # in pixels
-	SlitCenterY = 1000	 # in pixels
+	SlitCenterX = 950 # in pixels
+	SlitCenterY = 689 # in pixels
+	# ~ SlitCenterX = 400 # in pixels
+	# ~ SlitCenterY = 1000	 # in pixels
 	# ~ SlitCenterX = 968 # in pixels
 	# ~ SlitCenterY = 608	 # in pixels	SlitOffsetRA = 0.0 # in Arcmin - will be calculated from ref images
 	SlitOffsetRA = 0.0 # in Arcmin
