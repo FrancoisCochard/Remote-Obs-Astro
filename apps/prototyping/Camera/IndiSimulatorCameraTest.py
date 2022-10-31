@@ -1,16 +1,16 @@
 # Basic stuff
+import logging
 
 # Viz stuff
 import matplotlib.pyplot as plt
 from skimage import img_as_float
 from skimage import exposure
 
-# Local stuff : IndiClient
-from helper.IndiClient import IndiClient
-
 # Local stuff : Camera
 from Camera.IndiAbstractCameraSimulator import IndiAbstractCameraSimulator
 from Service.NTPTimeService import HostTimeService
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s;%(levelname)s:%(message)s')
 
 if __name__ == '__main__':
     config = dict(
@@ -67,9 +67,9 @@ if __name__ == '__main__':
                                       connect_on_create=False,
                                       primary=True)
     cam.connect()
-    # Acquire data
     cam.prepare_shoot()
-    cam.setExpTimeSec(10)
+    # Acquire data
+    cam.setExpTimeSec(4)
     cam.shoot_async()
     cam.synchronize_with_image_reception()
     fits = cam.get_received_image()

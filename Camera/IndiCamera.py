@@ -29,7 +29,7 @@ class IndiCamera(IndiDevice):
         'both': 'UPLOAD_BOTH'}
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
-    READOUT_TIME_MARGIN = 10
+    READOUT_TIME_MARGIN = 30
 
     def __init__(self, logger=None, config=None, connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
@@ -127,8 +127,10 @@ class IndiCamera(IndiDevice):
 
     def get_received_image(self):
         try:
-            self.logger.debug(f"Indicamera blob queue size is {self.blob_queue.qsize()}")
-            image = fits.open(self.blob_queue.get())
+            self.logger.debug(f"Indicamera {self.device_name} about to read blob")
+            image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            #blob = await self.blob_queue.get() # FIFO in "circular buffer" mode
+            #image = fits.open(blob)
             return image
         except Exception as e:
             self.logger.error(f"Indi Camera Error in get_received_image: {e}")

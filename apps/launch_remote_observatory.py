@@ -12,6 +12,9 @@ import zmq
 # Astropy
 from astropy import units as u
 
+#
+from transitions import MachineError
+
 # Local
 from Base.Base import Base
 from Manager.Manager import Manager
@@ -54,7 +57,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
     def __init__(
             self,
             manager,
-            state_machine_file='conf_files/simple_state_table.yaml',
+            state_machine_file=None,
             messaging=True,
             **kwargs):
 
@@ -63,10 +66,11 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # Explicitly call the base classes in the order we want
         Base.__init__(self, **kwargs)
 
-        # local init
+        # init
+        state_machine_file = state_machine_file if state_machine_file else os.path.join("conf_files", self.config[
+            'state_machine'])
         self.name = 'Remote Observatory'
-        self.logger.info('Initializing Remote Observatory - {}'.format(
-                         self.name))
+        self.logger.info(f"Initializing Remote Observatory - {self.name}")
         self._has_messaging = None
         self.has_messaging = messaging
 
@@ -144,7 +148,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 self.manager.initialize()
             except Exception as e:
                 self.logger.info(f"Oh wait. There was a problem initializing: {e}")
-                self.logger.info(f"Since we didn not initialize, I am going to exit.")
+                self.logger.info(f"Since we did not initialize, I am going to exit.")
                 self.power_down()
             else:
                 self._initialized = True
@@ -299,7 +303,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe_values = dict()
 
         # Check if night time: synchronous
-        is_safe_values['is_dark'] = self.is_dark()
+        # TODO TN URGENT
+        is_safe_values['is_dark'] = True
+        #is_safe_values['is_dark'] = self.is_dark()
 
         # Check weather: not really synchronous, checks db
         is_safe_values['good_weather'] = self.is_weather_safe()
@@ -308,24 +314,16 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe_values['free_space'] = self.has_free_space()
 
         safe = all(is_safe_values.values())
-        #TODO TN URGENT
-        safe = True
-
 
         if not safe:
             if no_warning is False:
                 self.logger.warning(f"Unsafe conditions: {is_safe_values}")
+            # It is ok not to be safe in one of those states
+            if self.state not in ['sleeping', 'parked', 'parking', 'housekeeping', 'ready']:
+                self.logger.warning('Safety check is  so sending to park if possible')
+                self.park()
 
-            if self.state not in ['sleeping', 'parked', 'parking',
-                                  'housekeeping', 'ready']:
-                #self.logger.warning('Safety failed so sending to park')
-                #self.park() #FSM trigger
-                # TODO TN urgent: corriger
-                pass
-
-        #return safe
-        # TODO TN urgent: corriger
-        return True
+        return safe
 
     def is_dark(self):
         """Is it dark
