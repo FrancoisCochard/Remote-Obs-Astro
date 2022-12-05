@@ -68,10 +68,6 @@ class Manager(Base):
         self.logger.info('\tSetting up cameras')
         self._setup_cameras()
 
-        # Setup filter wheel
-        self.logger.info('\tSetting up filterwheel')
-        self._setup_filterwheel()
-
         # setup guider
         self.logger.info('\tSetting up guider')
         self._setup_guider()
@@ -108,15 +104,6 @@ class Manager(Base):
     def sidereal_time(self):
         return self.observer.local_sidereal_time(
             self.serv_time.get_astropy_time_from_utc())
-
-    @property
-    def primary_camera(self):
-        return self._primary_camera
-
-    @primary_camera.setter
-    def primary_camera(self, cam):
-        cam.is_primary = True
-        self._primary_camera = cam
 
     @property
     def current_observation(self):
@@ -216,17 +203,20 @@ class Manager(Base):
 
     def acquire_calibration(self):
         obs_list = [obs for seq_t, obs in self.scheduler.observed_list.items()]
-        self.logger.debug(f"Acquiring calibratrions for {[obs_list.target.name]}")
+        target_name_list = [obs.target.name for obs in obs_list]
+        self.logger.debug(f"Acquiring calibrations for targets {target_name_list}")
 
+        # List of camera events to wait for to signal exposure is done processing
+        camera_events = dict()
         for cam_name, camera in self.acquisition_cameras.items():
-            self.logger.debug(f"Going to start calibration of camera {cam_name}"
-                              f"[{camera.uid}]")
-            # calibration = self._get_calibration(camera)
-            # calibration.calibrate(self.scheduler.observed_list)
-            ####calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
-            ####yield from calib_event_generator
-        self.scheduler.set_observed_to_calibrated()
-        #raise StopIteration
+            try:
+                self.logger.debug(f"Going to start calibration of camera {cam_name}[{camera.uid}]")
+                calibration = self._get_calibration(camera)
+                cam_event = calibration.calibrate(self.scheduler.observed_list)
+                camera_events[cam_name] = cam_event
+            except Exception as e:
+                self.logger.error(f"Problem trying to calibrate camera {cam_name}, {e}: {traceback.format_exc()}")
+        return camera_events
 
     def cleanup_observations(self):
         """Cleanup observation list
@@ -276,8 +266,7 @@ class Manager(Base):
         # All cameras share a similar start time
         headers['start_time'] = self.serv_time.flat_time()
 
-        # List of camera events to wait for to signal exposure is done
-        # processing
+        # List of camera events to wait for to signal exposure is done processing
         camera_events = dict()
 
         # Take exposure with each camera
@@ -289,8 +278,7 @@ class Manager(Base):
                     observation=self.current_observation, headers=headers)
                 camera_events[cam_name] = cam_event
             except Exception as e:
-                self.logger.error(f"Problem waiting for images, {e}: "
-                                  f"{traceback.format_exc()}")
+                self.logger.error(f"Problem waiting for images, {e}: {traceback.format_exc()}")
         return camera_events
 
     def analyze_recent(self):
@@ -421,7 +409,7 @@ class Manager(Base):
         headers['equinox'] = equinox
         return headers
 
-    def autofocus_cameras(self, camera_list=None, coarse=False):
+    def perform_cameras_autofocus(self, camera_list=None, coarse=False):
         """
         Perform autofocus on all cameras with focus capability, or a named
         subset of these. Optionally will perform a coarse autofocus first,
@@ -439,36 +427,31 @@ class Manager(Base):
         if camera_list:
             # Have been passed a list of camera names, extract dictionary
             # containing only cameras named in the list
-            cameras = {cam_name: self.acquisitions_cameras[
+            cameras = {cam_name: self.autofocus_cameras[
                 cam_name] for cam_name in camera_list if cam_name in
                 self.acquisition_cameras.keys()}
-
             if cameras == {}:
-                self.logger.warning('Passed a list of camera names ({}) but no'
-                                    ' matches found'.format(camera_list))
+                self.logger.warning(f"Passed a list of camera names ({camera_list}) but no matches found")
         else:
             # No cameras specified, will try to autofocus all cameras from
             # self.cameras
-            cameras = self.acquisition_cameras
+            cameras = self.autofocus_cameras
 
         autofocus_events = dict()
 
         # Start autofocus with each camera
         for cam_name, camera in cameras.items():
-            self.logger.debug("Autofocusing camera: {}".format(cam_name))
-
+            self.logger.debug(f"Autofocusing camera: {cam_name}")
             try:
                 assert camera.focuser.is_connected
             except AttributeError:
-                msg = f"Camera {cam_name} has no focuser, skipping "\
-                      f"autofocus"
-                self.logger.debug(msg)
-                raise RuntimeError("msg")
+                msg = f"Camera {cam_name} has no focuser, skipping autofocus"
+                self.logger.error(msg)
+                raise RuntimeError(msg)
             except AssertionError:
-                msg = f"Camera {cam_name} focuser not connected, "\
-                      f"skipping autofocus"
-                self.logger.debug(msg)
-                raise RuntimeError("msg")
+                msg = f"Camera {cam_name} focuser not connected, skipping autofocus"
+                self.logger.error(msg)
+                raise RuntimeError(msg)
             else:
                 try:
                     # Start the autofocus
@@ -476,7 +459,7 @@ class Manager(Base):
                 except Exception as e:
                     msg = f"Problem running autofocus: {e}"
                     self.logger.debug(msg)
-                    raise RuntimeError("msg")
+                    raise RuntimeError(msg)
                 else:
                     autofocus_events[cam_name] = autofocus_event
 
@@ -630,49 +613,63 @@ class Manager(Base):
             self.logger.error(f"Cannot load mount module: {e}")
             raise error.MountNotFound(f"Problem setting up mount")
 
+    @property
+    def pointing_camera(self):
+        return [v for k, v in self.cameras.items() if v.do_pointing][0]
+
+    @property
+    def acquisition_cameras(self):
+        """
+        We make sure we always provide cameras in the order of their declaration
+        :return:
+        """
+        cam_od = OrderedDict()
+        for k, v in self.cameras.items():
+            if v.do_acquisition:
+                cam_od[k] = v
+        return cam_od
+
+    @property
+    def autofocus_cameras(self):
+        """
+        We make sure we always provide cameras in the order of their declaration
+        :return:
+        """
+        cam_od = OrderedDict()
+        for k, v in self.cameras.items():
+            if v.do_autofocus:
+                cam_od[k] = v
+        return cam_od
+
     def _setup_cameras(self, **kwargs):
         """
             setup camera object(s)
 
         """
-        self.acquisition_cameras = OrderedDict()
+        self.cameras = OrderedDict()
 
-        def setup_cam(cam_type, primary):
+        def setup_cameras():
             try:
-                cam_name = self.config[cam_type]['module']
-                cam_module = load_module('Camera.'+cam_name)
-                cam = getattr(cam_module, cam_name)(
-                    serv_time=self.serv_time,
-                    config=self.config[cam_type],
-                    connect_on_create=True,
-                    primary=primary)
-                cam.prepare_shoot()
-                return cam
+                for cam_config in self.config["cameras"]:
+                    cam_name = cam_config['module']
+                    cam_module = load_module('Camera.'+cam_name)
+                    cam = getattr(cam_module, cam_name)(
+                        serv_time=self.serv_time,
+                        config=cam_config,
+                        connect_on_create=True)
+                    cam.prepare_shoot()
+                    self.cameras[cam.name] = cam
             except Exception as e:
                 raise RuntimeError(f"Problem setting up camera: {e}")
 
-        self.pointing_camera = setup_cam("pointing_camera", primary=False)
-        acquisition_camera = setup_cam("acquisition_camera", primary=True)
-        self.acquisition_cameras[acquisition_camera.name] = acquisition_camera
-
+        setup_cameras()
+        nb_pointing_cameras = len([v for k, v in self.cameras.items() if v.do_pointing])
+        if nb_pointing_cameras != 1:
+            raise error.CameraNotFound(
+                msg=f"Invalid number of pointing cameras {nb_pointing_cameras}. Exiting.", exit=True)
         if len(self.acquisition_cameras) == 0:
             raise error.CameraNotFound(
-                msg="No cameras available. Exiting.", exit=True)
-
-    # TODO TN: filterwheel should be relative to a camera
-    def _setup_filterwheel(self):
-        """
-            Setup a filterwheel object.
-        """
-        try:
-            if 'filterwheel' in self.config:
-                fw_name = self.config['filterwheel']['module']
-                fw_module = load_module('FilterWheel.'+fw_name)
-                self.filterwheel = getattr(fw_module, fw_name)(
-                    config = self.config['filterwheel'],
-                    connect_on_create=True)
-        except Exception:
-            raise RuntimeError(f'Problem setting up filterwheel: {e}')
+                msg="No acquisition camera available. Exiting.", exit=True)
 
     def _setup_guider(self):
         """
@@ -695,15 +692,12 @@ class Manager(Base):
         try:
             if 'calibration' in self.config:
                 calibration_name = self.config["calibration"]["module"]
-                calibration_module = load_module("calibration."+
-                                               calibration_name)
-                calibration = getattr(calibration_module,
-                                           calibration_name)(
+                calibration_module = load_module("calibration."+calibration_name)
+                calibration = getattr(calibration_module, calibration_name)(
                     camera=camera,
                     config=self.config["calibration"])
         except Exception as e:
-            raise RuntimeError(f"Problem setting up scheduler: {e}")
-        
+            raise RuntimeError(f"Problem setting up calibration: {e}")
         return calibration
 
     def _setup_scheduler(self):

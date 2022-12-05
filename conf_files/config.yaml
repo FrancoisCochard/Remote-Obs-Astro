@@ -89,126 +89,146 @@ mount:
         #~ indi_host : localhost
         indi_host : 192.168.144.32
         indi_port : 7624
-pointing_camera:
-    #~ module: IndiAbstractCameraSimulator
-    module: IndiAbstractCamera
-    #~ camera_name : Guide Simulator
-    camera_name : ZWO CCD ASI174MM Mini
-#    CCD_INFO:
-#        CCD_MAX_X: 1936
-#        CCD_MAX_Y: 1096
-#        CCD_PIXEL_SIZE: 2.9
-#        CCD_PIXEL_SIZE_X: 2.9
-#        CCD_PIXEL_SIZE_Y: 2.9
-#        CCD_BITSPERPIXEL: 12
-    SIMULATOR_SETTINGS: # 290MM
-        SIM_XRES: 1936
-        SIM_YRES: 1096
-        SIM_XSIZE: 2.9
-        SIM_YSIZE: 2.9
-        SIM_MAXVAL: 65000
-        SIM_SATURATION: 1
-        SIM_LIMITINGMAG: 17
-        SIM_NOISE: 0
-        SIM_SKYGLOW: 19.5
-        SIM_OAGOFFSET: 0
-        SIM_POLAR: 0
-        SIM_POLARDRIFT: 0
-        SIM_ROTATION: 0
-        SIM_KING_GAMMA: 0
-        SIM_KING_THETA: 0
-#        SIM_PEPERIOD: 0
-#        SIM_PEMAX: 0
-        SIM_TIME_FACTOR: 1
-    SCOPE_INFO: # 200/800 newtonian
-        FOCAL_LENGTH: 800
-        APERTURE: 200
-    pointing_seconds: 30
-    autofocus_seconds: 5 # Temps de pose focus
-    autofocus_size : 500 # Amplitude de réglage autour du focus (steps moteurs)
-    autofocus_merit_function: half_flux_radius #vollath_F4
-    indi_client :
-        indi_host : 192.168.144.32
-        indi_port : 7624
-acquisition_camera:
-    #~ module: IndiAbstractCameraSimulator
-    #~ camera_name : CCD Simulator
-    module: IndiAbstractCamera
-    camera_name : ZWO CCD ASI183MM Pro
-    #module: IndiEos6DCamera
-    #camera_name: Canon DSLR EOS 6D
-    #camera_name: GPhoto CCD
-#    CCD_INFO :
-#        CCD_MAX_X : 5496
-#        CCD_MAX_Y : 3672
-#        CCD_PIXEL_SIZE : 2.4
-#        CCD_PIXEL_SIZE_X : 2.4
-#        CCD_PIXEL_SIZE_Y : 2.4
-#        CCD_BITSPERPIXEL : 12
-    SIMULATOR_SETTINGS: # 180mm
-        SIM_XRES: 5496
-        SIM_YRES: 3672
-        SIM_XSIZE: 2.4
-        SIM_YSIZE: 2.4
-        SIM_MAXVAL: 65000
-        SIM_SATURATION: 1
-        SIM_LIMITINGMAG: 17
-        SIM_NOISE: 0
-        SIM_SKYGLOW: 19.5
-        SIM_OAGOFFSET: 0
-        SIM_POLAR: 0
-        SIM_POLARDRIFT: 0
-        SIM_ROTATION: 0
-#        SIM_KING_GAMMA: 0
-#        SIM_KING_THETA: 0
-        SIM_PEPERIOD: 0
-        SIM_PEMAX: 0
-        SIM_TIME_FACTOR: 1
-    SCOPE_INFO: # 200/800 newtonian
-        FOCAL_LENGTH: 800
-        APERTURE: 200
-    pointing_seconds: 5
-    autofocus_seconds: 2
-    autofocus_size : 1500
-    autofocus_merit_function : half_flux_radius #vollath_F4
-    indi_client :
-        indi_host : 192.168.144.32
-        indi_port : 7624
-    focuser:
-        module: IndiFocuser
-        focuser_name : Focuser Simulator
-        port : /dev/ttyUSB0
-        #~ focus_range :
-            #~ min : 32500
-            #~ max : 40000
-        focus_range :
-            min : 8000
-            max : 13000
-        autofocus_step :
-            fine : 750
-            coarse : 2500
-        autofocus_range :
-            fine : 10000
-            coarse : 30000
+
+cameras:
+    -
+    #    module: IndiAbstractCameraSimulator
+        module: IndiAbstractCamera
+    #    camera_name : Guide Simulator
+        camera_name : ZWO CCD ASI174MM Mini
+    #    CCD_INFO:
+    #        CCD_MAX_X: 1936
+    #        CCD_MAX_Y: 1096
+    #        CCD_PIXEL_SIZE: 2.9
+    #        CCD_PIXEL_SIZE_X: 2.9
+    #        CCD_PIXEL_SIZE_Y: 2.9
+    #        CCD_BITSPERPIXEL: 12
+        do_acquisition: false
+        SIMULATOR_SETTINGS: # 290MM
+            SIM_XRES: 1936
+            SIM_YRES: 1096
+            SIM_XSIZE: 2.9
+            SIM_YSIZE: 2.9
+            SIM_MAXVAL: 65000
+            SIM_SATURATION: 1
+            SIM_LIMITINGMAG: 17
+            SIM_NOISE: 0
+            SIM_SKYGLOW: 19.5
+            SIM_OAGOFFSET: 0
+            SIM_POLAR: 0
+            SIM_POLARDRIFT: 0
+            SIM_ROTATION: 0
+            SIM_KING_GAMMA: 0
+            SIM_KING_THETA: 0
+    #        SIM_PEPERIOD: 0
+    #        SIM_PEMAX: 0
+            SIM_TIME_FACTOR: 1
+        SCOPE_INFO: # 200/800 newtonian
+            FOCAL_LENGTH: 800
+            APERTURE: 200
+        do_pointing: true
+        pointing_seconds: 10
+        do_autofocus: true
+        autofocus_seconds: 5
+        autofocus_size : 750
+        autofocus_merit_function: half_flux_radius #vollath_F4
+        focuser:
+            module: IndiFocuser
+            # focuser_name: Focuser Simulator
+            focuser_name: FocusLynx F1
+            port: /dev/serial/by-id/usb-Optec__Inc._Optec_USB_Serial_Cable_OP5AORA9-if00-port0 # /dev/ttyUSB0
+            focus_range:
+                min: 11000
+                max: 13000
+            autofocus_step:
+                fine: 100
+                coarse: 300
+            autofocus_range:
+                fine: 2000
+                coarse: 2000
+            indi_client:
+                indi_host: 192.168.144.32 # localhost
+                indi_port: 7624
+        indi_client :
+            indi_host : 192.168.144.32 # localhost
+            indi_port : 7624
+    -
+        module: IndiAbstractCamera
+        camera_name : ZWO CCD ASI183MM Pro # CCD Simulator
+        do_acquisition: true
+        #module: IndiEos6DCamera
+        #camera_name: Canon DSLR EOS 6D
+        #camera_name: GPhoto CCD
+    #    CCD_INFO :
+    #        CCD_MAX_X : 5496
+    #        CCD_MAX_Y : 3672
+    #        CCD_PIXEL_SIZE : 2.4
+    #        CCD_PIXEL_SIZE_X : 2.4
+    #        CCD_PIXEL_SIZE_Y : 2.4
+    #        CCD_BITSPERPIXEL : 12
+        SIMULATOR_SETTINGS: # 180mm
+            SIM_XRES: 1500 #5496
+            SIM_YRES: 1500 #3672
+            SIM_XSIZE: 2.4
+            SIM_YSIZE: 2.4
+            SIM_MAXVAL: 65000
+            SIM_SATURATION: 1
+            SIM_LIMITINGMAG: 17
+            SIM_NOISE: 0
+            SIM_SKYGLOW: 19.5
+            SIM_OAGOFFSET: 0
+            SIM_POLAR: 0
+            SIM_POLARDRIFT: 0
+            SIM_ROTATION: 0
+    #        SIM_KING_GAMMA: 0
+    #        SIM_KING_THETA: 0
+            SIM_PEPERIOD: 0
+            SIM_PEMAX: 0
+            SIM_TIME_FACTOR: 1
+        SCOPE_INFO: # 200/800 newtonian
+            FOCAL_LENGTH: 800
+            APERTURE: 200
+        do_pointing: false
+        pointing_seconds: 10
+        do_autofocus: false
+        autofocus_seconds: 2
+        autofocus_size : 1500
+        autofocus_merit_function : half_flux_radius #vollath_F4
+        focuser:
+            module: IndiFocuser
+            focuser_name: Focuser Simulator
+            port: /dev/ttyUSB0
+            focus_range:
+                min: 32500
+                max: 40000
+            autofocus_step:
+                fine: 750
+                coarse: 2500
+            autofocus_range:
+                fine: 10000
+                coarse: 30000
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
+        do_filter_wheel: false
+        filter_wheel:
+            module: IndiFilterWheel
+            filterwheel_name: Filter Simulator
+            filter_list:
+                Luminance: 1
+                Red: 2
+                Green: 3
+                Blue: 4
+                H_Alpha: 5
+                OIII: 6
+                SII: 7
+                LPR: 8
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
         indi_client :
             indi_host : 192.168.144.32
             indi_port : 7624
-#filterwheel:
-nofilterwheel:
-    module : IndiFilterWheel 
-    filterwheel_name : Filter Simulator
-    filter_list : 
-        Luminance : 1
-        Red : 2
-        Green : 3
-        Blue : 4
-        H_Alpha : 5
-        OIII : 6
-        SII : 7
-        LPR : 8
-    indi_client :
-        indi_host : localhost
-        indi_port : 7624
 guider:
     module : GuiderPHD2
     host : localhost

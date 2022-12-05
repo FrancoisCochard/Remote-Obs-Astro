@@ -16,6 +16,8 @@ WAITING_MSG_INTERVAL = 5. * u.second
 MAX_EXTRA_TIME = (60+SLEEP_SECONDS) * u.second
 
 def on_enter(event_data):
+    #TODO TN DEBUG
+    event_data.model.manager.guider = None
     """Wait for camera exposures to complete.
 
     Frequently check for the exposures to complete, the observation to be
@@ -50,8 +52,7 @@ def on_enter(event_data):
             now = model.manager.serv_time.get_astropy_time_from_utc()
             if now >= next_msg_time:
                 elapsed_secs = (now - start_time).to(u.second).value
-                model.logger.debug(f"State: observing, waiting for images: "
-                                   f"{round(elapsed_secs)}")
+                model.logger.debug(f"State: observing, waiting for images: {round(elapsed_secs)}")
                 next_msg_time += WAITING_MSG_INTERVAL
                 now = model.manager.serv_time.get_astropy_time_from_utc()
 
@@ -64,13 +65,12 @@ def on_enter(event_data):
             if now >= next_status_time:
                 model.status()
                 next_status_time += STATUS_INTERVAL
-                now = model.manager.serv_time.get_astropy_time_from_utc()
 
-            if timeout.expired():
-                raise error.Timeout
+        if timeout.expired():
+            raise error.Timeout
 
-            # Sleep for a little bit.
-            time.sleep(SLEEP_SECONDS)
+        # Sleep for a little bit.
+        time.sleep(SLEEP_SECONDS)
 
     except error.Timeout as e:
         model.logger.warning("Timeout while waiting for images. Something wrong with camera, going to park.")

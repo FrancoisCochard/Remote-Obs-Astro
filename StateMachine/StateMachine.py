@@ -392,8 +392,13 @@ class StateMachine(Machine, Base):
                           event_data.event.name))
 
         # It's always safe to be in some states
-        if event_data and event_data.event.name in [
-                'park', 'set_park', 'clean_up', 'goto_sleep', 'get_ready']:
+        if event_data and event_data.event.name in ['park',
+                                                    'set_park',
+                                                    'clean_up',
+                                                    'goto_sleep',
+                                                    'get_ready',
+                                                    'acquire_calibration',
+                                                    'calibration_done']:
             self.logger.debug(f"Always safe to move to {event_data.event.name}")
             is_safe = True
         else:
@@ -488,8 +493,7 @@ class StateMachine(Machine, Base):
             return 'set_park'
         else:
             for state_info in self._state_machine_table['transitions']:
-                if self.state in state_info['source'] and (state_info['dest']
-                                                           == self.next_state):
+                if self.state in state_info['source'] and (state_info['dest'] == self.next_state):
                     return state_info['trigger']
 
         # Return park transition if we don't find existing transition in
