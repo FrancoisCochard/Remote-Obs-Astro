@@ -102,7 +102,7 @@ class IndiCamera(IndiDevice):
                 config=self.config['filter_wheel'],
                 connect_on_create=connect_on_create)
         except Exception as e:
-            self.logger.warning(f"Cannot load filter_wheel module: {e}")
+            # self.logger.warning(f"Cannot load filter_wheel module: {e}")
             self.filter_wheel = None
 
     @property

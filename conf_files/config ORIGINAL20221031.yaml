@@ -1,0 +1,259 @@
+name: Remote observatory
+observatory:
+    module: ShedObservatory
+    investigator: gnthibault
+    latitude: 43.56 # Degrees
+    longitude: 5.43 # Degrees
+    elevation: 150.0 # Meters
+    timezone: Europe/Paris #This is not mandatory, just speeds up startup
+    # UTC+1 CET Central European Time,
+    # UTC +2  CEST Central European Summer Time
+    utc_offset: 1 # Hours
+    horizon: # Degrees
+        0 : 30
+        90 : 30
+        180 : 30
+        270 : 30
+    twilight_horizon: -18 # Degrees
+    timezone: Europe/Paris
+    # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
+    # Greenwich Mean Time ( GMT+1 ).
+    gmt_offset: 60 # Minutes
+#    webcam:
+#        rtsp_url: rtsp://user:password@192.168.0.16
+    scope_controller:
+        module: DummyScopeController #IndiArduiScopeController
+        port: /dev/ttyACM0
+        controller_name: Arduino
+        indi_driver_connect_delay_s: 5
+        indi_camera_driver_name: Canon DSLR
+        indi_mount_driver_name: Losmandy Gemini
+        indi_webserver_host: 192.168.0.33
+        indi_webserver_port: 8624
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
+    dome_controller:
+        module : IndiRorController
+        port : /dev/ttyACM1
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
+directories:
+    base: /var/RemoteObservatory
+    images: images
+    webcam: webcams
+    data: data
+    resources: resources/
+    targets: resources/targets
+    mounts: resources/mounts
+db: 
+    name: /var/RemoteObservatory/DB
+    type: file
+ntp:
+    ntpserver: time.google.com
+scheduler:
+    module: DefaultScheduler
+    # module: SpectroScheduler
+    target_file: targets
+    #target_file: spectral_targets
+spectroscope_controller:
+    module: IndiSpectroController
+calibration:
+    module: ImagingCalibration
+    #module: SpectralCalibration
+    spectral_calib:
+        nb: 11
+        sec: 30
+        gain: 1
+        temperature:
+    flat:
+        nb: 21
+        sec: 5
+        gain: 1
+        temperature:
+    dark:
+        dark_nb: 11
+    controller:
+        module: DummySpectroController
+        controller_name: dummy
+        #module: IndiSpectroController
+        #controller_name: spox
+mount:
+    #module: IndiG11
+    #mount_name: Losmandy Gemini
+    module: IndiAbstractMount
+    mount_name : Telescope Simulator
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+pointing_camera:
+    module: IndiAbstractCameraSimulator
+    camera_name : Guide Simulator
+#    CCD_INFO:
+#        CCD_MAX_X: 1936
+#        CCD_MAX_Y: 1096
+#        CCD_PIXEL_SIZE: 2.9
+#        CCD_PIXEL_SIZE_X: 2.9
+#        CCD_PIXEL_SIZE_Y: 2.9
+#        CCD_BITSPERPIXEL: 12
+    SIMULATOR_SETTINGS: # 290MM
+        SIM_XRES: 1936
+        SIM_YRES: 1096
+        SIM_XSIZE: 2.9
+        SIM_YSIZE: 2.9
+        SIM_MAXVAL: 65000
+        SIM_SATURATION: 1
+        SIM_LIMITINGMAG: 17
+        SIM_NOISE: 0
+        SIM_SKYGLOW: 19.5
+        SIM_OAGOFFSET: 0
+        SIM_POLAR: 0
+        SIM_POLARDRIFT: 0
+        SIM_ROTATION: 0
+        SIM_KING_GAMMA: 0
+        SIM_KING_THETA: 0
+#        SIM_PEPERIOD: 0
+#        SIM_PEMAX: 0
+        SIM_TIME_FACTOR: 1
+    SCOPE_INFO: # 200/800 newtonian
+        FOCAL_LENGTH: 800
+        APERTURE: 200
+    pointing_seconds: 30
+    autofocus_seconds: 5
+    autofocus_size : 500
+    autofocus_merit_function: half_flux_radius #vollath_F4
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+acquisition_camera:
+    module: IndiAbstractCameraSimulator
+    camera_name : CCD Simulator
+    #module: IndiEos6DCamera
+    #camera_name: Canon DSLR EOS 6D
+    #camera_name: GPhoto CCD
+#    CCD_INFO :
+#        CCD_MAX_X : 5496
+#        CCD_MAX_Y : 3672
+#        CCD_PIXEL_SIZE : 2.4
+#        CCD_PIXEL_SIZE_X : 2.4
+#        CCD_PIXEL_SIZE_Y : 2.4
+#        CCD_BITSPERPIXEL : 12
+    SIMULATOR_SETTINGS: # 180mm
+        SIM_XRES: 5496
+        SIM_YRES: 3672
+        SIM_XSIZE: 2.4
+        SIM_YSIZE: 2.4
+        SIM_MAXVAL: 65000
+        SIM_SATURATION: 1
+        SIM_LIMITINGMAG: 17
+        SIM_NOISE: 5
+        SIM_SKYGLOW: 19.5
+        SIM_OAGOFFSET: 0
+        SIM_POLAR: 0
+        SIM_POLARDRIFT: 0
+        SIM_ROTATION: 0
+#        SIM_KING_GAMMA: 0
+#        SIM_KING_THETA: 0
+        SIM_PEPERIOD: 0
+        SIM_PEMAX: 0
+        SIM_TIME_FACTOR: 1
+    SCOPE_INFO: # 200/800 newtonian
+        FOCAL_LENGTH: 800
+        APERTURE: 200
+    pointing_seconds: 5
+    autofocus_seconds: 2
+    autofocus_size : 500
+    autofocus_merit_function : half_flux_radius #vollath_F4
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+    focuser:
+        module: IndiFocuser
+        focuser_name : Focuser Simulator
+        port : /dev/ttyUSB0
+        focus_range :
+            min : 32500
+            max : 40000
+        autofocus_step :
+            fine : 750
+            coarse : 2500
+        autofocus_range :
+            fine : 10000
+            coarse : 30000
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
+#filterwheel:
+nofilterwheel:
+    module : IndiFilterWheel 
+    filterwheel_name : Filter Simulator
+    filter_list : 
+        Luminance : 1
+        Red : 2
+        Green : 3
+        Blue : 4
+        H_Alpha : 5
+        OIII : 6
+        SII : 7
+        LPR : 8
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+guider:
+    module : GuiderPHD2
+    host : localhost
+    port : 4400
+    #profile_id : 1 # For IRL setup
+    profile_id : 2
+    exposure_time_sec : 2
+    settle :
+        pixels : 1.5
+        time : 10
+        timeout : 60
+    dither :
+        pixels : 3.0
+        ra_only : False
+weather_service :
+    #module : IndiOpenWeatherMap
+    #service_name: OpenWeatherMap
+    module : IndiWeather
+    service_name : Weather Simulator
+    key_path : /var/RemoteObservatory/keys.json
+    delay_sec : 60
+    messaging:
+        module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+        mqtt_host: 192.168.0.48
+        mqtt_port: 1883
+        cmd_port: 6500
+        msg_port: 6510
+    observatory:
+        latitude: 43.56 # Degrees
+        longitude: 5.43 # Degrees
+        elevation: 150.0 # Meters
+    limits :
+        MAX_WEATHER_WIND_SPEED_KPH : 25
+        MAX_WEATHER_WIND_GUST_KPH : 30
+        MAX_WEATHER_CLOUD_COVER : 5
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+time_service :
+    module : HostTimeService
+messaging:
+    module : PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: 192.168.0.48
+    mqtt_port: 1883
+    cmd_port: 6500
+    msg_port: 6510
+#Enable to output POCS messages to social accounts
+# social_accounts:
+#     twitter:
+#         consumer_key: [your_consumer_key]
+#         consumer_secret: [your_consumer_secret]
+#         access_token: [your_access_token]
+#         access_token_secret: [your_access_token_secret]
+#     slack:
+#         webhook_url: [your_webhook_url]
+#         output_timestamp: False
+state_machine: simple_state_table
