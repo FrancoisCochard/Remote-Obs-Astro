@@ -39,31 +39,47 @@ class IndiCamera(IndiDevice):
                 camera_name='CCD Simulator',
                 autofocus_seconds=5,
                 pointing_seconds=30,
-                autofocus_size=500,
-                autofocus_merit_function="vollath_F4",
+                autofocus_roi_size=500,
+                autofocus_merit_function="half_flux_radius",
                 focuser=dict(
                     module="IndiFocuser",
-                    focuser_name=""),
+                    focuser_name="Focuser Simulator",
+                    port="/dev/ttyUSB0",
+                    focus_range=dict(
+                        min=1,
+                        max=100000),
+                    autofocus_step=dict(
+                        coarse=10000,
+                        fine=500),
+                    autofocus_range=dict(
+                        coarse=100000,
+                        fine=20000),
+                    indi_client=dict(
+                        indi_host="localhost",
+                        indi_port="7624")
+                ),
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"
                 ))
         device_name = config['camera_name']
-        self.autofocus_seconds = float(config['autofocus_seconds'])
-        self.pointing_seconds = float(config['pointing_seconds'])
-        self.autofocus_size = int(config['autofocus_size'])
-        self.autofocus_merit_function = config['autofocus_merit_function']
-        self._setup_focuser(config, connect_on_create)
-        self._setup_filter_wheel(config, connect_on_create)
 
-        logger.debug(f"Indi camera, camera name is: {device_name}")
-      
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
+
+        # Specific initialization
+        self.autofocus_seconds = float(config['autofocus_seconds'])
+        self.pointing_seconds = float(config['pointing_seconds'])
+        self.autofocus_roi_size = int(config['autofocus_roi_size'])
+        self.autofocus_merit_function = config['autofocus_merit_function']
+        self._setup_focuser(config, connect_on_create)
+        self._setup_filter_wheel(config, connect_on_create)
+
+        self.logger.debug(f"Indi camera, camera name is: {device_name}")
 
         # Frame Blob: reference that will be used to receive binary
         self.last_blob = None
@@ -328,7 +344,7 @@ class IndiCamera(IndiDevice):
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
-    def autofocus_async(self, coarse=True):
+    def autofocus_async(self, coarse=True, autofocus_status=None):
         """
 
         """
@@ -336,10 +352,12 @@ class IndiCamera(IndiDevice):
                          f"autofocus with device {self.focuser.device_name}...")
         af = IndiAutoFocuser(
             camera=self,
-            autofocus_size=self.autofocus_size,
+            autofocus_roi_size=self.autofocus_roi_size,
             autofocus_merit_function=self.autofocus_merit_function)
-        autofocus_event = af.autofocus(coarse=coarse, blocking=False,
-                                       make_plots=True)
+        autofocus_event = af.autofocus(coarse=coarse,
+                                       blocking=False,
+                                       make_plots=True,
+                                       autofocus_status=autofocus_status)
         self.logger.info(f"Camera {self.device_name} just launched async "
                          f"autofocus with focuser {self.focuser.device_name}")
         return autofocus_event
