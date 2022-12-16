@@ -36,8 +36,8 @@ if __name__ == '__main__':
                 coarse=100,
                 fine=300),
             autofocus_range=dict(
-                coarse=2000,
-                fine=2000),
+                coarse=4000,
+                fine=4000),
             indi_client=dict(
                 indi_host="192.168.144.32",
                 indi_port="7624")
