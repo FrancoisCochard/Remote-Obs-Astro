@@ -9,9 +9,9 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 config = {
     "host": "localhost",
-    "port": 4400
+    "port": 4400,
     "do_calibration": False,
-    "profile_name": ""
+    "profile_name": "Simulators",
     "exposure_time_sec": 2,
     "settle": {
         "pixels": 1.5,
@@ -27,7 +27,7 @@ g.launch_server()
 g.connect()
 g.get_connected()
 print(g.get_profiles())
-g.set_exposure(2.0
+g.set_exposure(2.0)
 #g.loop() not needed
 g.guide()
 # guide for 5 min:
