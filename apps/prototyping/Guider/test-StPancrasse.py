@@ -40,7 +40,7 @@ config = {
 
 g = GuiderPHD2.GuiderPHD2(config=config)
 # ~ g.launch_server()
-print(g.get_profiles())
+print(f"Ici, avant le connect : {g.get_profiles()}")
 g.connect()
 g.get_connected()
 print(g.get_profiles())
@@ -49,10 +49,10 @@ g.set_exposure(2.0)
 g.guide()
 # guide for 5 min:
 for i in range(5*3):
-    g.receive()
+    # ~ g.receive()
     time.sleep(1)
 
-g.disconnect()
+# ~ g.disconnect()
 # ~ g.terminate_server()
 
 # ~ g = GuiderPHD2.GuiderPHD2(config=config)

@@ -11,7 +11,7 @@ config = {
     "host": "localhost",
     "port": 4400,
     "do_calibration": False,
-    "profile_name": "Simulators",
+    "profile_name": "",
     "exposure_time_sec": 2,
     "settle": {
         "pixels": 1.5,
