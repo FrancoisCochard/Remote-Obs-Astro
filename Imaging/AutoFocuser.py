@@ -36,7 +36,7 @@ class AutoFocuser(Base):
         autofocus_range ((int, int) optional): Coarse & fine focus sweep range, in encoder units
         autofocus_step ((int, int), optional): Coarse & fine focus sweep steps, in encoder units
         autofocus_seconds (scalar, optional): Exposure time for focus exposures
-        autofocus_size (int, optional): Size of square central region of image to use, default
+        autofocus_roi_size (int, optional): Size of square central region of image to use, default
             500 x 500 pixels.
         autofocus_keep_files (bool, optional): If True will keep all images taken during focusing.
             If False (default) will delete all except the first and last images from each focus run.
@@ -54,7 +54,7 @@ class AutoFocuser(Base):
                  camera=None,
                  initial_position=None,
                  autofocus_seconds=None,
-                 autofocus_size=None,
+                 autofocus_roi_size=None,
                  autofocus_keep_files=None,
                  autofocus_take_dark=None,
                  autofocus_merit_function=None,
@@ -87,7 +87,7 @@ class AutoFocuser(Base):
         if self.camera is not None:
             self.autofocus_seconds = self.camera.autofocus_seconds
         if self.camera is not None:
-            self.autofocus_size = self.camera.autofocus_size
+            self.autofocus_roi_size = self.camera.autofocus_roi_size
 
         self.autofocus_keep_files = autofocus_keep_files
         self.autofocus_take_dark = autofocus_take_dark
@@ -150,6 +150,7 @@ class AutoFocuser(Base):
         return self.move_to(self.position + increment)
 
     def autofocus(self,
+                  autofocus_status=None,
                   seconds=None,
                   focus_range=None,
                   focus_step=None,
@@ -206,6 +207,9 @@ class AutoFocuser(Base):
         assert self.camera.focuser.is_connected, self.logger.error(
             f"Focuser {self.camera.focuser} must be connected for autofocus")
 
+        if not autofocus_status:
+            autofocus_status = [False]
+
         if not focus_range:
             if self.autofocus_range:
                 focus_range = self.autofocus_range
@@ -228,8 +232,8 @@ class AutoFocuser(Base):
                                  f"autofocus of {self.camera}")
 
         if not thumbnail_size:
-            if self.autofocus_size:
-                thumbnail_size = self.autofocus_size
+            if self.autofocus_roi_size:
+                thumbnail_size = self.autofocus_roi_size
             else:
                 raise ValueError(f"No focus thumbnail size specified, aborting"
                                  f" autofocus of {self.camera}")
@@ -267,6 +271,7 @@ class AutoFocuser(Base):
         # Set up the focus parameters
         focus_event = Event()
         focus_params = {
+            'autofocus_status': autofocus_status,
             'seconds': seconds,
             'focus_range': focus_range,
             'focus_step': focus_step,
@@ -295,6 +300,48 @@ class AutoFocuser(Base):
         return image.astype(np.float32)
 
     def _autofocus(self,
+                   autofocus_status,
+                   seconds,
+                   focus_range,
+                   focus_step,
+                   thumbnail_size,
+                   keep_files,
+                   take_dark,
+                   merit_function,
+                   merit_function_kwargs,
+                   structuring_element,
+                   make_plots,
+                   coarse,
+                   focus_event,
+                   *args,
+                   **kwargs):
+        try:
+            initial_focus, final_focus = self.do_autofocus(
+                seconds,
+                focus_range,
+                focus_step,
+                thumbnail_size,
+                keep_files,
+                take_dark,
+                merit_function,
+                merit_function_kwargs,
+                structuring_element,
+                make_plots,
+                coarse,
+                focus_event,
+                *args,
+                **kwargs)
+            assert np.isfinite(initial_focus)
+            assert np.isfinite(final_focus)
+        except Exception as e:
+            self.logger.error(f"Focusing method failed: {e}")
+            if focus_event is not None:
+                focus_event.set()
+        autofocus_status[0] = True
+        if focus_event is not None:
+            focus_event.set()
+
+    def do_autofocus(self,
                    seconds,
                    focus_range,
                    focus_step,
@@ -354,30 +401,34 @@ class AutoFocuser(Base):
         # initial_path = os.path.join(file_path_root, initial_fn)
         #
         initial_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
+        self.logger.debug(f"Autofocusing: initial thumbnail size is {initial_thumbnail.shape}")
 
         # Set up encoder positions for autofocus sweep, truncating at focus travel
         # limits if required.
         if coarse:
-            focus_range = focus_range["coarse"]
-            focus_step = focus_step["coarse"]
+            cur_focus_range = focus_range["coarse"]
+            cur_focus_step = focus_step["coarse"]
         else:
-            focus_range = focus_range["fine"]
-            focus_step = focus_step["fine"]
+            cur_focus_range = focus_range["fine"]
+            cur_focus_step = focus_step["fine"]
 
         self.logger.debug(f"Initial focus is {initial_focus} minus range/2 "
-                          f"gives {initial_focus - focus_range / 2}")
+                          f"gives {initial_focus - cur_focus_range / 2}")
         self.logger.debug(f"Initial focus is {initial_focus} plus range/2 gives "
-                          f"{initial_focus + focus_range / 2}")
+                          f"{initial_focus + cur_focus_range / 2}")
         self.logger.debug(f"Min position is {self.min_position} and "
                           f"Max position is {self.max_position}")
-        self.logger.debug(f"Focus step is {focus_step}")
+        self.logger.debug(f"Focus step is {cur_focus_step}")
 
-        focus_positions = np.arange(max(initial_focus - focus_range / 2, self.min_position),
-                                    min(initial_focus + focus_range / 2, self.max_position) + 1,
-                                    focus_step, dtype=np.int)
+        if not (self.min_position <= initial_focus <= self.max_position):
+            central_position = (self.min_position+self.max_position)/2
+            self.move_to(central_position)
+            initial_focus = self.position
+        focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
+                                    min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
+                                    cur_focus_step, dtype=np.int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
-                          f"following positions for autofocusing "
-                          f"{focus_positions}")
+                          f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
 
         thumbnails = np.zeros((n_positions, thumbnail_size, thumbnail_size),
@@ -410,16 +461,33 @@ class AutoFocuser(Base):
             #thumbnail = np.ma.array(thumbnail, mask=master_mask)
             metric[i] = self.focus_metric(
                 thumbnail, merit_function, **merit_function_kwargs)
+            assert np.isfinite(metric[i]), f"Issue with values from merit function {merit_function}, with arguments " \
+                                           f"{merit_function_kwargs}, at focus position {focus_positions[i]}: " \
+                                           f"{metric[i]} "
         fitted = False
 
         # Find best values
         ibest = metric.argmin()
 
         if ibest == 0 or ibest == (n_positions - 1):
-            # TODO: have this automatically switch to coarse focus mode if this happens
-            self.logger.warning(f"Best focus outside sweep range, aborting "
-                                f"autofocus on {self.camera}!")
             best_focus = focus_positions[ibest]
+            self.logger.warning(f"Best focus likely to be outside sweep range {focus_positions}. Sampled metrics " \
+                                f"were {metric}, restarting autofocus on {self.camera} from position {best_focus}")
+            self.move_to(best_focus)
+
+            return self.do_autofocus(
+               seconds=seconds,
+               focus_range=focus_range,
+               focus_step=focus_step,
+               thumbnail_size=thumbnail_size,
+               keep_files=keep_files,
+               take_dark=take_dark,
+               merit_function=merit_function,
+               merit_function_kwargs=merit_function_kwargs,
+               structuring_element=structuring_element,
+               make_plots=make_plots,
+               coarse=coarse,
+               focus_event=focus_event)
 
         elif not coarse:
             # Fit data around the maximum value to determine best focus position.
@@ -465,7 +533,7 @@ class AutoFocuser(Base):
             # Coarse focus, just use max value.
             best_focus = focus_positions[ibest]
 
-        # This allows to remove effects of backlas
+        # This allows to remove effects of backlash
         reset_focus = self.move_to(focus_positions[0])
         final_focus = self.move_to(best_focus)
 
@@ -474,6 +542,7 @@ class AutoFocuser(Base):
         #                                "final",
         #                                self.camera.file_extension)
         final_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
+        self.logger.debug(f"Autofocusing: final thumbnail size is {final_thumbnail.shape}")
 
         if make_plots:
             initial_thumbnail = initial_thumbnail #self.mask_saturated(initial_thumbnail)
@@ -482,7 +551,7 @@ class AutoFocuser(Base):
             #    initial_thumbnail = initial_thumbnail - dark_thumb
             #    final_thumbnail = final_thumbnail - dark_thumb
 
-            fig, ax = plt.subplots(1,3,figsize=(22, 7))
+            fig, ax = plt.subplots(1, 3, figsize=(22, 7))
 
             #im1 = ax[0].imshow(initial_thumbnail, interpolation='none',
             #                 cmap=self.get_palette(), norm=colours.LogNorm())
@@ -496,7 +565,7 @@ class AutoFocuser(Base):
                                  100)
                 ax[1].plot(fs, fit(fs), 'b-', label='Polynomial fit')
 
-            ax[1].set_xlim(focus_positions[0] - focus_step / 2, focus_positions[-1] + focus_step / 2)
+            ax[1].set_xlim(focus_positions[0] - cur_focus_step / 2, focus_positions[-1] + cur_focus_step / 2)
             l_limit = min(0.95 * metric.min(), 1.05 * metric.min())
             u_limit = 1.10 * metric.max()
             ax[1].set_ylim(l_limit, u_limit)
@@ -534,9 +603,6 @@ class AutoFocuser(Base):
 
         self.logger.debug(f"Autofocus of {self.camera.name} complete - final "
                           f"focus position: {final_focus}")
-
-        if focus_event is not None:
-            focus_event.set()
 
         return initial_focus, final_focus
 
@@ -611,7 +677,6 @@ class AutoFocuser(Base):
             rmax=6. * objects['a'], frac=0.5,
             subpix=5)
         return radius.mean()
-
 
 
     def vollath_F4(self, data, axis=None):

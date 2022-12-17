@@ -10,7 +10,7 @@ from Base.Base import Base
 
 class Observation(Base):
 
-    def __init__(self, observing_block, exp_set_size=None):
+    def __init__(self, observing_block):
         """ An observation of a given target.
 
         An observation consists of a minimum number of exposures (`min_nexp`)
@@ -32,7 +32,7 @@ class Observation(Base):
         self.observing_block = observing_block
         self.current_exp = 0
         self.merit = 0 #Merit is != priority: highest is scheduled first
-        self.exp_set_size = exp_set_size or self.number_exposures
+        self.exp_set_size = self.number_exposures
         #self.exp_time = exp_time
         #self.min_nexp = min_nexp
         self.exposure_list = OrderedDict()
@@ -83,8 +83,7 @@ class Observation(Base):
         """ Return the latest exposure information
 
         Returns:
-            tuple: `image_id` and full path of most recent exposure from the
-                    primary camera
+            tuple: `image_id` and full path of most recent exposure from an acquisition camera
         """
         try:
             return list(self.exposure_list.items())[0]
@@ -96,8 +95,7 @@ class Observation(Base):
         """ Return the latest exposure information
 
         Returns:
-            tuple: `image_id` and full path of most recent exposure from the
-                   primary camera
+            tuple: `image_id` and full path of most recent exposure from an acquisition camera
         """
         try:
             return list(self.exposure_list.items())[-1]
@@ -183,9 +181,5 @@ class Observation(Base):
 ###############################################################################
 
     def __str__(self):
-        return ('{}: {} exposures, time per exposure {}, priority '
-                '{:.0f}'.format(
-                self.target,
-                self.number_exposures,
-                self.time_per_exposure,
-                self.priority))
+        return (f"{self.target}: {self.number_exposures} exposures, time per exposure {self.time_per_exposure}, "
+                f"priority {self.priority}")

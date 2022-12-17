@@ -8,7 +8,7 @@ import functools
 import io
 import logging
 import os
-import queue
+import collections
 import time
 import traceback
 import threading
@@ -557,7 +557,9 @@ class indielement(indinamedobject):
         @return: B{None}
         @rtype: NoneType
         """
-        logging.info("INDIElement: %s %s %s %s" % (self.name, self.label, self.tag.get_type(), self._value))
+        #TODO TN URGENT
+        logging.info("INDIElement: %s %s %s" % (self.name, self.label, self.tag.get_type()))
+        #logging.info("INDIElement: %s %s %s %s" % (self.name, self.label, self.tag.get_type(), self._value))
 
     def get_text(self):
         """
@@ -1297,7 +1299,6 @@ class indiswitchvector(indivector):
         if not found:
             raise RuntimeError(f"There is no element with label {element_label} in indiswitch")
 
-
     def set_one_of_many_by_element_label(self, element_label):
         """
         Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{element_name}
@@ -1455,7 +1456,7 @@ class device(ABC):
 
         # Specific events that might be manipulated by handlers
         self.blob_event = threading.Event()
-        self.blob_queue = queue.Queue(maxsize=64)
+        self.blob_queue = collections.deque(maxlen=1)
 
         # vector/property handlers
         self.custom_element_handler_list = []
@@ -1529,11 +1530,13 @@ class device(ABC):
         because this call is blocking inside the main ioloop, an it is the only single
         place where blobvector are manipulated
         """
+        #blob_vector.tell()
         blob = blob_vector.get_first_element()
+        #print(f"################## JUST RECEIVED BLOB with FORMAT {blob.get_plain_format()}")
         if blob.get_plain_format() == ".fits":
-            self.blob_queue.put(io.BytesIO(blob.get_data()))
+            #await self.blob_queue.put(io.BytesIO(blob.get_data()))
+            self.blob_queue.append(io.BytesIO(blob.get_data()))
             self.blob_event.set()
-            #self.blob_event.clear()
 
     def _default_def_handler(self, vector, indi):
         """
@@ -1636,7 +1639,6 @@ class device(ABC):
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name].updateByVector(vector)
                     except KeyError:
-
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name] = vector
             else:
@@ -1783,6 +1785,7 @@ class device(ABC):
             is_set = self.blob_event.is_set()
             #self.blob_event.wait()
             if is_set:
+                logging.debug(f"device {self.device_name} blob event has been set and about to clear")
                 self.blob_event.clear()
             # with self.property_vectors_lock:
                 #bv = self.property_vectors[blob_vector_name]
@@ -1874,7 +1877,7 @@ class device(ABC):
             if elementname == element.name:
                 return element
 
-    def set_and_send_text(self, vector_name, element_name, text):
+    def set_and_send_text(self, vector_name, value_vector):
         """
         Sets the value of an element by a text, and sends it to the server
         @param devicename:  The name of the device
@@ -1890,7 +1893,8 @@ class device(ABC):
         """
         vector = self.get_vector(vector_name)
         if vector is not None:
-            vector.get_element(element_name).set_text(text)
+            for element_name, text in value_vector.items():
+                vector.get_element(element_name).set_text(text)
             self.send_vector(vector)
         return vector
 
@@ -1935,7 +1939,7 @@ class device(ABC):
             self.send_vector(vector)
         return vector
 
-    def set_and_send_switchvector_by_element_name(self, vectorname, element_name, is_active=True):
+    def set_and_send_switchvector_by_element_name(self, vectorname, on_switches=[], off_switches=[]):
         """
         Sets all L{indiswitch} elements in this vector to C{Off}. And sets the one matching the given L{element_name}
         to C{On}
@@ -1950,7 +1954,10 @@ class device(ABC):
         """
         vector = self.get_vector(vectorname)
         if vector is not None:
-            vector.set_by_element_name(element_name, is_active)
+            for on_switch in on_switches:
+                vector.set_by_element_name(on_switch, True)
+            for off_switch in off_switches:
+                vector.set_by_element_name(off_switch, False)
             self.send_vector(vector)
         else:
             raise RuntimeError(f"Indi switchvector {vectorname} does not exist")

@@ -29,7 +29,7 @@ class IndiCamera(IndiDevice):
         'both': 'UPLOAD_BOTH'}
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
-    READOUT_TIME_MARGIN = 10
+    READOUT_TIME_MARGIN = 30
 
     def __init__(self, logger=None, config=None, connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
@@ -39,33 +39,31 @@ class IndiCamera(IndiDevice):
                 camera_name='CCD Simulator',
                 autofocus_seconds=5,
                 pointing_seconds=30,
-                autofocus_size=500,
+                autofocus_roi_size=500,
+                autofocus_merit_function="half_flux_radius",
                 focuser=dict(
                     module="IndiFocuser",
-                    focuser_name=""),
+                    focuser_name="Focuser Simulator",
+                    port="/dev/ttyUSB0",
+                    focus_range=dict(
+                        min=1,
+                        max=100000),
+                    autofocus_step=dict(
+                        coarse=10000,
+                        fine=500),
+                    autofocus_range=dict(
+                        coarse=100000,
+                        fine=20000),
+                    indi_client=dict(
+                        indi_host="localhost",
+                        indi_port="7624")
+                ),
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"
                 ))
         device_name = config['camera_name']
-        self.autofocus_seconds = float(config['autofocus_seconds'])
-        self.pointing_seconds = float(config['pointing_seconds'])
-        self.autofocus_size = int(config['autofocus_size'])
-        # If scope focuser is specified in the config, load
-        try:
-            cfg = config['focuser']
-            focuser_name = cfg['module']
-            focuser = load_module('Focuser.'+focuser_name)
-            #TODO TN, we need to better handle optional connection of focuser
-            self.focuser = getattr(focuser, focuser_name)(
-                logger=None, config=cfg, connect_on_create=True)
-            #    logger=None, config=cfg, connect_on_create=connect_on_create)
-        except Exception as e:
-            logger.warning(f"Cannot load focuser module: {e}")
-            self.focuser = None
 
-        logger.debug('Indi camera, camera name is: {}'.format(device_name))
-      
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
@@ -73,23 +71,55 @@ class IndiCamera(IndiDevice):
         if connect_on_create:
             self.connect()
 
+        # Specific initialization
+        self.autofocus_seconds = float(config['autofocus_seconds'])
+        self.pointing_seconds = float(config['pointing_seconds'])
+        self.autofocus_roi_size = int(config['autofocus_roi_size'])
+        self.autofocus_merit_function = config['autofocus_merit_function']
+        self._setup_focuser(config, connect_on_create)
+        self._setup_filter_wheel(config, connect_on_create)
+
+        self.logger.debug(f"Indi camera, camera name is: {device_name}")
+
         # Frame Blob: reference that will be used to receive binary
-        #self.frame_blob = None
         self.last_blob = None
 
         # Default exposureTime, gain
         self.exp_time_sec = 5
         self.gain = 400
 
-        # Now check if there is a focuser attached
-        #try:
-        #    self.focuser = IndiFocuser(indi_client=self.indi_client,
-        #                               connect_on_create=True)
-        #except Exception:
-        #    raise RuntimeError('Problem setting up focuser')
-
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
+
+    def _setup_focuser(self, config, connect_on_create):
+        # If scope focuser is specified in the config, load
+        try:
+            cfg = config['focuser']
+            focuser_name = cfg['module']
+            focuser = load_module('Focuser.'+focuser_name)
+            #TODO TN, we need to better handle optional connection of focuser
+            self.focuser = getattr(focuser, focuser_name)(
+                logger=None,
+                config=cfg,
+                connect_on_create=connect_on_create)
+        except Exception as e:
+            self.logger.warning(f"Cannot load focuser module: {e}")
+            self.focuser = None
+
+    def _setup_filter_wheel(self, config, connect_on_create):
+        # If scope filterwheel is specified in the config, load
+        try:
+            cfg = config['filter_wheel']
+            fw_name = cfg['module']
+            fw_module = load_module('FilterWheel.'+fw_name)
+            #TODO TN, we need to better handle optional connection of filter_wheel
+            self.filter_wheel = getattr(fw_module, fw_name)(
+                logger=None,
+                config=self.config['filter_wheel'],
+                connect_on_create=connect_on_create)
+        except Exception as e:
+            # self.logger.warning(f"Cannot load filter_wheel module: {e}")
+            self.filter_wheel = None
 
     @property
     def dynamic(self):
@@ -116,7 +146,8 @@ class IndiCamera(IndiDevice):
 
     def synchronize_with_image_reception(self):
         try:
-            self.logger.debug('synchronize_with_image_reception: Start waiting')
+            self.logger.debug(f"synchronize_with_image_reception: Start waiting for " \
+                              f"{self.exp_time_sec}s with margin {self.READOUT_TIME_MARGIN}s")
             self.wait_for_incoming_blob_vector(timeout=self.exp_time_sec + self.READOUT_TIME_MARGIN)
             self.logger.debug('synchronize_with_image_reception: Done')
         except Exception as e:
@@ -124,8 +155,10 @@ class IndiCamera(IndiDevice):
 
     def get_received_image(self):
         try:
-            self.logger.debug(f"Indicamera blob queue size is {self.blob_queue.qsize()}")
-            image = fits.open(self.blob_queue.get())
+            self.logger.debug(f"Indicamera {self.device_name} about to read blob")
+            image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            #blob = await self.blob_queue.get() # FIFO in "circular buffer" mode
+            #image = fits.open(blob)
             return image
         except Exception as e:
             self.logger.error(f"Indi Camera Error in get_received_image: {e}")
@@ -311,15 +344,20 @@ class IndiCamera(IndiDevice):
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
-    def autofocus_async(self, coarse=True):
+    def autofocus_async(self, coarse=True, autofocus_status=None):
         """
 
         """
         self.logger.info(f"Camera {self.device_name} is going to start "
                          f"autofocus with device {self.focuser.device_name}...")
-        af = IndiAutoFocuser(camera=self)
-        autofocus_event = af.autofocus(coarse=coarse, blocking=False,
-                                       make_plots=True)
+        af = IndiAutoFocuser(
+            camera=self,
+            autofocus_roi_size=self.autofocus_roi_size,
+            autofocus_merit_function=self.autofocus_merit_function)
+        autofocus_event = af.autofocus(coarse=coarse,
+                                       blocking=False,
+                                       make_plots=True,
+                                       autofocus_status=autofocus_status)
         self.logger.info(f"Camera {self.device_name} just launched async "
                          f"autofocus with focuser {self.focuser.device_name}")
         return autofocus_event

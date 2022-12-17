@@ -12,11 +12,10 @@ from Camera.AbstractCamera import AbstractCamera
 from Camera.IndiCamera import IndiCamera
 
 class IndiAbstractCamera(IndiCamera, AbstractCamera):
-    def __init__(self, serv_time, config=None,
-                 connect_on_create=True, primary=False):
+    def __init__(self, serv_time, config=None, connect_on_create=True):
 
         # Parent initialization
-        AbstractCamera.__init__(self, serv_time=serv_time, primary=primary, camera_name=config["camera_name"])
+        AbstractCamera.__init__(self, serv_time=serv_time, **config)
 
         # device related intialization
         IndiCamera.__init__(self, logger=self.logger, config=config,
@@ -39,8 +38,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             self.set_temperature(temperature)
         # Now shoot
         self.setExpTimeSec(exp_time_sec)
+        self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")
         self.shoot_async()
-        self.synchronize_with_image_reception() 
+        self.synchronize_with_image_reception()
+        self.logger.debug(f"Camera {self.camera_name}, done with image reception")
         image = self.get_received_image()
         try:
             with open(filename, "wb") as f:
@@ -65,25 +66,27 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
 
     def autofocus(self, *args, **kwargs):
         """
-        Should return an event
+        Should return an event and a status
         """
         autofocus_event = threading.Event()
+        autofocus_status = [False]
         w = threading.Thread(target=self.autofocus_async,
-                             args=(autofocus_event))
+                             kwargs={"autofocus_event": autofocus_event,
+                                     "autofocus_status": autofocus_status})
         self.set_frame_type('FRAME_LIGHT')
         w.start()
-        return exposure_event
+        return autofocus_event, autofocus_status
 
     def take_bias_exposure(self, *args, **kwargs):
-        kwargs["frame_type"]="FRAME_BIAS"
+        kwargs["frame_type"] = "FRAME_BIAS"
         return self.take_exposure(*args, **kwargs)
 
     def take_dark_exposure(self, *args, **kwargs):
-        kwargs["frame_type"]="FRAME_DARK"
+        kwargs["frame_type"] = "FRAME_DARK"
         return self.take_exposure(*args, **kwargs)
 
     def take_flat_exposure(self, *args, **kwargs):
-        kwargs["frame_type"]="FRAME_FLAT"
+        kwargs["frame_type"] = "FRAME_FLAT"
         return self.take_exposure(*args, **kwargs)
 
     # TODO TN: we decide that IndiCamera takes over AbstractCamera in the

@@ -166,7 +166,8 @@ class StateMachine(Machine, Base):
         # The auto_transitions=False disable automatic addition of
         #to_<statename> method to the machine/model, that otherwise would allow
         #to go from any other state to <statename> upon triggering
-        super(StateMachine, self).__init__(
+        Machine.__init__(
+            self,
             states=states_list,
             transitions=transitions_list,
             initial=state_machine_table.get('initial'),
@@ -181,6 +182,9 @@ class StateMachine(Machine, Base):
         self._next_state = None
         self._keep_running = False
         self._do_states = True
+
+        # Now, show state machine graph
+        self._update_graph()
 
         self.logger.debug("State machine created")
 
@@ -290,9 +294,8 @@ class StateMachine(Machine, Base):
                 try:
                     state_changed = self.goto_next_state()
                 except Exception as e:
-                    self.logger.warning('Problem going from {} to {}, exiting '
-                        'loop: {}:{}'.format(self.state, self.next_state, e,
-                        traceback.format_exc()))
+                    self.logger.warning(f"Problem going from {self.state} to {self.next_state}, exiting loop: "
+                                        f"{e}: {traceback.format_exc()}")
                     self.stop_states()
                     #TODO TN URGENT DO SOME INTERNAL SIGNALING HERE !
                     break
@@ -330,7 +333,7 @@ class StateMachine(Machine, Base):
         # Get the next transition method based on `state` and `next_state`
         call_method = self._lookup_trigger()
 
-        self.logger.debug("Transition method: {}".format(call_method))
+        self.logger.debug(f"Transition method: {call_method}")
         caller = getattr(self, call_method, self.park)
         state_changed = caller()
         self.db.insert_current('state', {"source": self.state,
@@ -353,11 +356,10 @@ class StateMachine(Machine, Base):
     def wait_until_safe(self):
         """ Waits until all safety flags are set 
         """
-        while not self.is_safe(no_warning=True):
-            self.sleep(30)
+        return NotImplemented
 
     def sleep(self, delay=2.5, with_status=True):
-        time.sleep(delay)
+        return NotImplemented
 
     def check_messages(self):
         """
@@ -390,10 +392,14 @@ class StateMachine(Machine, Base):
                           event_data.event.name))
 
         # It's always safe to be in some states
-        if event_data and event_data.event.name in [
-                'park', 'set_park', 'clean_up', 'goto_sleep', 'get_ready']:
-            self.logger.debug("Always safe to move to {}".format(
-                              event_data.event.name))
+        if event_data and event_data.event.name in ['park',
+                                                    'set_park',
+                                                    'clean_up',
+                                                    'goto_sleep',
+                                                    'get_ready',
+                                                    'acquire_calibration',
+                                                    'calibration_done']:
+            self.logger.debug(f"Always safe to move to {event_data.event.name}")
             is_safe = True
         else:
             is_safe = self.is_safe()
@@ -430,9 +436,7 @@ class StateMachine(Machine, Base):
             event_data(transitions.EventData):  Contains informaton about the
                 event
          """
-        self.logger.debug(
-            "Before calling {} from {} state".format(event_data.event.name,
-                                                     event_data.state.name))
+        self.logger.debug(f"Before calling {event_data.event.name} from {event_data.state.name} state")
 
     def after_state(self, event_data):
         """ Called after each state.
@@ -444,9 +448,7 @@ class StateMachine(Machine, Base):
                 event
         """
 
-        self.logger.debug(
-            "After calling {}. Now in {} state".format(event_data.event.name,
-                                                       event_data.state.name))
+        self.logger.debug(f"After calling {event_data.event.name}. Now in {event_data.state.name} state")
 
 
 ###############################################################################
@@ -486,14 +488,12 @@ class StateMachine(Machine, Base):
         """ returns name of trigger method based on state and next_state
 
         """
-        self.logger.debug("Source: {}\t Dest: {}".format(self.state,
-                          self.next_state))
+        self.logger.debug(f"Source: {self.state}\t Dest: {self.next_state}")
         if self.state == 'parking' and self.next_state == 'parking':
             return 'set_park'
         else:
             for state_info in self._state_machine_table['transitions']:
-                if self.state in state_info['source'] and (state_info['dest']
-                                                           == self.next_state):
+                if self.state in state_info['source'] and (state_info['dest'] == self.next_state):
                     return state_info['trigger']
 
         # Return park transition if we don't find existing transition in
@@ -503,23 +503,26 @@ class StateMachine(Machine, Base):
     def _update_status(self, event_data):
         self.status()
 
-    def _update_graph(self, event_data, ext=['png', 'svg']): # pragma: no cover
-        model = event_data.model
+    def _update_graph(self, event_data=None, ext=['png', 'svg']): # pragma: no cover
+        #model = event_data.model
 
         try:
-            state_id = 'state_{}_{}'.format(event_data.event.name,
-                                            event_data.state.name)
+            if event_data is None:
+                state_id = f"state_{self.state}"
+            else:
+                state_id = f"state_{event_data.event.name}_{event_data.state.name}"
 
             image_dir = self.config['directories']['images']
-            os.makedirs('{}/state_images/'.format(image_dir), exist_ok=True)
+            os.makedirs(f"{image_dir}/state_images/", exist_ok=True)
 
             for fext in ext:
-                fn = '{}/state_images/{}.{}'.format(image_dir, state_id, fext)
-                ln_fn = '{}/state.{}'.format(image_dir, fext)
+                fn = f"{image_dir}/state_images/{state_id}.{fext}"
+                ln_fn = f"{image_dir}/state.{fext}"
 
                 # Only make the file once
                 if not os.path.exists(fn):
-                    model.get_graph().draw(fn, prog='dot')
+                    self.get_graph().draw(fn, prog='dot')
+                    #model.get_graph().draw(fn, prog='dot')
 
                 # Link current image
                 if os.path.exists(ln_fn):
@@ -528,7 +531,7 @@ class StateMachine(Machine, Base):
                 os.symlink(fn, ln_fn)
 
         except Exception as e:
-            self.logger.warning("Can't generate state graph: {}".format(e))
+            self.logger.warning(f"Can't generate state graph: {e}")
 
     def _load_state(self, state):
         """
@@ -562,18 +565,15 @@ class StateMachine(Machine, Base):
                 state
             ))
             # Get the `on_enter` method
-            self.logger.debug("Checking {}".format(state_module))
+            self.logger.debug(f"Checking {state_module}")
             on_enter_method = getattr(state_module, 'on_enter')
-            setattr(self, 'on_enter_{}'.format(state), on_enter_method)
-            self.logger.debug(
-                "Added `on_enter` method from {} {}".format(
-                state_module, on_enter_method))
-
+            setattr(self, f"on_enter_{state}", on_enter_method)
+            self.logger.debug(f"Added `on_enter` method from {state_module} {on_enter_method}")
             self.logger.debug("Created state")
             s = State(name=state)
             s.add_callback('enter', '_update_status')
             s.add_callback('enter', '_update_graph')
-            s.add_callback('enter', 'on_enter_{}'.format(state))
+            s.add_callback('enter', f"on_enter_{state}")
 
         except Exception as e:
             raise RuntimeError("Can't load state modules: {}\t{}".format(
@@ -606,7 +606,7 @@ class StateMachine(Machine, Base):
             statemachine if there is no model
         """
 
-        self.logger.debug('Loading transition: {}'.format(transition))
+        self.logger.debug(f"Loading transition: {transition}")
 
         # Add `check_safety` as the first transition for all states
         conditions = listify(transition.get('conditions', []))

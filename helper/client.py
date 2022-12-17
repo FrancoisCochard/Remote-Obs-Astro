@@ -34,7 +34,7 @@ import logging
         it would be nice to remove tornado dependencies in this module. 
 
 """
-
+MAX_NETWORK_EXCHANCE_TIMEOUT_S = 10
 class INDIClient:
     """This class sends/recvs INDI data to/from the indiserver 
     tcp/ip socket. See the above diagram for help understanding
@@ -50,7 +50,6 @@ class INDIClient:
         self.port = port
         self.host = host
         self.read_width = read_width
-        self.lastblob = None
 
     async def connect(self, timeout):
         """Attempt to connect to the indiserver in a loop.
@@ -71,9 +70,9 @@ class INDIClient:
                 #     self.write_to_indiserver(timeout=timeout),
                 #     self.read_from_indiserver())
                 # await self.task
-                task_write = asyncio.create_task(self.write_to_indiserver(timeout=timeout))
-                task_read = asyncio.create_task(self.read_from_indiserver(timeout=timeout))
-                await asyncio.wait([task_read, task_write], return_when=asyncio.FIRST_COMPLETED)
+                task_write = asyncio.create_task(self.write_to_indiserver(timeout=MAX_NETWORK_EXCHANCE_TIMEOUT_S))
+                task_read = asyncio.create_task(self.read_from_indiserver(timeout=MAX_NETWORK_EXCHANCE_TIMEOUT_S))
+                await asyncio.wait([task_read, task_write], return_when=asyncio.ALL_COMPLETED)
 
                 logging.debug("INDI client tasks finished. indiserver crash?")
                 logging.debug("Attempting to connect again")
@@ -106,15 +105,16 @@ class INDIClient:
                 data = await asyncio.wait_for(self.read_from_stream(),
                                               timeout=timeout)
             except asyncio.TimeoutError:
+                logging.error(f"Timeout in client stream reading process")
                 continue
             except Exception as err:
                 self.running = False
-                logging.warning(f"Could not read from INDI server {err}")
+                logging.error(f"Could not read from INDI server {err}")
                 raise
             else:
                 # Makes the data available for the application, and wait for it to be consumed
                 await self.xml_from_indiserver(data)
-        logging.warning(f"Finishing read_from_indiserver task")
+        logging.info(f"Finishing read_from_indiserver task")
 
     async def write_to_indiserver(self, timeout):
         """Collect INDI data from the from the to_indiQ.

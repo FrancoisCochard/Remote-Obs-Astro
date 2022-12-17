@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Local stuff : Camera
-from Camera.IndiCamera import IndiCamera
+from Camera.IndiAbstractCameraSimulator import IndiAbstractCameraSimulator
+from Service.NTPTimeService import HostTimeService
 
 # For this t
 if __name__ == '__main__':
@@ -20,9 +21,30 @@ if __name__ == '__main__':
 
     config = dict(
         camera_name='CCD Simulator',
+        SIMULATOR_SETTINGS=dict(
+            SIM_XRES=1000,
+            SIM_YRES=1000,
+            SIM_XSIZE=5.2,
+            SIM_YSIZE=5.2,
+            SIM_MAXVAL=65000,
+            SIM_SATURATION=1,
+            SIM_LIMITINGMAG=17,
+            SIM_NOISE=0.5,
+            SIM_SKYGLOW=19.5,
+            SIM_OAGOFFSET=0,
+            SIM_POLAR=0,
+            SIM_POLARDRIFT=0,
+            SIM_ROTATION=0,
+            SIM_PEPERIOD=0,
+            SIM_PEMAX=0,
+            SIM_TIME_FACTOR=1),
+        SCOPE_INFO=dict(
+            FOCAL_LENGTH=800,
+            APERTURE=200),
+        pointing_seconds=30,
         autofocus_seconds=5,
-        pointing_seconds=10,
-        autofocus_size=500,
+        autofocus_roi_size=650,
+        autofocus_merit_function="half_flux_radius",
         focuser=dict(
             module="IndiFocuser",
             focuser_name="Focuser Simulator",
@@ -34,8 +56,8 @@ if __name__ == '__main__':
                 coarse=500,
                 fine=200),
             autofocus_range=dict(
-                coarse=100000,
-                fine=20000),
+                coarse=25000,
+                fine=10000),
             indi_client=dict(
                 indi_host="localhost",
                 indi_port="7624")
@@ -46,7 +68,7 @@ if __name__ == '__main__':
         )
 
     # test indi virtual camera class
-    cam = IndiCamera(config=config, connect_on_create=True)
+    cam = IndiAbstractCameraSimulator(serv_time=HostTimeService(), config=config, connect_on_create=True)
     cam.prepare_shoot()
 
     def get_thumb(cam):
@@ -62,7 +84,9 @@ if __name__ == '__main__':
 
     # Now focus
     assert(cam.focuser.is_connected)
-    #autofocus_event = cam.autofocus_async(coarse=True)
-    autofocus_event = cam.autofocus_async(coarse=False)
+    autofocus_status = [False]
+    #autofocus_event = cam.autofocus_async(coarse=True, autofocus_status=autofocus_status)
+    autofocus_event = cam.autofocus_async(coarse=False, autofocus_status=autofocus_status)
     autofocus_event.wait()
+    assert autofocus_status[0], "Focusing failed"
     print("Done")

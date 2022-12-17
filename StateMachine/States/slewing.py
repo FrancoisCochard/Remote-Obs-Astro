@@ -23,6 +23,7 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.next_state = 'pointing'
+        #model.next_state = 'totoFC'
 
     except Exception as e:
         model.logger.debug(f"Wait a minute, there was a problem slewing. "

@@ -7,17 +7,21 @@ import queue
 import sys
 import time
 import warnings
+import zmq
 
 # Astropy
 from astropy import units as u
+
+#
+from transitions import MachineError
 
 # Local
 from Base.Base import Base
 from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
-from Service.PanMessaging import PanMessaging
-#from Service.PanMessagingZMQ import PanMessagingZMQ
+#from Service.PanMessaging import PanMessaging
+from Service.PanMessagingZMQ import PanMessagingZMQ
 #from Service.PanMessagingMQTT import PanMessagingMQTT
 
 class RemoteObservatoryFSM(StateMachine, Base):
@@ -53,7 +57,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
     def __init__(
             self,
             manager,
-            state_machine_file='conf_files/simple_state_table.yaml',
+            state_machine_file=None,
             messaging=True,
             **kwargs):
 
@@ -62,10 +66,11 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # Explicitly call the base classes in the order we want
         Base.__init__(self, **kwargs)
 
-        # local init
+        # init
+        state_machine_file = state_machine_file if state_machine_file else os.path.join("conf_files", self.config[
+            'state_machine'])
         self.name = 'Remote Observatory'
-        self.logger.info('Initializing Remote Observatory - {}'.format(
-                         self.name))
+        self.logger.info(f"Initializing Remote Observatory - {self.name}")
         self._has_messaging = None
         self.has_messaging = messaging
 
@@ -141,16 +146,12 @@ class RemoteObservatoryFSM(StateMachine, Base):
             try:
                 self.logger.debug("Initializing manager")
                 self.manager.initialize()
-
             except Exception as e:
-                self.logger.info(f"Oh wait. There was a problem initializing: "
-                                 f"{e}")
-                self.logger.info('Since we didn not initialize, I am going '
-                                 'to exit.')
+                self.logger.info(f"Oh wait. There was a problem initializing: {e}")
+                self.logger.info(f"Since we did not initialize, I am going to exit.")
                 self.power_down()
             else:
                 self._initialized = True
-
         self.status()
         return self._initialized
 
@@ -179,7 +180,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         if not self.has_messaging:
             self.logger.info(f"Unit says: {msg}")
         else:
-            self.send_message(f"{msg}", channel='chat')
+            self.send_message(f"{msg}", channel='CHAT')
 
     def send_message(self, msg, channel='chat'):
         """ Send a message
@@ -196,9 +197,10 @@ class RemoteObservatoryFSM(StateMachine, Base):
             channel {str} -- Channel to send message on (default: {'POCS'})
         """
         if self.has_messaging:
-            self._msg_client.send_message(channel, msg)
+            self._msg_publisher.send_message(channel, msg)
         else:
             self.logger.info(f"MESSAGE {channel}: {msg}")
+
 
     def check_messages(self):
         """ Check messages for the system
@@ -301,7 +303,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe_values = dict()
 
         # Check if night time: synchronous
-        is_safe_values['is_dark'] = self.is_dark()
+        # TODO TN URGENT
+        is_safe_values['is_dark'] = True
+        #is_safe_values['is_dark'] = self.is_dark()
 
         # Check weather: not really synchronous, checks db
         is_safe_values['good_weather'] = self.is_weather_safe()
@@ -314,17 +318,12 @@ class RemoteObservatoryFSM(StateMachine, Base):
         if not safe:
             if no_warning is False:
                 self.logger.warning(f"Unsafe conditions: {is_safe_values}")
+            # It is ok not to be safe in one of those states
+            if self.state not in ['sleeping', 'parked', 'parking', 'housekeeping', 'ready']:
+                self.logger.warning('Safety check indicates a risk, so sending to park if possible')
+                self.park()
 
-            if self.state not in ['sleeping', 'parked', 'parking',
-                                  'housekeeping', 'ready']:
-                #self.logger.warning('Safety failed so sending to park')
-                #self.park() #FSM trigger
-                # TODO TN urgent: corriger
-                pass
-
-        #return safe
-        # TODO TN urgent: corriger
-        return True
+        return safe
 
     def is_dark(self):
         """Is it dark
@@ -496,22 +495,87 @@ class RemoteObservatoryFSM(StateMachine, Base):
         self._interrupted = True
         self.power_down()
 
+    # def _setup_messaging(self):
+    #     #mqtt_host = self.config['messaging']['mqtt_host']
+    #     #mqtt_port = self.config['messaging']['mqtt_port']
+    #     #self._msg_client = PanMessaging(mqtt_host, mqtt_port, connect=True)
+    # 
+    #     self._cmd_queue = multiprocessing.Queue()
+    #     self._sched_queue = multiprocessing.Queue()
+    #     self._msg_client = PanMessaging(**self.config['messaging'])
+    # 
+    #     def new_cmd_callback(msg_type, msg_obj):
+    #         self._sched_queue.put(msg_obj)
+    #     def new_sched_callback(msg_type, msg_obj):
+    #         self._cmd_queue.put(msg_obj)
+    # 
+    #     self._msg_client.register_callback(callback=new_cmd_callback, cmd_type="POCS-CMD/#")
+    #     self._msg_client.register_callback(callback=new_sched_callback, cmd_type="POCS-SCHED/#")
+    
     def _setup_messaging(self):
-        #mqtt_host = self.config['messaging']['mqtt_host']
-        #mqtt_port = self.config['messaging']['mqtt_port']
-        #self._msg_client = PanMessaging(mqtt_host, mqtt_port, connect=True)
+        cmd_port = self.config['messaging']['cmd_port']
+        msg_port = self.config['messaging']['msg_port']
 
+        def create_forwarder(port):
+            try:
+                PanMessagingZMQ.create_forwarder(port, port + 1)
+            except Exception:
+                pass
+
+        cmd_forwarder_process = multiprocessing.Process(
+            target=create_forwarder, args=(
+                cmd_port,), name='CmdForwarder')
+        cmd_forwarder_process.start()
+
+        msg_forwarder_process = multiprocessing.Process(
+            target=create_forwarder, args=(
+                msg_port,), name='MsgForwarder')
+        msg_forwarder_process.start()
+
+        self._do_cmd_check = True
         self._cmd_queue = multiprocessing.Queue()
         self._sched_queue = multiprocessing.Queue()
-        self._msg_client = PanMessaging(**self.config['messaging_service'])
 
-        def new_cmd_callback(msg_type, msg_obj):
-            self._sched_queue.put(msg_obj)
-        def new_sched_callback(msg_type, msg_obj):
-            self._cmd_queue.put(msg_obj)
+        self._msg_publisher = PanMessagingZMQ.create_publisher(msg_port)
 
-        self._msg_client.register_callback(callback=new_cmd_callback, cmd_type="POCS-CMD/#")
-        self._msg_client.register_callback(callback=new_sched_callback, cmd_type="POCS-SCHED/#")
+        def check_message_loop(cmd_queue):
+            cmd_subscriber = PanMessagingZMQ.create_subscriber(cmd_port + 1)
+
+            poller = zmq.Poller()
+            poller.register(cmd_subscriber.socket, zmq.POLLIN)
+
+            try:
+                while self._do_cmd_check:
+                    # Poll for messages
+                    sockets = dict(poller.poll(500))  # 500 ms timeout
+
+                    if cmd_subscriber.socket in sockets and \
+                            sockets[cmd_subscriber.socket] == zmq.POLLIN:
+
+                        msg_type, msg_obj = cmd_subscriber.receive_message(
+                            flags=zmq.NOBLOCK)
+
+                        # Put the message in a queue to be processed
+                        if msg_type == 'POCS-CMD':
+                            cmd_queue.put(msg_obj)
+
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                pass
+
+        self.logger.debug('Starting command message loop')
+        check_messages_process = multiprocessing.Process(
+            target=check_message_loop, args=(self._cmd_queue,))
+        check_messages_process.name = 'MessageCheckLoop'
+        check_messages_process.start()
+        self.logger.debug('Command message subscriber set up on port {}'.format(
+                          cmd_port))
+
+        self._processes = {
+            'check_messages': check_messages_process,
+            'cmd_forwarder': cmd_forwarder_process,
+            'msg_forwarder': msg_forwarder_process,
+        }
 
 if __name__ == '__main__':
     # load the logging configuration

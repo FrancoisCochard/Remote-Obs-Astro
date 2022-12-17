@@ -21,6 +21,9 @@ max_pointing_error = OffsetError(20*u.arcsec, 20*u.arcsec, 30*u.arcsec)
 
 
 def on_enter(event_data):
+    #TODO TN DEBUG
+    #event_data.model.next_state = 'tracking'
+    #return
     """Pointing State
 
     Take 30 second exposure and plate-solve to get the pointing error
@@ -48,12 +51,11 @@ def on_enter(event_data):
                 observation=observation
             )
             fits_headers["POINTING"] = "True"
-            model.logger.debug("Pointing headers: {}".format(fits_headers))
+            model.logger.debug(f"Pointing headers: {fits_headers}")
             camera_events = dict()
 
-            cam_name = model.manager.pointing_camera.name
             camera = model.manager.pointing_camera
-            model.logger.debug(f"Exposing for camera: {cam_name}")
+            model.logger.debug(f"Exposing for camera: {camera.name}")
             try:
                 # Start the exposures
                 camera_event = camera.take_observation(
@@ -62,7 +64,7 @@ def on_enter(event_data):
                     filename='pointing{:02d}'.format(img_num),
                     exp_time=camera.pointing_seconds*u.second,
                 )
-                camera_events[cam_name] = camera_event
+                camera_events[camera.name] = camera_event
 
             except Exception as e:
                 model.logger.error(f"Problem waiting for images: "
@@ -94,7 +96,7 @@ def on_enter(event_data):
                     location=model.manager.earth_location
                 )
 
-                pointing_image.solve_field(verbose=True)
+                pointing_image.solve_field(verbose=True, gen_hips=True)
                 observation.pointing_image = pointing_image
                 model.logger.debug(f"Pointing file: {pointing_image}")
                 pointing_error = pointing_image.pointing_error
