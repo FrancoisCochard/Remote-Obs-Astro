@@ -85,6 +85,7 @@ mount:
     module: IndiAbstractMount
     #~ mount_name : Telescope Simulator
     mount_name : 10micron
+    equatorial_eod: J2000 # JNOW
     indi_client :
         #~ indi_host : localhost
         indi_host : 192.168.144.32
