@@ -12,7 +12,7 @@ config = {
     "port": 4400,
     "profile_name": "St-Pancrasse",
     "do_calibration": False,
-    "exposure_time_sec": 2,
+    "exposure_time_sec": 1.0,
     "settle": {
         "pixels": 1.5,
         "time": 10,
@@ -23,41 +23,41 @@ config = {
         "ra_only": False}
     }
     
-# ~ config = {
-    # ~ "host": "localhost",
-    # ~ "port": 4400,
-    # ~ "do_calibration": False,
-    # ~ "profile_name": "SimulateursDistants",
-    # ~ "exposure_time_sec": 2,
-    # ~ "settle": {
-        # ~ "pixels": 1.5,
-        # ~ "time": 3,
-        # ~ "timeout": 60},
-    # ~ "dither": {
-        # ~ "pixels": 3.0,
-        # ~ "ra_only": False}
-    # ~ }
-
 g = GuiderPHD2.GuiderPHD2(config=config)
-# ~ g.launch_server()
-# ~ print(f"Ici, avant le connect : {g.get_profiles()}")
+
 g.connect_server()
 print(f"Connecté ? {g.get_connected()}")
 print(f"Et là, après le connect : {g.get_profiles()}")
-g.set_exposure(2.0)
 g.connect_profile(do_calibration=False)
-#g.loop() not needed
-print("TEST ICI ================= pas de calib !")
-# ~ g.clear_calibration()
+
+# On démarre les acquisitions
+print("================= Acquisitions")
+g.loop()
+time.sleep(10)
+
+# Pour vérifier que je peux changer le temps de pose à la volée
+print("================= Exposure passe à 5s")
+g.set_exposure(5.0)
+time.sleep(10)
+
+# Défintion de la position de lock
+print("================= Lock position")
+g.set_lock_position(940, 690)
+
+# On active le guidage
+print("================= Guidage !")
 g.guide()
+
 # guide for 5 min:
-for i in range(3*1):
+for i in range(3*10):
     # ~ g.receive()
     time.sleep(1)
+
 # Back to looping
 g.loop()
 print("================= Bouclage 10s")
 time.sleep(10)
+
 print("================= Fin des acquisitions")
 g.stop_capture()
 
