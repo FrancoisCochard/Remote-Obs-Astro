@@ -138,15 +138,16 @@ class GuiderPHD2(Base):
                         do_calibration=None):
         if profile_name is None:
             profile_name = self.profile_name
-        if do_calibration is None:
-            do_calibration = self.do_calibration
         self.logger.info(f"Connect profile {profile_name}")
-        # we make sure that we are starting from a "proper" state
+        # We make sure to start from a clean state
         self.set_connected(False)
         self.set_profile_from_name(profile_name)
-        if do_calibration:
-            self.clear_calibration()
         self.set_connected(True)
+        # We run the calibration only if required (by arguments or by the default config value)
+        if do_calibration is None:
+            do_calibration = self.do_calibration
+        if do_calibration is True:
+            self.clear_calibration()
 
     def disconnect_and_terminate_server(self):
         self.logger.info(f"Closing connection to server PHD2 {self.host}"
