@@ -82,7 +82,8 @@ calibration:
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
-    module: IndiAbstractMount
+    #~ module: IndiAbstractMount
+    module: Indi10Micron
     #~ mount_name : Telescope Simulator
     mount_name : 10micron
     equatorial_eod: J2000 # JNOW
@@ -131,7 +132,7 @@ cameras:
         pointing_seconds: 10
         do_autofocus: true
         autofocus_seconds: 5
-        autofocus_size : 750
+        autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
         focuser:
             module: IndiFocuser
@@ -193,7 +194,7 @@ cameras:
         pointing_seconds: 10
         do_autofocus: false
         autofocus_seconds: 2
-        autofocus_size : 1500
+        autofocus_roi_size : 1500
         autofocus_merit_function : half_flux_radius #vollath_F4
         focuser:
             module: IndiFocuser
@@ -209,7 +210,7 @@ cameras:
                 fine: 10000
                 coarse: 30000
             indi_client:
-                indi_host: localhost
+                indi_host: 192.168.144.32
                 indi_port: 7624
         do_filter_wheel: false
         filter_wheel:
@@ -232,10 +233,12 @@ cameras:
             indi_port : 7624
 guider:
     module : GuiderPHD2
-    host : localhost
+    #~ host : localhost
+    host : 192.168.144.32
     port : 4400
     #profile_id : 1 # For IRL setup
-    profile_id : 2
+    do_calibration : True
+    profile_name : St-Pancrasse
     exposure_time_sec : 2
     settle :
         pixels : 1.5
@@ -266,7 +269,7 @@ weather_service :
         MAX_WEATHER_WIND_GUST_KPH : 30
         MAX_WEATHER_CLOUD_COVER : 5
     indi_client :
-        indi_host : localhost
+        indi_host : 192.168.144.32
         indi_port : 7624
 time_service :
     module : HostTimeService

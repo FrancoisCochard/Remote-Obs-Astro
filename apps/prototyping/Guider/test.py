@@ -8,10 +8,12 @@ from Guider import GuiderPHD2
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s') 
 
 config = {
-    "host": "localhost",
+    # ~ "host": "localhost",
+    "host": "192.168.144.32",
     "port": 4400,
     "do_calibration": False,
-    "profile_name": "Simulator",
+    # ~ "profile_name": "Simulator",
+    "profile_name": "St-Pancrasse",
     "exposure_time_sec": 2,
     "settle": {
         "pixels": 1.5,

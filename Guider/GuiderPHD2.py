@@ -147,11 +147,6 @@ class GuiderPHD2(Base):
         self.disconnect_profile()
         self.set_profile_from_name(profile_name)
         self.set_connected(True)
-        # We run the calibration only if required (by arguments or by the default config value)
-        if do_calibration is None:
-            do_calibration = self.do_calibration
-        if do_calibration is True:
-            self.clear_calibration()
 
     def is_server_connected(self):
         return self.state != 'NotConnected'
