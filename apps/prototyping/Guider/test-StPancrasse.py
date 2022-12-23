@@ -28,7 +28,7 @@ g = GuiderPHD2.GuiderPHD2(config=config)
 g.connect_server()
 print(f"Connecté ? {g.get_connected()}")
 print(f"Et là, après le connect : {g.get_profiles()}")
-g.connect_profile(do_calibration=False)
+g.connect_profile()
 
 # On démarre les acquisitions
 print("================= Acquisitions")
@@ -39,6 +39,10 @@ time.sleep(10)
 print("================= Exposure passe à 5s")
 g.set_exposure(5.0)
 time.sleep(10)
+
+# J'active la recherche de l'étoile à la position...
+print("================= Detect star")
+g.find_star(200, 200, 35, 35)
 
 # Défintion de la position de lock
 print("================= Lock position")
@@ -61,23 +65,3 @@ time.sleep(10)
 print("================= Fin des acquisitions")
 g.stop_capture()
 
-# ~ g.disconnect()
-# ~ g.terminate_server()
-
-# ~ g = GuiderPHD2.GuiderPHD2(config=config)
-# g.launch_server()
-# ~ g.connect()
-# ~ g.get_connected()
-# ~ print(dir(g.state))
-# ~ print(f"Profiles : {g.get_profiles()}")
-# ~ print(f"Connected : {g.get_connected()}")
-# ~ g.set_exposure(2.0)
-#g.loop() not needed
-# ~ g.guide()
-# guide for 5 min:
-# ~ for i in range(2*5):
-    # ~ g.receive()
-    # ~ time.sleep(1)
-
-# ~ g.disconnect()
-# ~ g.terminate_server()

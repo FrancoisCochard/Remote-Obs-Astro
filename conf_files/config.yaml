@@ -95,7 +95,8 @@ mount:
 cameras:
     -
     #    module: IndiAbstractCameraSimulator
-        module: IndiAbstractCamera
+        #~ module: IndiAbstractCamera
+        module: IndiASICamera
     #    camera_name : Guide Simulator
         camera_name : ZWO CCD ASI174MM Mini
     #    CCD_INFO:
