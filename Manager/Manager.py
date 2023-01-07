@@ -168,8 +168,7 @@ class Manager(Base):
             }
 
         except Exception as e:  # pragma: no cover
-            msg = "Can't get observatory status: {}-{}".format(e,
-                traceback.format_exc())
+            msg = f"Can't get observatory status: {e}-{traceback.format_exc()}"
             self.logger.error(msg)
             raise RuntimeError(msg)
         return status
@@ -331,7 +330,6 @@ class Manager(Base):
         self.mount.set_slew_rate("3x")
         self.mount.slew_to_target()
 
-
     def update_tracking(self):
         """Update tracking with dithering.
         """
@@ -347,9 +345,9 @@ class Manager(Base):
                 self.logger.info("Initializing guider before observing")
                 self.guider.connect_server()
                 self.guider.connect_profile()
-                self.logger.info("Starting guiding calibration")
+                self.logger.info("Start guiding")
                 self.guider.guide()
-                self.logger.info("Guiding calibration over")
+                self.logger.info("Guiding successfully started")
             return True
         except Exception as e:
             self.logger.error('Error while trying to initialize tracking')
@@ -548,20 +546,21 @@ class Manager(Base):
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()
-            #self.serv_astrometry = NovaAstrometryService(configFileName='local')
+            self._setup_independant_services()
         except Exception:
             raise RuntimeError('Problem setting up services')
 
-    def _setup_messaging(self):
+    def _setup_time_service(self):
+        """
+            setup a service that will provide time
+        """
         try:
-            messaging_name = self.config['messaging']['module']
-            #messaging_module = load_module('Service.'+messaging_name)
-            # self.messaging = getattr(messaging_module, messaging_name)(
-            #     config=self.config['messaging'])
-            #TODO TN: TO BE FIXED
-            self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging"]["msg_port"])
+            time_name = self.config['time_service']['module']
+            time_module = load_module('Service.'+time_name)
+            self.serv_time = getattr(time_module, time_name)(
+                config=self.config['time_service'])
         except Exception:
-            raise RuntimeError('Problem setting up messaging service')
+            raise RuntimeError('Problem setting up time service')
 
     def _setup_weather_service(self):
         """
@@ -578,17 +577,25 @@ class Manager(Base):
         except Exception:
             raise RuntimeError('Problem setting up weather service')
 
-    def _setup_time_service(self):
-        """
-            setup a service that will provide time
-        """
+    def _setup_messaging(self):
         try:
-            time_name = self.config['time_service']['module']
-            time_module = load_module('Service.'+time_name)
-            self.serv_time = getattr(time_module, time_name)(
-                config=self.config['time_service'])
+            messaging_name = self.config["messaging_publisher"]['module']
+            messaging_module = load_module('Service.'+messaging_name)
+            self.messaging = getattr(messaging_module, messaging_name)(
+                 config=self.config["messaging_publisher"])
         except Exception:
-            raise RuntimeError('Problem setting up time service')
+            raise RuntimeError('Problem setting up messaging service')
+
+    def _setup_independant_services(self):
+        self.independant_services = []
+        for config in self.config["independant_services"]:
+            try:
+                module_name = config['module']
+                module = load_module('Service.'+module_name)
+                self.independant_services.append(getattr(module, module_name)(
+                     config=config))
+            except Exception:
+                raise RuntimeError('Problem setting up independant services')
 
     def _setup_observatory(self):
         """
@@ -620,6 +627,20 @@ class Manager(Base):
     @property
     def pointing_camera(self):
         return [v for k, v in self.cameras.items() if v.do_pointing][0]
+
+    @property
+    def adjust_pointing_camera(self):
+        cam_list = [v for k, v in self.cameras.items() if v.do_adjust_pointing]
+        if not len(cam_list):
+            return None
+        return cam_list[0]
+
+    @property
+    def guiding_camera(self):
+        cam_list = [v for k, v in self.cameras.items() if v.do_guiding]
+        if not len(cam_list):
+            return None
+        return cam_list[0]
 
     @property
     def acquisition_cameras(self):
@@ -712,10 +733,8 @@ class Manager(Base):
         try:
             if 'scheduler' in self.config:
                 scheduler_name = self.config['scheduler']['module']
-                scheduler_target_file = self.config[
-                    'scheduler']['target_file']
-                scheduler_module = load_module('ObservationPlanner.'+
-                                               scheduler_name)
+                scheduler_target_file = self.config['scheduler']['target_file']
+                scheduler_module = load_module(f"ObservationPlanner.{scheduler_name}")
                 self.scheduler = getattr(scheduler_module, scheduler_name)(
                     ntpServ=self.serv_time,
                     obs=self.observatory,

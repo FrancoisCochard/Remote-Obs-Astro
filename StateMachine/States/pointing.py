@@ -31,6 +31,7 @@ def on_enter(event_data):
     Take 30 second exposure and plate-solve to get the pointing error
     """
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
 
     try:
@@ -102,10 +103,8 @@ def on_enter(event_data):
                 observation.pointing_image = pointing_image
                 model.logger.debug(f"Pointing file: {pointing_image}")
                 pointing_error = pointing_image.pointing_error
-                model.say("Ok, I have the pointing picture, "
-                          "let's see how close we are.")
-                model.logger.debug(f"Pointing Coords: "
-                                   f"{pointing_image.pointing}")
+                model.say("Ok, I have the pointing picture, let's see how close we are.")
+                model.logger.debug(f"Pointing Coords: {pointing_image.pointing}")
                 msg = f"Pointing Error: {pointing_error}"
                 model.logger.debug(msg)
                 model.say(msg)

@@ -21,10 +21,11 @@ def on_enter(event_data):
     channel and to the debug log.
     """
     #TODO TN DEBUG
-    #event_data.model.next_state = 'observing'
+    #event_data.model.next_state = 'offset_pointing'
     #return
 
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
 
     # First thing: if we are not at our first exposure, then assume the focus is still ok
@@ -35,7 +36,7 @@ def on_enter(event_data):
               f"no need to refocus, jumping to next state"
         model.logger.debug(msg)
         model.say(msg)
-        model.next_state = 'observing'
+        model.next_state = 'offset_pointing'
         return
 
     # Try to pause guiding first
@@ -115,9 +116,9 @@ def on_enter(event_data):
             model.logger.debug(msg)
             model.say(msg)
             model.manager.guider.set_paused(paused=False)
-            model.manager.guider.wait_for_state(one_of_states=["Guiding"])
+            model.manager.guider.wait_for_state(one_of_states=["Guiding", "SteadyGuiding"])
 
         msg = f"Finished with focusing, going to observe"
         model.logger.debug(msg)
         model.say(msg)
-        model.next_state = 'observing'
+        model.next_state = 'offset_pointing'
