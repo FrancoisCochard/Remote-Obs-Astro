@@ -28,7 +28,7 @@ targets :
             temperature :
             gain : 1
             exp_time_sec : 10
-    HD3360:
+    HD20902:
         Luminance:
             count: 3
             temperature:

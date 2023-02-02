@@ -38,7 +38,7 @@ observatory:
         dome_movement_timeout_s: 300
         dome_name: Dome Simulator
         indi_client :
-            indi_host : localhost
+            indi_host : 192.168.144.32
             indi_port : 7624
 directories:
     base: /var/RemoteObservatory
@@ -127,11 +127,11 @@ cameras:
         do_pointing: true
         pointing_seconds: 5
         do_adjust_pointing: true
-        adjust_center_x: 400
-        adjust_center_y: 400
+        adjust_center_x: 940
+        adjust_center_y: 690
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: false
+        do_autofocus: true
         autofocus_seconds: 4
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
@@ -199,26 +199,11 @@ cameras:
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: true
+        do_autofocus: false
         autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
-        focuser:
-            module: IndiFocuser
-            focuser_name: Focuser Simulator
-            port: /dev/ttyUSB0
-            focus_range:
-                min: 32500
-                max: 40000
-            autofocus_step:
-                fine: 750
-                coarse: 2500
-            autofocus_range:
-                fine: 10000
-                coarse: 30000
-            indi_client:
-                indi_host: 192.168.144.32
-                indi_port: 7624
+        
         do_filter_wheel: false
         filter_wheel:
             module: IndiFilterWheel
@@ -244,7 +229,7 @@ guider:
     host : 192.168.144.32
     port : 4400
     #profile_id : 1 # For IRL setup
-    do_calibration : True
+    do_calibration : false
     profile_name : St-Pancrasse
     exposure_time_sec : 2
     settle :
