@@ -10,12 +10,12 @@ targets :
 #            temperature :
 #            gain : 1
 #            exp_time_sec : 100
-    M42 :
+    Arcturus :
         Luminance :
             count : 3
             temperature :
             gain : 1
-            exp_time_sec : 10
+            exp_time_sec : 3
     HCG49 :
         Luminance :
             count : 3
@@ -28,7 +28,7 @@ targets :
             temperature :
             gain : 1
             exp_time_sec : 10
-    HD20902:
+    NGC1502:
         Luminance:
             count: 3
             temperature:
