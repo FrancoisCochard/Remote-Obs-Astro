@@ -125,7 +125,7 @@ cameras:
             APERTURE: 200
         do_guiding: true
         do_pointing: true
-        pointing_seconds: 5
+        pointing_seconds: 30
         do_adjust_pointing: true
         adjust_center_x: 940
         adjust_center_y: 690
@@ -157,6 +157,7 @@ cameras:
             indi_port : 7624
     -
         module: IndiAbstractCamera
+        #~ module: IndiZwoASI183ProCamera
         camera_name : ZWO CCD ASI183MM Pro # CCD Simulator
         do_acquisition: true
         #module: IndiEos6DCamera
