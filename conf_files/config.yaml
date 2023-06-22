@@ -132,8 +132,8 @@ cameras:
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
         do_autofocus: true
-        autofocus_seconds: 4
-        autofocus_roi_size : 750
+        autofocus_seconds: 5
+        autofocus_roi_size : 2000
         autofocus_merit_function: half_flux_radius #vollath_F4
         focuser:
             module: IndiFocuser
@@ -144,7 +144,7 @@ cameras:
                 min: 11000
                 max: 13000
             autofocus_step:
-                fine: 100
+                fine: 300
                 coarse: 300
             autofocus_range:
                 fine: 2000
