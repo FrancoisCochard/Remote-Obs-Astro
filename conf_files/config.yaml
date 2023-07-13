@@ -133,7 +133,7 @@ cameras:
         adjust_pointing_seconds: 5
         do_autofocus: true
         autofocus_seconds: 5
-        autofocus_roi_size : 2000
+        autofocus_roi_size : 760 # ATTENTION : on doit mettre des multiples de 8 ! (bug redécouvert Thibault + François le 22/06/2023)
         autofocus_merit_function: half_flux_radius #vollath_F4
         focuser:
             module: IndiFocuser
@@ -196,8 +196,8 @@ cameras:
         do_pointing: false
         pointing_seconds: 5
         do_adjust_pointing: true
-        adjust_center_x: 400
-        adjust_center_y: 400
+        adjust_center_x: 947
+        adjust_center_y: 690
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
         do_autofocus: false
