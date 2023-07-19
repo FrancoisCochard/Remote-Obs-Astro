@@ -7,6 +7,7 @@ import os
 # Astropy stuff
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.time import Time
 
 # Astroplan stuff
 from astroplan import FixedTarget
@@ -264,7 +265,12 @@ class Scheduler(Base):
 
     def define_target(self, target_name):
         try:
-            target = FixedTarget.from_name(target_name)
+            target = FixedTarget(
+                name=target_name,
+                coord=SkyCoord(
+                    SkyCoord.from_name(target_name,
+                                       frame="icrs"),
+                    equinox=Time('J2000')))
         except:
             try:
                 #"5h12m43.2s +31d12m43s" is perfectly valid

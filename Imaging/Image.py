@@ -22,13 +22,10 @@ class OffsetError:
         self.delta_dec = delta_dec
         self.magnitude = magnitude
 
-    def to_delta(self):
-        return SkyCoord(
-                ra=self.delta_ra,
-                dec=self.delta_dec,
-                frame='icrs', equinox='J2000.0')
-
     def __str__(self):
+        return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
+
+    def __repr__(self):
         return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
 
 
@@ -42,8 +39,7 @@ class Image(Base):
             wcs_file (str, optional): Name of FITS file to use for WCS
         """
         super().__init__()
-        assert os.path.exists(fits_file), self.logger.warning(
-            'File does not exist: {}'.format(fits_file))
+        assert os.path.exists(fits_file), f"File does not exist: {fits_file}"
 
         if fits_file.endswith('.fz'):
             fits_file = fits_utils.fpack(fits_file, unpack=True)
@@ -142,9 +138,10 @@ class Image(Base):
             if pointing_reference_coord is None:
                 pointing_reference_coord = self.header_pointing
 
-            mag = self.pointing.separation(pointing_reference_coord)
-            d_ra = self.pointing.ra - pointing_reference_coord.ra
-            d_dec = self.pointing.dec - pointing_reference_coord.dec
+            ref_pointing = pointing_reference_coord.transform_to(self.pointing.frame)
+            mag = self.pointing.separation(ref_pointing)
+            d_ra = self.pointing.ra - ref_pointing.ra
+            d_dec = self.pointing.dec - ref_pointing.dec
 
             self._pointing_error = OffsetError(
                 d_ra.to(u.arcsec),
@@ -153,6 +150,14 @@ class Image(Base):
             )
 
         return self._pointing_error
+
+    def get_center_coordinates(self):
+        """
+        Those are 0-based indexing
+        :return:
+        """
+        return (self.header["NAXIS1"]/2-0.5,
+                self.header["NAXIS2"]/2-0.5)
 
     def get_header_pointing(self):
         """Get the pointing information from the header
@@ -187,11 +192,20 @@ class Image(Base):
         One should notice that Astrometry.net uses J2000 equinox
         """
         if self.wcs is not None:
+            # This was wrong because crval coord relates to crpix reference pixels
             ra = self.wcs.celestial.wcs.crval[0]
             dec = self.wcs.celestial.wcs.crval[1]
 
-            self.pointing = SkyCoord(ra=ra*u.degree,
-                                     dec=dec*u.degree,
+            # TODO TN trying alternative definition
+            cx, cy = self.get_center_coordinates()
+            radeg, decdeg = self.wcs.all_pix2world(
+                cx,
+                cy,
+                0,  # 0-based indexing
+                ra_dec_order=True)
+
+            self.pointing = SkyCoord(ra=radeg*u.degree,
+                                     dec=decdeg*u.degree,
                                      frame='icrs', equinox='J2000.0')
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
@@ -229,9 +243,11 @@ class Image(Base):
         assert isinstance(ref_image, Image), self.logger.warning(
             "Must pass an Image class for reference")
 
-        mag = self.pointing.separation(ref_image.pointing)
-        d_dec = self.pointing.dec - ref_image.pointing.dec
-        d_ra = self.pointing.ra - ref_image.pointing.ra
+        # Make sure we are in the same frame/equinox
+        ref_pointing = ref_image.pointing.transform_to(self.pointing.frame)
+        mag = self.pointing.separation(ref_pointing)
+        d_dec = self.pointing.dec - ref_pointing.dec
+        d_ra = self.pointing.ra - ref_pointing.ra
 
         return OffsetError(d_ra.to(u.arcsec), d_dec.to(u.arcsec), mag.to(u.arcsec))
 

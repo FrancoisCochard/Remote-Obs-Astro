@@ -11,8 +11,9 @@ from astropy import units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS
-from astropy.coordinates import ITRS
-from astropy.coordinates import EarthLocation
+from astropy.coordinates import GCRS
+#from astropy.coordinates import ITRS
+#from astropy.coordinates import EarthLocation
 from astropy.coordinates import FK5
 #c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs', equinox='J2000.0')
 
@@ -98,25 +99,32 @@ class IndiMount(IndiDevice):
 
     def set_coord(self, coord):
         """
-        Subtleties here: coord should be given as Equatorial astrometric epoch
+        Subtleties here for INDILIB: coord should be given as FK% frame with Equatorial astrometric epoch
         of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
 
-        As our software only manipulates J2000. we decided to convert to jnow
-        for the generic case
+        As our software only manipulates ICRS J2000. We decided to convert to FK5 jnow for the generic case
+
+        EDIT: I am tired that nobody actually properly implements the standard:
+        https://indilib.org/develop/developer-manual/101-standard-properties.html
         """
         # fk5_j2k = FK5(equinox=Time('J2000'))
         # coord_j2k = coord.transform_to(fk5_j2k)
         # rahour_decdeg = {'RA': coord_j2k.ra.hour,
         #                  'DEC': coord_j2k.dec.degree}
         fk5_now = FK5(equinox=Time.now())
-        coord_jnow = coord.transform_to(fk5_now)
-        rahour_decdeg = {'RA': coord_jnow.ra.hour,
-                        'DEC': coord_jnow.dec.degree}
+        coord_now = coord.transform_to(fk5_now)
+        # gcrs_now = GCRS(obstime=Time.now())
+        # coord_now = coord.transform_to(gcrs_now)
+        rahour_decdeg = {'RA': coord_now.ra.hour,
+                         'DEC': coord_now.dec.degree}
+        # rahour_decdeg = {'RA': coord.ra.hour,
+        #                  'DEC': coord.dec.degree}
         if self.is_parked:
             self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
                                 f"mount is parked")
         else:
-            self.logger.info(f"Now setting JNow coord: {rahour_decdeg}")
+            coord_formatted = coord_now.to_string(style="hmsdms", sep=":", precision=1)
+            self.logger.info(f"Now setting JNow coord: {rahour_decdeg} = {coord_formatted}")
             self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                             timeout=180)
 
@@ -171,11 +179,11 @@ class IndiMount(IndiDevice):
              'state': 'OK'}
         """
         guide_dict = self.get_number('GUIDE_RATE')
-        self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
+        #self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
         guide_rate = {}
         guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']
         guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']
-        self.logger.debug(f"Got mount guiding rate: {guide_rate}")
+        #self.logger.debug(f"Got mount guiding rate: {guide_rate}")
         return guide_rate
 
     def set_guide_rate(self, guide_rate={'NS':0.5,'WE':0.5}):
@@ -197,7 +205,7 @@ class IndiMount(IndiDevice):
              'state': 'IDLE'}
         """
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
-        self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
+        #self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
         if len(slew_dict) > 0:
             return [k for k, v in slew_dict.items() if v == "On"][0]
         else:
@@ -227,7 +235,7 @@ class IndiMount(IndiDevice):
             PIER_WEST Mount on the West side of pier (Pointing East).
         '''
         pier_side = self.get_switch('TELESCOPE_PIER_SIDE')
-        self.logger.debug(f"Got mount pier side: {pier_side}")
+        #self.logger.debug(f"Got mount pier side: {pier_side}")
         return pier_side
 
     def get_track_mode(self):
@@ -239,7 +247,7 @@ class IndiMount(IndiDevice):
           'state': 'OK'}
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
-        self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
+        #self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         if len(track_dict) > 0:
             return [k for k, v in track_dict.items() if v == "On"][0]
         else:
@@ -255,8 +263,8 @@ class IndiMount(IndiDevice):
                 TRACK_CUSTOM: custom
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
-        self.logger.debug(f"Setting mount tracking rate: {track_mode} while "
-                          f"dictionary is {track_dict}")
+        #self.logger.debug(f"Setting mount tracking rate: {track_mode} while "
+        #                  f"dictionary is {track_dict}")
         if track_mode in track_dict:
             self.set_switch('TELESCOPE_TRACK_MODE', [track_mode])
         else:
@@ -275,14 +283,33 @@ class IndiMount(IndiDevice):
         return ret
 
     def get_current_coordinates(self):
-        self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
+        """
+        Subtleties here for INDILIB: coord are retrieved as FK5 frame with Equatorial astrometric epoch
+        of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
+
+        As our software only manipulates ICRS J2000. We decided to convert FROM FK5 jnow for the generic case
+
+        EDIT: I am tired that nobody actually properly implements the standard:
+        https://indilib.org/develop/developer-manual/101-standard-properties.html
+
+        """
+        #self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
-        self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
+        #self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
+        fk5_now = FK5(equinox=Time.now())
+        # gcrs_now = GCRS(obstime=Time.now())
         ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,
                        dec=rahour_decdeg['DEC']*u.degree,
-                       frame='cirs',
+                       frame=fk5_now,
                        obstime=Time.now())
+        icrs_j2k = ICRS()
         self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
+        ret = ret.transform_to(icrs_j2k)
+
+        # ret = SkyCoord(ra=rahour_decdeg['RA'] * u.hourangle,
+        #                dec=rahour_decdeg['DEC'] * u.degree,
+        #                frame='icrs',
+        #                equinox='J2000.0')
         return ret
 
 ###############################################################################

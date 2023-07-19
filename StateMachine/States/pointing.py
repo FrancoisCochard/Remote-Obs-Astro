@@ -72,7 +72,7 @@ def on_enter(event_data):
             # Sleep for a little bit.
             time.sleep(SLEEP_SECONDS)
 
-        if not pointing_status:
+        if not pointing_status[0]:
             raise Exception("Pointing has failed")
 
     except error.Timeout as e:
@@ -87,4 +87,4 @@ def on_enter(event_data):
         msg = f"Done with pointing"
         model.logger.debug(msg)
         model.say(msg)
-        model.next_state = 'focusing'
+        model.next_state = 'tracking'
