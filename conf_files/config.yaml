@@ -155,6 +155,7 @@ cameras:
         indi_client :
             indi_host : 192.168.144.32 # localhost
             indi_port : 7624
+            #use_unique_client: True
     -
         module: IndiAbstractCamera
         #~ module: IndiZwoASI183ProCamera
@@ -233,7 +234,7 @@ pointer:
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
     timeout_seconds: 300
-    max_identification_error_seconds: 5
+    max_identification_error_seconds: 1
     sync_mount_upon_solve: False
     use_guider_adjust: False
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
