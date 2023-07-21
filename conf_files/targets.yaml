@@ -15,7 +15,7 @@ targets :
             count : 3
             temperature :
             gain : 1
-            exp_time_sec : 3
+            exp_time_sec : 10
     #~ HCG49 :
         #~ Luminance :
             #~ count : 3

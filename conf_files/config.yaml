@@ -131,7 +131,7 @@ cameras:
         adjust_center_y: 690
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: true
+        do_autofocus: false
         autofocus_seconds: 5
         autofocus_roi_size : 760 # ATTENTION : on doit mettre des multiples de 8 ! (bug redécouvert Thibault + François le 22/06/2023)
         autofocus_merit_function: half_flux_radius #vollath_F4
@@ -141,8 +141,8 @@ cameras:
             focuser_name: FocusLynx F1
             port: /dev/serial/by-id/usb-Optec__Inc._Optec_USB_Serial_Cable_OP5AORA9-if00-port0 # /dev/ttyUSB0
             focus_range:
-                min: 11000
-                max: 13000
+                min: 10200
+                max: 11400
             autofocus_step:
                 fine: 300
                 coarse: 300
@@ -235,7 +235,7 @@ offset_pointer:
     timeout_seconds: 300
     max_identification_error_seconds: 5
     sync_mount_upon_solve: False
-    use_guider_adjust: True
+    use_guider_adjust: False
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
 guider:
     module : GuiderPHD2
