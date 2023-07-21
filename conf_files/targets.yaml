@@ -10,7 +10,7 @@ targets :
 #            temperature :
 #            gain : 1
 #            exp_time_sec : 100
-    Deneb :
+    Sheliak :
         Luminance :
             count : 3
             temperature :
