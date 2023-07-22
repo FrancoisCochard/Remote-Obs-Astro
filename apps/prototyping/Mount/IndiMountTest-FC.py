@@ -11,63 +11,38 @@ from Mount.IndiMount import IndiMount
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
-if __name__ == '__main__':
+# test indi client
+indi_config = {
+    "indi_host": "192.168.144.32",
+    "indi_port": 7624
+}
+indi_cli = IndiClient(config=indi_config)
 
-    # test indi client
-    indi_config = {
-        "indi_host": "192.168.144.32",
-        "indi_port": 7624
-    }
-    indi_cli = IndiClient(config=indi_config)
+# Build the Mount
+mount_config = {
+    # ~ "mount_name":"10micron",
+    "mount_name": "Telescope Simulator",
+    "indi_client": indi_config
+}
+mount = IndiMount(config=mount_config)
 
-    # Build the Mount
-    mount_config = {
-        "mount_name":"10micron",
-        # ~ "mount_name": "Telescope Simulator",
-        "indi_client": indi_config
-    }
-    mount = IndiMount(config=mount_config)
-    # ~ # Set slew ret to be used afterwards
-    # ~ mount.set_slew_rate('3x')
-    # ~ slew_rate = mount.get_slew_rate()
+# Get Pier side, not supported by simulator
+# ~ ps = mount.get_pier_side()
 
-    # Get Pier side, not supported by simulator
-    # ~ ps = mount.get_pier_side()
+# Unpark if you want something useful to actually happen
+mount.unpark()
+print(f"Status of the mount for parking is {mount.is_parked}")
 
-    # Unpark if you want something useful to actually happen
-    mount.unpark()
-    print(f"Status of the mount for parking is {mount.is_parked}")
 
-    # Do a slew and track
-    #JNow: 15h 20m 40s  71° 46' 13"
-    #J2000:  15h 20m 43s  71° 50' 02"
-    #AzAlt:   332° 12' 25"  61° 48' 28"
-    # ~ ra = random.randint(15, 16)
-    # ~ dec = random.randint(10, 40)
-    ra = 18.5
-    dec = 38.5
-    c = SkyCoord(ra=ra*u.hourangle, dec=dec*u.degree, frame='icrs')
-    print("BEFORE SLEWING --------------------------")
-    mount.slew_to_coord_and_track(c)
-    print("After SLEWING --------------------------")
-
-    # Check coordinates
-    c_true = mount.get_current_coordinates()
-    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
-    print(f"Should be: ra:{c.ra.to(u.hourangle)}, dec:{c.dec.to(u.degree)}")
-
-    # Sync
-    # ~ ra = random.randint(0, 12)
-    # ~ dec = random.randint(-90, 90)
-    ra = 20.0
-    dec = 42.5
-    c = SkyCoord(ra=ra*u.hour, dec=dec*u.degree, frame='icrs')
-    mount.sync_to_coord(c)
-
-    #Do a slew and stop
-    c = SkyCoord(ra=15*u.hour, dec=35*u.degree, frame='icrs')
-    mount.slew_to_coord_and_stop(c)
-
-    # Park before standby
-    # ~ mount.park()
+# ~ c = SkyCoord(ra=ra*u.hourangle, dec=dec*u.degree, frame='icrs')
+# ~ Cor Carolis : J2000 :	12h 56m 02s	 38° 19' 06"
+c = SkyCoord("12h56m02s	 +38d19m06s", frame='icrs')
+print("BEFORE SLEWING --------------------------")
+c_true = mount.get_current_coordinates()
+print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+mount.slew_to_coord_and_track(c)
+print("After SLEWING --------------------------")
+c_true = mount.get_current_coordinates()
+print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+print("Le télescope est maintenant sur la cible")
 
