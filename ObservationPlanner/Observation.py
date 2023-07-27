@@ -80,6 +80,15 @@ class Observation(Base):
         self._seq_time = time
 
     @property
+    def is_done(self):
+        """ Return True if at least one block has been completed
+
+        Returns:
+            bool: True if at least one block has been completed
+        """
+        return self.current_exp >= self.number_exposures
+
+    @property
     def first_exposure(self):
         """ Return the latest exposure information
 
