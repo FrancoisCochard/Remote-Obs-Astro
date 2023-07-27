@@ -10,11 +10,11 @@ targets :
 #            temperature :
 #            gain : 1
 #            exp_time_sec : 100
-    Sheliak :
+    Deneb :
         Luminance :
             count : 3
             temperature :
-            gain : 1
+            gain : 100
             exp_time_sec : 10
     #~ HCG49 :
         #~ Luminance :
