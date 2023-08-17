@@ -57,10 +57,13 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     @property
     def is_parked(self):
-        ret = IndiMount.is_parked.fget(self)
-        if ret != AbstractMount.is_parked.fget(self):
-            self.logger.error('It looks like the software maintained stated is'
-                              ' different from the Indi maintained state')
+        logical_park_status = AbstractMount.is_parked.fget(self)
+        ret = logical_park_status
+        if self._is_initialized:
+            physical_park_status = IndiMount.is_parked.fget(self)
+            if physical_park_status != logical_park_status:
+                self.logger.error('It looks like the software maintained state is'
+                                  ' different from the Indi maintained state')
         return ret
 
     @property
@@ -86,18 +89,11 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
-    def connect(self):  # pragma: no cover
-        IndiMount.connect(self)
 
-    def disconnect(self):
-        if not self.is_parked:
-            self.park()
-        IndiMount.disconnect(self)
-
-    def initialize(self, *arg, **kwargs):  # pragma: no cover
-        self.logger.debug(f"Initializing mount with args {arg}, {kwargs}")
-        self.connect()
-        self._is_initialized = True
+    def initialize(self):
+        self.logger.debug("Initializing from IndiAbstractMount")
+        IndiMount.unpark(self)
+        self.logger.debug("Successfully initialized from IndiAbstractMount")
 
     def park(self):
         """ Slews to the park position and parks the mount.
@@ -106,15 +102,20 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
+        self.logger.debug(f"Mount {self.device_name} about to park")
         try:
-            IndiMount.park(self)
+            if self.is_initialized:
+                IndiMount.park(self)
             self._is_parked = True
+            self.disconnect() # Disconnect indi server
+            self.stop_indi_server()
+            self._is_initialized = False
         except Exception as e:
             self.logger.warning('Problem with park')
             # by default, we assume that mount is in the "worst" situation
             self._is_parked = False
             return False
-
+        self.logger.debug(f"Mount {self.device_name} successfully parked")
         return self.is_parked
 
     def unpark(self):
@@ -123,11 +124,18 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
-        IndiMount.unpark(self)
+        self.logger.debug(f"Mount {self.device_name} about to unpark with a reset-like behaviour")
+        self.park()
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.connect(connect_device=True)
+        self.initialize()
+        self._is_initialized = True
         self._is_parked = False
+        self.logger.debug(f"Mount {self.device_name} successfully unparked")
 
     def slew_to_coord(self, coord):
-        IndiMount.slew_to_coord_and_track(self, coord)
+        self.slew_to_coord_and_track(coord)
 
     def get_current_coordinates(self):
         return IndiMount.get_current_coordinates(self)
@@ -156,13 +164,12 @@ class IndiAbstractMount(IndiMount, AbstractMount):
                 self._is_slewing = True
 
                 target = self.get_target_coordinates()
-                IndiMount.slew_to_coord_and_track(self, target)
+                self.slew_to_coord_and_track(target)
                 success = True
                 self._is_slewing = False
                 self._is_tracking = True
             except Exception as e:
-                self.logger.error("Error in slewing to target: {}, {}"
-                    "".format(e, traceback.format_exc()))
+                self.logger.error(f"Error in slewing to target: {e}, {traceback.format_exc()}")
                 self._is_slewing = was_slewing
                 self._is_tracking = was_tracking
                 success = False

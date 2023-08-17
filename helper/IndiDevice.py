@@ -6,10 +6,12 @@ import time
 
 # Indi stuff
 from helper.device import device, VectorHandler
+from helper.IndiWebManagerClient import IndiWebManagerClient
 
 #Local
-from helper.IndiClient import IndiClient
 from Base.Base import Base
+from helper.IndiClient import IndiClient
+from utils.error import IndiClientPredicateTimeoutError
 
 class PyIndi():
     """
@@ -43,10 +45,24 @@ class PyIndi():
     INDI_BLOB = 4
     INDI_UNKNOWN = 5
 
+def probe_device_driver_connection(self, indi_client_config, device_name):
+    probe = IndiDevice(
+        device_name=device_name,
+        indi_client_config=indi_client_config)
+    # setup indi client
+    probe.connect(connect_device=False)
+    try:
+        probe.wait_for_any_property_vectors(timeout=1.5)
+    except IndiClientPredicateTimeoutError as e:
+        return False
+    else:
+        return True
+
+
 class IndiDevice(Base, device):
     defaultTimeout = 30
 
-    def __init__(self, device_name, indi_client_config, debug=False):
+    def __init__(self, device_name, indi_client_config, indi_driver_name=None, debug=False):
         Base.__init__(self)
         device.__init__(self, name=device_name)
 
@@ -54,6 +70,7 @@ class IndiDevice(Base, device):
         self.is_client_connected = False
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
+        self.indi_driver_name = indi_driver_name
         self.interfaces = None
         self.debug = debug
 
@@ -94,7 +111,7 @@ class IndiDevice(Base, device):
         #    lambda x: self.indi_client.device_subscriptions.append(x),
         #    self.parse_xml_str)
         future = asyncio.run_coroutine_threadsafe(self.registering_runner(self.parse_xml_str), self.indi_client.ioloop)
-        _ = future.result() # This is just sync
+        _ = future.result()  # This is just sync
 
     def unregister_device_to_client(self):
         self.logger.debug(f"IndiDevice: asking indi_client to stop listen for device {self.device_name}")
@@ -153,10 +170,12 @@ class IndiDevice(Base, device):
             setup the indi client that will communicate with devices
         """
         try:
-            self.logger.info(f"Setting up indi client")
+            self.logger.debug(f"Setting up indi client")
             self.indi_client = IndiClient(config=self.indi_client_config)
-        except Exception:
-            raise RuntimeError('Problem setting up indi client')
+        except Exception as e:
+            msg = f"Problem setting up indi client for device {self.device_name}: {e}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
 
     def connect_client(self):
         """
@@ -197,13 +216,13 @@ class IndiDevice(Base, device):
             self.connect_device()
 
     def disconnect(self):
-        self.logger.info(f"Disconnecting device {self.device_name}")
-
+        self.logger.debug(f"Disconnecting device {self.device_name}")
         if self.is_client_connected:
             # set the corresponding switch to off
             self.disconnect_device()
             self.unregister_device_to_client()
             self.is_client_connected = False
+        self.logger.debug(f"Successfully disconnected device {self.device_name}")
 
     @property
     def is_connected(self):
@@ -213,6 +232,30 @@ class IndiDevice(Base, device):
             return self.get_switch("CONNECTION")["CONNECT"] == 'On'
         except Exception as e:
             return False
+
+    def stop_indi_server(self):
+        # We could simply do like that:
+        # if self.indi_client is None:
+        #     self._setup_indi_client()
+        # self.indi_client.indi_webmanager_client.start_server()
+        # But then in case of stopping, it could consume ressources for no reason
+        if self.indi_client is not None:
+            self.indi_client.indi_webmanager_client.stop_server()
+        else:
+            # Setup temporary webmanager client
+            if "indi_webmanager" in self.indi_client_config:
+                iwmc = IndiWebManagerClient(self.indi_client_config["indi_webmanager"])
+                iwmc.stop_server()
+
+    def start_indi_server(self):
+        if self.indi_client is None:
+            self._setup_indi_client()
+        self.indi_client.indi_webmanager_client.start_server()
+
+    def start_indi_driver(self):
+        self.indi_client.indi_webmanager_client.start_driver(
+            driver_name=self.indi_driver_name,
+            check_started=True)
 
     def get_switch(self, name):
         return self.get_vector_dict(name)
@@ -258,4 +301,14 @@ class IndiDevice(Base, device):
     def wait_for_incoming_blob_vector(self, blob_vector_name=None, timeout=None):
         blob_checker = lambda: self.check_blob_vector(blob_vector_name)
         self.indi_client.sync_with_predicate(blob_checker, timeout=timeout)
+        return
+
+    def wait_for_any_property_vectors(self, timeout=5):
+        """
+            Wait until property vector is non-empty
+        :param timeout:
+        :return:
+        """
+        light_checker = lambda: bool(self.property_vectors)
+        self.indi_client.sync_with_predicate(light_checker, timeout=timeout)
         return

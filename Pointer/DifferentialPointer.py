@@ -86,7 +86,14 @@ class DifferentialPointer(Base):
                     observation.last_pointing)
                 pointing_image = Image(pointing_path)
 
-                pointing_image.solve_field(verbose=True, gen_hips=self.gen_hips)
+                solve_params = dict(
+                    verbose=True,
+                    gen_hips=self.gen_hips,
+                    sampling_arcsec=camera.sampling_arcsec,
+                    downsample=camera.subsample_astrometry)
+                if img_num > 0:
+                    solve_params["use_header_position"] = True
+                pointing_image.solve_field(**solve_params)
                 observation.pointing_image = pointing_image
                 self.logger.debug(f"Pointing file: {pointing_image}")
                 pointing_error = pointing_image.pointing_error()
@@ -94,10 +101,10 @@ class DifferentialPointer(Base):
                 self.logger.debug(f"Pointing Coords: {pointing_image.pointing}")
                 self.logger.debug(f"Pointing Error: {pointing_error}")
                 # adjust by slewing again to correct the delta
-                target = mount.get_current_coordinates()
+                current = mount.get_current_coordinates()
                 target = SkyCoord(
-                    ra=target.ra-pointing_error.delta_ra,
-                    dec=target.dec-pointing_error.delta_dec,
+                    ra=current.ra-pointing_error.delta_ra,
+                    dec=current.dec-pointing_error.delta_dec,
                     frame='icrs', equinox='J2000.0')
                 mount.slew_to_coord(target)
                 # update pointing process tracking information

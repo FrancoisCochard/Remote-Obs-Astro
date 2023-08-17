@@ -2,9 +2,9 @@ name: Remote observatory
 observatory:
     module: Observatory
     investigator: gnthibault
-    latitude: 45.67 # Degrees
-    longitude: 5.67 # Degrees
-    elevation: 150.0 # Meters
+    latitude: 43.93447527626349  # Degrees
+    longitude: 5.710523353974106 # Degrees
+    elevation: 650.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
@@ -28,8 +28,6 @@ observatory:
         indi_driver_connect_delay_s: 5
         indi_camera_driver_name: Canon DSLR
         indi_mount_driver_name: Losmandy Gemini
-        indi_webserver_host: 192.168.0.33
-        indi_webserver_port: 8624
         indi_client :
             indi_host : localhost
             indi_port : 7624
@@ -54,32 +52,34 @@ db:
 ntp:
     ntpserver: time.google.com
 scheduler:
-    module: DefaultScheduler
-    # module: SpectroScheduler
-    target_file: targets.yaml
-    #target_file: spectral_targets.yaml
+    #module: DefaultScheduler
+    module: SpectroScheduler
+    #target_file: targets.yaml
+    target_file: spectral_targets.yaml
 spectroscope_controller:
     module: IndiSpectroController
 calibration:
-    module: ImagingCalibration
-    #module: SpectralCalibration
+    #module: ImagingCalibration
+    module: SpectralCalibration
     spectral_calib:
-        nb: 11
-        sec: 30
-        gain: 1
-        temperature:
-    flat:
-        nb: 21
+        nb: 2
         sec: 5
-        gain: 1
-        temperature:
+        gain: 150
+        offset: 30
+        temperature: -10
+    flat:
+        nb: 2
+        sec: 5
+        gain: 150
+        offset: 30
+        temperature: -10
     dark:
-        dark_nb: 11
+        dark_nb: 2
     controller:
         module: DummySpectroController
-        controller_name: dummy
+        device_name: dummy
         #module: IndiSpectroController
-        #controller_name: spox
+        #device_name: spox
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
@@ -97,7 +97,7 @@ mount:
 cameras:
     -
         #module: IndiAbstractCameraSimulator
-        module: IndiASICamera
+        module: IndiASICameraNonCool
         #camera_name : Guide Simulator
         camera_name : ZWO CCD ASI174MM Mini   
         do_acquisition: false
@@ -123,6 +123,8 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        sampling_arcsec: 0.751668
+        subsample_astrometry: 1
         do_guiding: true
         do_pointing: true
         pointing_seconds: 10
@@ -161,16 +163,7 @@ cameras:
         #~ module: IndiZwoASI183ProCamera
         camera_name : ZWO CCD ASI183MM Pro # CCD Simulator
         do_acquisition: true
-        #module: IndiEos6DCamera
-        #camera_name: Canon DSLR EOS 6D
-        #camera_name: GPhoto CCD
-    #    CCD_INFO :
-    #        CCD_MAX_X : 5496
-    #        CCD_MAX_Y : 3672
-    #        CCD_PIXEL_SIZE : 2.4
-    #        CCD_PIXEL_SIZE_X : 2.4
-    #        CCD_PIXEL_SIZE_Y : 2.4
-    #        CCD_BITSPERPIXEL : 12
+        working_temperature: -12
         SIMULATOR_SETTINGS: # 180mm
             SIM_XRES: 1500 #5496
             SIM_YRES: 1500 #3672
@@ -193,10 +186,11 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        subsample_astrometry: 4
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
-        do_adjust_pointing: true
+        do_adjust_pointing: false
         adjust_center_x: 947
         adjust_center_y: 690
         adjust_roi_search_size: 50
@@ -230,14 +224,16 @@ pointer:
     gen_hips: False
     timeout_seconds: 450
     max_iterations: 5
-    max_pointing_error_seconds: 3
+    max_pointing_error_seconds: 2
 offset_pointer:
-    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
+    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False
     use_guider_adjust: True
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
+    max_iterations: 5
+    max_pointing_error_seconds: 2
 guider:
     module : GuiderPHD2
     #~ host : localhost
@@ -248,9 +244,9 @@ guider:
     profile_name : St-Pancrasse
     exposure_time_sec : 2
     settle :
-        pixels : 1.5
+        pixels : 3
         time : 10
-        timeout : 60
+        timeout : 360
     dither :
         pixels : 0.0
         ra_only : False
@@ -276,6 +272,7 @@ vizualization_service:
         module: SceneVizualization
         delay_sky_update_s: 1
         delay_moving_objects_s: 0.05
+        show_stars: False
         gps_coord:
             latitude: 45.67
             longitude: 5.67
@@ -305,6 +302,7 @@ paws_publisher:
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6500
+
 #independant_services:
 #    -
 #        module: NasaGCNService

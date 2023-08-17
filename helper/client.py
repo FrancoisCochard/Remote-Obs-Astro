@@ -35,7 +35,7 @@ import threading
 """
 logger = logging.getLogger(__name__)
 
-MAX_NETWORK_EXCHANCE_TIMEOUT_S = 10
+MAX_NETWORK_EXCHANCE_TIMEOUT_S = 60
 class INDIClient:
     """This class sends/recvs INDI data to/from the indiserver 
     tcp/ip socket. See the above diagram for help understanding
@@ -66,13 +66,14 @@ class INDIClient:
                 # Send first "Introductory message" in non blocking fashion
                 await self.to_indiQ.put("<getProperties version='1.7'/>")
                 # Now run main two asynchronous task: consume send queue, and receive
-                self.running = True
                 # self.task = asyncio.gather(
                 #     self.write_to_indiserver(timeout=timeout),
                 #     self.read_from_indiserver())
                 # await self.task
                 task_write = asyncio.create_task(self.write_to_indiserver(timeout=MAX_NETWORK_EXCHANCE_TIMEOUT_S))
                 task_read = asyncio.create_task(self.read_from_indiserver(timeout=MAX_NETWORK_EXCHANCE_TIMEOUT_S))
+                self.running = True
+                self.client_connecting = False
                 await asyncio.wait([task_read, task_write], return_when=asyncio.ALL_COMPLETED)
                 logger.debug("INDI client tasks finished or indiserver crashed ?")
                 # Stopped from the outside on purpose
@@ -108,7 +109,7 @@ class INDIClient:
                 data = await asyncio.wait_for(self.read_from_stream(), timeout=timeout)
             except asyncio.TimeoutError:
                 # Sorry this is just too verbose
-                # logger.debug(f"Timeout in client stream reading process. Expected in loop mode")
+                logger.error(f"Timeout in client stream reading process. Expected in loop mode")
                 continue
             except Exception as err:
                 self.running = False

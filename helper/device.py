@@ -1566,9 +1566,8 @@ class device(ABC):
         because this call is blocking inside the main ioloop, an it is the only single
         place where blobvector are manipulated
         """
-        #blob_vector.tell()
+        # blob_vector.tell() # Too verbose
         blob = blob_vector.get_first_element()
-        #print(f"################## JUST RECEIVED BLOB with FORMAT {blob.get_plain_format()}")
         if blob.get_plain_format() == ".fits":
             #await self.blob_queue.put(io.BytesIO(blob.get_data()))
             self.blob_queue.append(io.BytesIO(blob.get_data()))
@@ -1662,13 +1661,13 @@ class device(ABC):
                         self.blob_def_handler(vector, self)
                         # blob will never make it to property_vector
                         return
-                    if vector.tag.get_type() == "TextVector":
+                    elif vector.tag.get_type() == "TextVector":
                         self.text_def_handler(vector, self)
-                    if vector.tag.get_type() == "NumberVector":
+                    elif vector.tag.get_type() == "NumberVector":
                         self.number_def_handler(vector, self)
-                    if vector.tag.get_type() == "SwitchVector":
+                    elif vector.tag.get_type() == "SwitchVector":
                         self.switch_def_handler(vector, self)
-                    if vector.tag.get_type() == "LightVector":
+                    elif vector.tag.get_type() == "LightVector":
                         self.light_def_handler(vector, self)
                     # Now update or create the local vector "storage"
                     try:
@@ -1738,10 +1737,11 @@ class device(ABC):
         """
         obj = self._factory.create(name, attrs)
         if obj is None:
-            logging.debug(f"Received new element with name/attr: {name, attrs}")
+            #logging.debug(f"Received new element with name/attr: {name, attrs}") # This was too verbose
             return
         if 'message' in attrs:
-            logging.debug(f"Message received from indi: {name, attrs}")
+            #logging.debug(f"Message received from indi: {name, attrs}")
+            pass # It was too verbose
         if obj.tag.is_vector():
             if obj.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
                 self.current_vector = obj

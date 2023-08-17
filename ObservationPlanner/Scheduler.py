@@ -283,8 +283,7 @@ class Scheduler(Base):
                                          frame='icrs',
                                          equinox='J2000.0'))
             except:
-                raise RuntimeError(f"Scheduler: did not managed to "
-                                   f"define target {target_name}")
+                raise RuntimeError(f"Scheduler: did not managed to define target {target_name}")
         return target
 
     def initialize_target_list(self):
@@ -306,11 +305,13 @@ class Scheduler(Base):
                 count = config["count"]
                 temperature = config["temperature"]
                 gain = config["gain"]
+                offset = config["offset"]
                 exp_time_sec = config["exp_time_sec"]*u.second
                 configuration={
                     'filter': filter_name,
                     'temperature': temperature,
-                    'gain': gain
+                    'gain': gain,
+                    'offset': offset
                 }
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name == 'Luminance') else 1

@@ -10,11 +10,10 @@ def on_enter(event_data):
     model.next_state = 'parked'
 
     msg = f"Taking it on home and then parking."
-    model.logger.debug(msg)
     model.say(msg)
     
     if not model.manager.park():
-        msg = f"Unable to unpark everything"
+        msg = f"Unable to park everything"
         model.logger.critical(msg)
         model.say(msg)
 
@@ -22,4 +21,3 @@ def on_enter(event_data):
         msg = f"Unable to close observatory!"
         model.logger.critical(msg)
         model.say(msg)
-

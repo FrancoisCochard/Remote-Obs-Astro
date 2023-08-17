@@ -1,5 +1,5 @@
 # Generic import
-import logging
+import argparse
 import logging.config
 import multiprocessing
 import os
@@ -7,7 +7,6 @@ import queue
 import sys
 import time
 import warnings
-import zmq
 
 # Astropy
 from astropy import units as u
@@ -63,6 +62,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
         # Explicitly call the base classes in the order we want
         Base.__init__(self, **kwargs)
+
+        # Check if we are running in simulation mode
+        self.simulation_mode = kwargs.get("simulation_mode", False)
 
         # init
         state_machine_file = state_machine_file if state_machine_file else os.path.join("conf_files", self.config[
@@ -147,7 +149,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             except Exception as e:
                 self.logger.info(f"Oh wait. There was a problem initializing: {e}")
                 self.logger.info(f"Since we did not initialize, I am going to exit.")
-                self.power_down()
+                self.park()
             else:
                 self._initialized = True
         self.status()
@@ -175,6 +177,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         Args:
             msg(str): Message to be sent
         """
+        self.logger.debug(msg)
         if not self.has_messaging:
             self.logger.info(f"Unit says: {msg}")
         else:
@@ -235,21 +238,21 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 # TODO(jamessynge): Figure out how to handle the situation
                 # where we have both mount and dome, but this code is only
                 # checking for a mount.
-                if self.manager.mount.is_connected:
-                    if not self.manager.mount.is_parked:
-                        self.logger.info("Parking mount")
-                        self.park() #FSM trigger
+                # if self.manager.mount.is_connected:
+                #     if not self.manager.mount.is_parked:
+                #         self.logger.info("Parking mount")
+                self.park() #FSM trigger
 
             if self.state == 'parking':
-                if self.manager.mount.is_connected:
-                    if self.manager.mount.is_parked:
-                        self.logger.info('Mount is parked, setting Parked '
-                                         'state')
-                        self.set_park() #FSM trigger
+                # if self.manager.mount.is_connected:
+                #     if self.manager.mount.is_parked:
+                #         self.logger.info('Mount is parked, setting Parked '
+                #                          'state')
+                self.set_park() #FSM trigger
 
-            if not self.manager.mount.is_parked:
-                self.logger.info('Mount not parked, parking')
-                self.manager.mount.park()
+            # if not self.manager.mount.is_parked:
+            #     self.logger.info('Mount not parked, parking')
+            #     self.manager.mount.park()
 
             # Manager shut down
             self.manager.power_down()
@@ -301,9 +304,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe_values = dict()
 
         # Check if night time: synchronous
-        # TODO TN URGENT
-        is_safe_values['is_dark'] = True
-        #is_safe_values['is_dark'] = self.is_dark()
+        is_safe_values['is_dark'] = self.is_dark()
 
         # Check weather: not really synchronous, checks db
         is_safe_values['good_weather'] = self.is_weather_safe()
@@ -323,6 +324,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
         return safe
 
+    def is_simulation(self):
+        return self.simulation_mode
+
     def is_dark(self):
         """Is it dark
 
@@ -334,9 +338,11 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
         """
         # See if dark
-        is_dark = self.manager.is_dark
-
-        self.logger.debug("Dark Check: {}".format(is_dark))
+        if self.simulation_mode:
+            is_dark = os.getenv("REMOTE_OBSERVATORY_IS_DARK", "1") == "1"
+        else:
+            is_dark = self.manager.is_dark
+        self.logger.debug(f"Dark Check: {is_dark}")
         return is_dark
 
     def is_weather_safe(self, stale=180):
@@ -371,7 +377,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
         else:
             if age > stale:
                 self.logger.warning("Weather record looks stale, marking unsafe.")
-                is_safe = False
+                if not self.simulation_mode:
+                    is_safe = False
 
         self._is_safe = is_safe
 
@@ -567,9 +574,17 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # }
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Main command to run the observatory management software')
+    parser.add_argument('--simulation_mode',
+                        dest='simulation_mode',
+                        help='Wether to run in simulation mode or not',
+                        default=False,
+                        action='store_true')
+    args = parser.parse_args()
+
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
     m = Manager()
-    r = RemoteObservatoryFSM(manager=m)
+    r = RemoteObservatoryFSM(manager=m, simulation_mode=args.simulation_mode)
     r.initialize()
     r.run()

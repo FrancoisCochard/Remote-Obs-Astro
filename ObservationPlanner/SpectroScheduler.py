@@ -9,7 +9,6 @@ from astropy.coordinates import SkyCoord
 
 # Astrophysical informations
 from astroquery.simbad import Simbad
-from astroquery.mpc import MPC
 
 # Astroplan stuff
 from astroplan import FixedTarget
@@ -116,7 +115,10 @@ class SpectroScheduler(Scheduler):
             spinfo["MAIN_ID"] = CDS['MAIN_ID'][0]
             spinfo["OTYPE"] = CDS['OTYPE'][0]
             spinfo["OTYPES"] = CDS['OTYPES'][0]
-            spinfo["OTYPE_COMMENT"] = otypes[spinfo["OTYPE"]]
+            try:
+                spinfo["OTYPE_COMMENT"] = otypes[spinfo["OTYPE"]]
+            except KeyError:
+                spinfo["OTYPE_COMMENT"] = ""
             spinfo["SP_TYPE"] = CDS['SP_TYPE'][0]
             spinfo["RVZ_RADVEL"] = float(CDS['RVZ_RADVEL'][0])
             spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0])
@@ -134,13 +136,12 @@ class SpectroScheduler(Scheduler):
                     target = FixedTarget(name=target_name.replace(" ", ""),
                                          coord=coord)
                 except:
-                    raise RuntimeError("SpectroScheduler: did not managed to "
-                                       "define target {target_name}")
+                    raise RuntimeError(f"SpectroScheduler: did not managed to define target {target_name}")
         return target, spinfo
 
     def get_best_reference_target(self, observation):
         ob = observation.observing_block
-        maxseparation = 5 * u.deg
+        maxseparation = 15 * u.deg
         maxebv = 1
         altaz_frame = AltAz(obstime=self.serv_time.get_astropy_time_from_utc(),
                             location=self.obs.getAstropyEarthLocation())
@@ -160,10 +161,12 @@ class SpectroScheduler(Scheduler):
         count = config["count"]
         temperature = config["temperature"]
         gain = config["gain"]
+        offset = config["offset"]
         exp_time_sec = config["exp_time_sec"] * u.second
         configuration = {
             'temperature': temperature,
             'gain': gain,
+            'offset': offset,
             'spinfo': spinfo
         }
         exp_set_size = count
@@ -202,10 +205,12 @@ class SpectroScheduler(Scheduler):
             count = config["count"]
             temperature = config["temperature"]
             gain = config["gain"]
+            offset = config["offset"]
             exp_time_sec = config["exp_time_sec"] * u.second
             configuration = {
                 'temperature': temperature,
                 'gain': gain,
+                'offset': offset,
                 'spinfo': spinfo
             }
             # TODO TN retrieve priority from the file ?
@@ -244,7 +249,6 @@ class SpectroScheduler(Scheduler):
         try:
             observation = SpectralObservation(
                 observing_block=observing_block,
-                exp_set_size=exp_set_size,
                 is_reference_observation=is_reference_observation)
         except Exception as e:
             self.logger.warning(f"Cannot add  observing_block: "
@@ -289,7 +293,7 @@ class SpectroScheduler(Scheduler):
             time = self.serv_time.get_astropy_time_from_utc()  # get_utc()
 
         # dictionary where key is obs key and value is priority (aka merit)
-        valid_obs = {obs: 1.0 for obs in self.observations}
+        valid_obs = {obs: 1.0 for obs, obs_def in self.observations.items() if not obs_def.is_done}
         best_obs = []
 
         observer = self.obs.getAstroplanObserver()
@@ -324,21 +328,21 @@ class SpectroScheduler(Scheduler):
             # Sort the list by highest score (reverse puts in correct order)
             best_obs = sorted(valid_obs.items(), key=lambda x: x[1])[::-1]
 
-            # Check new best against current_observation
-            if (self.current_observation is not None and
-                    best_obs[0][0] != self.current_observation.id):
-
-                # Favor the current observation if still doable
-                end_of_next_set = time + self.current_observation.set_duration
-                if self.observation_available(
-                        self.current_observation,
-                        Time([time, end_of_next_set])):
-
-                    # If current is better or equal to top, add it to bestof
-                    # but no need to update current_observation
-                    if self.current_observation.merit >= best_obs[0][1]:
-                        best_obs.insert(0, (self.current_observation.id,
-                                            self.current_observation.merit))
+            # # Check new best against current_observation
+            # if (self.current_observation is not None and
+            #         best_obs[0][0] != self.current_observation.id):
+            #
+            #     # Favor the current observation if still doable
+            #     end_of_next_set = time + self.current_observation.set_duration
+            #     if self.observation_available(
+            #             self.current_observation,
+            #             Time([time, end_of_next_set])):
+            #
+            #         # If current is better or equal to top, add it to bestof
+            #         # but no need to update current_observation
+            #         if self.current_observation.merit >= best_obs[0][1]:
+            #             best_obs.insert(0, (self.current_observation.id,
+            #                                 self.current_observation.merit))
 
             self.current_observation = self.observations[best_obs[0][0]]
             self.current_observation.merit = best_obs[0][1]

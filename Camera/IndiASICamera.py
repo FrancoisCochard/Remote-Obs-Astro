@@ -20,12 +20,12 @@ class IndiASICamera(IndiAbstractCamera):
         # Always use maximum dynamic
         dyn = self.get_dynamic()
         max_dyn = self.get_maximum_dynamic()
-        if dyn != max_dyn:
+        if dyn < max_dyn:
             self.logger.warning(f"Camera {self.name} using format {self.get_current_format()} with dynamic {dyn} although it "
-                                f"is capable of {max_dyn}. Trying to set maximum bit depth")
-            self.set_switch("CCD_VIDEO_FORMAT", ["ASI_IMG_RAW16"])
-            self.logger.info(f"Now camera {self.name} has format {self.get_current_format()} allowing for dynamic "
-                             f"{self.get_dynamic()}")
+                                f"is capable of {max_dyn}.") #Trying to set maximum bit depth")
+            #self.set_switch("CCD_VIDEO_FORMAT", ["ASI_IMG_RAW16"])
+            #self.logger.info(f"Now camera {self.name} has format {self.get_current_format()} allowing for dynamic "
+            #                 f"{self.get_dynamic()}")
 
     def get_current_format(self):
         return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val == "On"]
@@ -39,3 +39,11 @@ class IndiASICamera(IndiAbstractCamera):
     def get_gain(self):
         gain = self.get_number('CCD_CONTROLS')
         return gain["Gain"]
+
+    def set_offset(self, value):
+        self.set_number('CCD_CONTROLS', {'Offset': value}, sync=True, timeout=self.defaultTimeout)
+
+    def get_offset(self):
+        offset = self.get_number('CCD_CONTROLS')
+        return offset["Offset"]
+

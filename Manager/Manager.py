@@ -27,9 +27,6 @@ from Base.Base import Base
 from helper.IndiClient import IndiClient
 
 # Local stuff: Service
-from Service.NovaAstrometryService import NovaAstrometryService
-#TODO TN TO BE FIXED
-from Service.PanMessagingZMQ import PanMessagingZMQ
 
 # Local stuff: Utils
 from utils import error
@@ -46,48 +43,18 @@ class Manager(Base):
         dates, mount, cameras, and weather station
         """
         Base.__init__(self)
-        self.logger.info('Initializing observatory manager')
 
-        # Image directory and other ios
-        self.logger.info('\tSetting up main image directory')
-        self._setup_image_directory()
+        self.cameras               = None
+        self.guider                = None
+        self.independant_services  = None
+        self.is_initialized        = False
+        self.mount                 = None
+        self.observatory           = None
+        self.serv_time             = None
+        self.serv_weather          = None
+        self.vizualization_service = None
 
-        # setup web services
-        self.logger.info('\tSetting up web services')
         self._setup_services()
-
-        # Setup physical obervatory related informations
-        self.logger.info('\tSetting up observatory')
-        self._setup_observatory()
-
-        # Setup telescope mount
-        self.logger.info('\tSetting up mount')
-        self._setup_mount()
-
-        # Setup camera(s)
-        self.logger.info('\tSetting up cameras')
-        self._setup_cameras()
-
-        # setup guider
-        self.logger.info('\tSetting up guider')
-        self._setup_guider()
-
-        # setup pointing strategy
-        self.logger.info('\tSetting up pointing strategy')
-        self._setup_pointer()
-
-        # setup pointing strategy
-        self.logger.info('\tSetting up offset pointing strategy')
-        self._setup_offset_pointer()
-
-        # Setup observation planner
-        self.logger.info('\tSetting up observation planner')
-        self._setup_scheduler()
-
-        # Setup vizualization service
-        self.logger.info('\tSetting up vizualization service')
-        self._setup_vizualization_service()
-        self.logger.info('\t Observatory initialized')
 
 ##########################################################################
 # Properties
@@ -132,22 +99,56 @@ class Manager(Base):
         self.messaging.send_message(channel, {"data": data})
 
     def initialize(self):
-        """Initialize the observatory and connected hardware """
-        self.logger.debug("Initializing mount")
-        self.mount.initialize()
-        self.observatory.initialize()
+        """Initialize the whole system, but not necessarily to start observing """
+        self.logger.info('Initializing observatory manager')
 
-    def power_down(self):
-        """Power down the observatory. Currently does nothing
-        """
-        self.logger.debug("Shutting down observatory")
-        self.mount.deinitialize()
-        self.observatory.deinitialize()
+        # Image directory and other ios
+        self.logger.info('\tSetting up main image directory')
+        self._setup_image_directory()
+
+        # Setup physical obervatory related informations
+        self.logger.info('\tSetting up observatory')
+        self._setup_observatory()
+
+        # Setup telescope mount
+        self.logger.info('\tSetting up mount')
+        self._setup_mount()
+
+        # Setup camera(s)
+        self.logger.info('\tSetting up cameras')
+        self._setup_cameras()
+
+        # setup guider
+        self.logger.info('\tSetting up guider')
+        self._setup_guider()
+
+        # setup pointing strategy
+        self.logger.info('\tSetting up pointing strategy')
+        self._setup_pointer()
+
+        # setup pointing strategy
+        self.logger.info('\tSetting up offset pointing strategy')
+        self._setup_offset_pointer()
+
+        # Setup observation planner
+        self.logger.info('\tSetting up observation planner')
+        self._setup_scheduler()
+
+        self.is_initialized = True
+
+    # def power_down(self):
+    #     """Power down the observatory. Currently does nothing
+    #     """
+    #     self.logger.debug("Shutting down observatory")
+    #     self.mount.deinitialize()
+    #     self.observatory.deinitialize()
 
     def status(self):
         """Get status information for various parts of the observatory
         """
         status = {}
+        if not self.is_initialized:
+            return status
         try:
             t = self.serv_time.get_astropy_time_from_utc()
             local_time = str(self.serv_time.get_local_time())
@@ -180,8 +181,7 @@ class Manager(Base):
 
         except Exception as e:  # pragma: no cover
             msg = f"Can't get observatory status: {e}-{traceback.format_exc()}"
-            self.logger.error(msg)
-            raise RuntimeError(msg)
+            self.logger.warning(msg)
         return status
 
     def get_observation(self, *args, **kwargs):
@@ -338,7 +338,7 @@ class Manager(Base):
 
     def slew(self):
         """Slew to current target"""
-        self.mount.set_slew_rate("3x")
+        #self.mount.set_slew_rate("3x")
         self.mount.slew_to_target()
 
     def update_tracking(self):
@@ -368,15 +368,21 @@ class Manager(Base):
             observation=observation,
             fits_headers=fits_headers)
 
+    def stop_tracking(self):
+        # Stop guiding
+        if self.guider is not None:
+            self.guider.disconnect_profile()
+
     def initialize_tracking(self):
         # start each observation by setting up the guider
         try:
             self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
                 self.logger.info("Start guiding")
-                # TODO TN
                 # if self.guiding_camera is not None:
                 #     self.guiding_camera.disable_shoot()
+                # unfortunately disable_blob is client-wide, not device wide
+                self.guider.connect_profile()
                 self.guider.guide()
                 self.logger.info("Guiding successfully started")
             return True
@@ -527,22 +533,32 @@ class Manager(Base):
 
     def unpark(self):
         try:
+            # unpark the observatory
+            self.observatory.unpark()
+
             # unpark the mount
             self.mount.unpark()
 
-            # unpark the observatory
-            self.observatory.unpark()
+            # Mount and observatory are ready, we can vizualize
+            if self.vizualization_service:
+                self.vizualization_service.start()
+
+            # unpark cameras
+            for camera_name, camera in self.cameras.items():
+                camera.unpark()
 
             # Launch guider server
             if self.guider is not None:
                 self.guider.launch_server()
                 self.guider.connect_server()
-                self.guider.connect_profile()
+                # self.guider.connect_profile()
 
             return True
         except Exception as e:
             self.logger.error(f"Problem unparking: {e}")
             return False
+    def power_down(self):
+        self.logger.info("Powering down observatory")
 
     def park(self):
         try:
@@ -550,6 +566,14 @@ class Manager(Base):
             if self.guider is not None:
                 self.guider.disconnect_profile()
                 self.guider.disconnect_server()
+
+            # parking cameras
+            for camera_name, camera in self.cameras.items():
+                camera.park()
+
+            # Mount and observatory will be shut down
+            if self.vizualization_service:
+                self.vizualization_service.stop()
 
             # park the mount
             self.mount.park()
@@ -559,8 +583,7 @@ class Manager(Base):
 
             return True
         except Exception as e:
-            self.logger.error(
-                "Problem parking: {}".format(e))
+            self.logger.error(f"Problem parking: {e}")
             return False
 
 ##########################################################################
@@ -578,6 +601,7 @@ class Manager(Base):
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()
+            self._setup_vizualization_service()
             self._setup_independant_services()
         except Exception:
             raise RuntimeError('Problem setting up services')
@@ -591,8 +615,8 @@ class Manager(Base):
             time_module = load_module('Service.'+time_name)
             self.serv_time = getattr(time_module, time_name)(
                 config=self.config['time_service'])
-        except Exception:
-            raise RuntimeError('Problem setting up time service')
+        except Exception as e:
+            raise RuntimeError(f'Problem setting up time service: {e}')
 
     def _setup_weather_service(self):
         """
@@ -638,6 +662,8 @@ class Manager(Base):
             obs_module = load_module('Observatory.'+obs_name)
             self.observatory = getattr(obs_module, obs_name)(
                 config=self.config['observatory'])
+            if self.vizualization_service:
+                self.vizualization_service.set_observatory(self.observatory.dome_controller)
         except Exception as e:
             raise RuntimeError(f"Problem setting up observatory: {e}")
 
@@ -651,7 +677,11 @@ class Manager(Base):
             self.mount = getattr(mount_module, mount_name)(
                 location=self.earth_location,
                 serv_time=self.serv_time,
-                config=self.config['mount'])
+                config=self.config['mount'],
+                connect_on_create=False
+            )
+            if self.vizualization_service:
+                self.vizualization_service.set_mount(self.mount)
         except Exception as e:
             self.logger.error(f"Cannot load mount module: {e}")
             raise error.MountNotFound(f"Problem setting up mount")
@@ -708,13 +738,14 @@ class Manager(Base):
         def setup_cameras():
             try:
                 for cam_config in self.config["cameras"]:
+                    self.logger.debug(f"Setting up camera with config {cam_config}")
                     cam_name = cam_config['module']
                     cam_module = load_module('Camera.'+cam_name)
                     cam = getattr(cam_module, cam_name)(
                         serv_time=self.serv_time,
                         config=cam_config,
-                        connect_on_create=True)
-                    cam.prepare_shoot()
+                        connect_on_create=False)
+                    #cam.prepare_shoot()
                     self.cameras[cam.name] = cam
             except Exception as e:
                 raise RuntimeError(f"Problem setting up camera: {e}")
@@ -742,7 +773,7 @@ class Manager(Base):
                 self.logger.info("Initializing guider")
                 self.guider.launch_server()
                 self.guider.connect_server()
-                self.guider.connect_profile()
+                # self.guider.connect_profile()
         except Exception as e:
             raise RuntimeError(f"Problem setting up guider: {e}")
 
@@ -812,14 +843,19 @@ class Manager(Base):
         """
 
         try:
+            mount_device = self.mount
+            try:
+                observatory_device = self.observatory.dome_controller
+            except Exception as e:
+                observatory_device = None
+
             if 'vizualization_service' in self.config:
                 viz_name = self.config['vizualization_service']['module']
                 viz_module = load_module(f"Service.{viz_name}")
                 self.vizualization_service = getattr(viz_module, viz_name)(
                     config=self.config['vizualization_service'],
-                    mount_device=self.mount,
-                    observatory_device=self.observatory.dome_controller)
-                self.vizualization_service.start()
+                    mount_device=mount_device,
+                    observatory_device=observatory_device)
         except Exception as e:
             # No need to stop everything just for this service
             self.logger.error(f"Problem setting up vizualization_service: {e}")

@@ -4,10 +4,12 @@ import concurrent
 import logging
 import threading
 #from transitions.extensions import LockedMachine
-import weakref
+#import weakref
 
 # Indi stuff
 from helper.client import INDIClient
+from helper.IndiWebManagerClient import IndiWebManagerClient, IndiWebManagerDummy
+from utils.error import IndiClientPredicateTimeoutError
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -75,6 +77,10 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
                             port=config["indi_port"])
         logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
 
+        self.indi_webmanager_client = IndiWebManagerDummy()
+        if "indi_webmanager" in config:
+            self.indi_webmanager_client = IndiWebManagerClient(config["indi_webmanager"])
+
         # Start the main ioloop that will serve all async task in another (single) thread
         self.device_subscriptions = {} # dict of device_name: coroutines
         self.ioloop = asyncio.new_event_loop()
@@ -91,6 +97,8 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.running = False
         # Now wait until the main connection loop (also running in ioloop) is over
         #self.communication_over_event.wait()
+
+        # TODO TN THIS IS QUITE EXPERIMENTAL (runinng stop in its own loop...)
         remaining_tasks = asyncio.all_tasks(loop=self.ioloop)
         while remaining_tasks:
             future = asyncio.run_coroutine_threadsafe(asyncio.wait(remaining_tasks, return_when=asyncio.ALL_COMPLETED), self.ioloop)
@@ -98,6 +106,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             remaining_tasks = asyncio.all_tasks(loop=self.ioloop)
         # We need to force stop the ioloop that has been started with run_forever
         self.ioloop.call_soon_threadsafe(self.ioloop.stop)
+
         #self.ioloop.run_until_complete(self.ioloop.shutdown_asyncgens())
         # self.ioloop.close()
         # The thread whose only work was to run the ioloop forever should properly terminate
@@ -130,9 +139,9 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         try:
             assert (future.result(timeout) is True)
         except concurrent.futures.TimeoutError:
-            logger.error(f"Waiting for predicate {predicate_checker} took too long...")
+            msg = f"Waiting for predicate {predicate_checker} took too long..."
             future.cancel()
-            raise RuntimeError
+            raise IndiClientPredicateTimeoutError(msg)
         except Exception as exc:
             logger.error(f"Error while trying to wait for predicate: {exc!r}")
             raise RuntimeError
@@ -145,18 +154,19 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         if (not self.client_connecting) and (not self.running):
             self.client_connecting = True
             asyncio.run_coroutine_threadsafe(self.connect(timeout=timeout), self.ioloop)
-
         if sync:
             future = asyncio.run_coroutine_threadsafe(self.wait_running(), self.ioloop)
             try:
                 assert (future.result(timeout) is True)
             except concurrent.futures.TimeoutError:
-                logger.error("Setting up running state took too long...")
+                msg = "Setting up running state took too long..."
+                logger.error(msg)
                 future.cancel()
-                raise RuntimeError
+                raise RuntimeError(msg)
             except Exception as exc:
-                logger.error(f"Error while trying to connect client: {exc!r}")
-                raise RuntimeError
+                msg = f"Error while trying to connect client: {exc!r}"
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     def trigger_get_properties(self):
         self.xml_to_indiserver("<getProperties version='1.7'/>")
@@ -194,7 +204,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         :return:
         """
         # This is way too verbose, even in debug mode
-        #logger.debug(f"IndiClient just received data {data}")
+        # print(f"IndiClient just received data {data}")
         for sub in self.device_subscriptions.values():
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
         await asyncio.sleep(0.01)

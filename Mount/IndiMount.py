@@ -49,11 +49,14 @@ class IndiMount(IndiDevice):
         assert (config is not None) and (type(config) == dict), ("Please provide "
             "config as dictionary, with mount_name")
         device_name = config['mount_name']
+        indi_driver_name = config.get('indi_driver_name', None)
+
         logging.debug(f"Indi Mount, mount name is: {device_name}")
 
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
+                            indi_driver_name=indi_driver_name,
                             indi_client_config=config["indi_client"])
 
         try:
@@ -65,7 +68,7 @@ class IndiMount(IndiDevice):
             self.gps = None
 
         if connect_on_create:
-            self.connect()
+            self.connect(connect_device=True)
 
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
@@ -151,10 +154,10 @@ class IndiMount(IndiDevice):
         :return:
         """
         self.logger.debug('Slewing to Park')
-        self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180)
+        self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180) #It can take some time to park a mount
 
     def unpark(self):
-        self.logger.debug('unpark')
+        self.logger.debug('Unparking with indi mount semantic')
         self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=self.defaultTimeout)
 
     def get_guide_rate(self):
@@ -275,7 +278,7 @@ class IndiMount(IndiDevice):
     @property
     def is_parked(self):
         status = self.get_switch('TELESCOPE_PARK')
-        self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
+        self.logger.debug(f'Got TELESCOPE_PARK status: {status}')
         if status['PARK'] == 'On':
             ret = True
         else:
@@ -303,7 +306,8 @@ class IndiMount(IndiDevice):
                        frame=fk5_now,
                        obstime=Time.now())
         icrs_j2k = ICRS()
-        self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
+        # This was too verbose
+        #self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
         ret = ret.transform_to(icrs_j2k)
 
         # ret = SkyCoord(ra=rahour_decdeg['RA'] * u.hourangle,

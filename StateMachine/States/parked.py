@@ -19,23 +19,21 @@ def on_enter(event_data):
             model.say(f"Cleaning up for the night")
             model.next_state = 'housekeeping'
     else:
-        model.say("No observations found.")
         # TODO Should check if we are close to morning and if so do some morning
         # calibration frames rather than just waiting for 30 minutes then
         # shutting down.
-        model.say(f"Going to stay parked for half an hour then will try again.")
+        model.say(f"No observations found, going to stay parked for half an hour then will try again.")
 
         while True:
             model.sleep(delay=1800)  # 30 minutes = 1800 seconds
-
             # We might have shutdown during previous sleep.
             if not model.connected:
                 break
-            elif model.is_safe():
+            elif model.is_safe() and not model.is_simulation():
                 model.reset_observing_run()
                 model.next_state = 'ready'
                 break
-            elif model.is_dark() is False:
+            elif model.is_dark() is False or model.is_simulation():
                 model.logger.debug(f"Looks like it is not dark anymore. Going to clean up.")
                 model.next_state = 'housekeeping'
                 break

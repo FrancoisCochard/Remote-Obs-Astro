@@ -1,0 +1,378 @@
+name: Remote observatory
+observatory:
+    module: Observatory
+    investigator: gnthibault
+    latitude: 43.934807501800606 # Degrees
+    longitude: 5.710652100000001 # Degrees
+    elevation: 650.0 # Meters
+    timezone: Europe/Paris #This is not mandatory, just speeds up startup
+    # UTC+1 CET Central European Time,
+    # UTC +2  CEST Central European Summer Time
+    utc_offset: 1 # Hours
+    horizon: # Degrees
+        0 : 20
+        90 : 20
+        180 : 20
+        270 : 20
+    max_altitude_degree: 60
+    twilight_horizon: -18 # Degrees
+    timezone: Europe/Paris
+    # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
+    # Greenwich Mean Time ( GMT+1 ).
+    gmt_offset: 60 # Minutes
+#    webcam:
+#        rtsp_url: rtsp://user:password@192.168.0.16
+    scope_controller:
+        module: AggregatedCustomScopeController
+        config_arduino:
+            device_name: Arduino telescope controller
+            device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0
+            connection_type: CONNECTION_SERIAL
+            baud_rate: 57600
+            polling_ms: 1000
+            indi_client:
+                indi_host: localhost
+                indi_port: 7625
+        config_upbv2:
+            device_name: Pegasus UPB
+            device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+            connection_type: CONNECTION_SERIAL
+            baud_rate: 9600
+            polling_ms: 1000
+            dustcap_travel_delay_s: 10
+            adjustable_voltage_value: 5
+            power_labels:
+                POWER_LABEL_1: MAIN_TELESCOPE_DUSTCAP_CONTROL
+                POWER_LABEL_2: SPOX_AND_DUSTCAP_POWER
+                POWER_LABEL_3: MAIN_CAMERA_POWER
+                POWER_LABEL_4: MOUNT_POWER
+            always_on_power_identifiers:
+                MAIN_TELESCOPE_DUSTCAP_CONTROL: True
+                SPOX_AND_DUSTCAP_POWER: False
+                MAIN_CAMERA_POWER: False
+                MOUNT_POWER: False
+            usb_labels:
+                USB_LABEL_1: FIELD_CAMERA
+                USB_LABEL_2: PRIMARY_CAMERA
+                USB_LABEL_3: SPECTRO_CONTROL_BOX
+                USB_LABEL_4: ARDUINO_CONTROL_BOX
+                USB_LABEL_5: WIFI_ROUTER
+                USB_LABEL_6: GUIDE_CAMERA
+            always_on_usb_identifiers:
+                FIELD_CAMERA: False
+                PRIMARY_CAMERA: False
+                SPECTRO_CONTROL_BOX: False
+                ARDUINO_CONTROL_BOX: False
+                WIFI_ROUTER: True,
+                GUIDE_CAMERA: False
+            dew_labels:
+                DEW_LABEL_1: PRIMARY_FAN
+                DEW_LABEL_2: SECONDARY_DEW_HEATER
+                DEW_LABEL_3: FINDER_DEW_HEATER
+            auto_dew_identifiers:
+                PRIMARY_FAN: False
+                SECONDARY_DEW_HEATER: True
+                FINDER_DEW_HEATER: True
+            auto_dew_aggressivity: 150 # Number between 50 and 250
+            indi_client:
+                indi_host: localhost
+                indi_port: 7625
+        indi_driver_connect_delay_s: 5
+        indi_resetable_instruments_driver_map:
+            ZWO CCD: ZWO CCD ASI290MM Mini
+            Altair: Altair AA183MPRO
+            Shelyak SPOX: Shelyak SPOX
+            PlayerOne CCD: PlayerOne CCD Ares-M PRO
+            Arduino telescope controller: Arduino
+        indi_mount_driver_name: Losmandy Gemini
+        indi_mount_device_name: Losmandy Gemini
+        indi_webserver_host: localhost
+        indi_webserver_port: 8624
+        indi_client: #TODO TN urgent
+            indi_host: localhost
+            indi_port: 7625
+    dome_controller:
+        module : IndiDomeController
+        dome_movement_timeout_s: 300
+        dome_name: Dome Simulator
+        indi_client :
+            indi_host : localhost
+            indi_port : 7625
+directories:
+    base: /var/RemoteObservatory
+    images: images
+    webcam: webcams
+    data: data
+    resources: resources/
+    targets: resources/targets
+    mounts: resources/mounts
+db: 
+    name: /var/RemoteObservatory/DB
+    type: file
+ntp:
+    ntpserver: time.google.com
+scheduler:
+    # module: DefaultScheduler
+    module: SpectroScheduler
+    # target_file: targets.yaml
+    target_file: spectral_targets.yaml
+spectroscope_controller:
+    module: IndiSpectroController
+calibration:
+    #module: ImagingCalibration
+    module: SpectralCalibration
+    spectral_calib:
+        nb: 5
+        sec: 30
+        gain: 150
+        offset: 30
+        temperature: -10
+    flat:
+        nb: 10
+        sec: 5
+        gain: 150
+        offset: 30
+        temperature: -10
+    dark:
+        dark_nb: 10
+    controller:
+        module: IndiSpectroController
+        device_name: Shelyak Spox
+        port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0
+        indi_client :
+            indi_host : localhost
+            indi_port : 7625
+mount:
+    module: IndiG11
+    mount_name: Losmandy Gemini
+    equatorial_eod: J2000 # JNOW
+    tcp_host: 192.168.8.63
+    tcp_port: 11110
+cameras:
+    -
+        module: IndiASICamera290MMMini
+        camera_name : ZWO CCD ASI290MM Mini
+        do_acquisition: false
+        SCOPE_INFO: # 200/800 newtonian
+            FOCAL_LENGTH: 800
+            APERTURE: 200
+        sampling_arcsec: 0.88
+        do_guiding: true
+        do_pointing: true
+        pointing_seconds: 30
+        do_adjust_pointing: true
+        adjust_center_x: 877
+        adjust_center_y: 637
+        adjust_roi_search_size: 50
+        adjust_pointing_seconds: 40
+        do_autofocus: false
+        autofocus_seconds: 4
+        autofocus_roi_size : 750
+        autofocus_merit_function: half_flux_radius
+        indi_client :
+            indi_host : localhost
+            indi_port : 7627
+            #use_unique_client: True
+            indi_webmanager:
+                module: IndiWebManagerClient
+                master_host: localhost
+                master_port: 8624
+                host: localhost
+                port: 8627
+                profile_name: zwo_guiding
+    -
+        module: IndiPlayerOneCamera
+        camera_name : PlayerOne CCD Ares-M PRO
+        indi_driver_name: PlayerOne CCD
+        do_acquisition: true
+        working_temperature: 10
+        SCOPE_INFO: # 200/800 newtonian
+            FOCAL_LENGTH: 800
+            APERTURE: 200
+        sampling_arcsec: 0.97
+        do_guiding: false
+        do_pointing: false
+        pointing_seconds: 5
+        do_adjust_pointing: true
+        adjust_center_x: 400
+        adjust_center_y: 400
+        adjust_roi_search_size: 50
+        adjust_pointing_seconds: 5
+        do_autofocus: false
+        autofocus_seconds: 5
+        autofocus_roi_size : 750
+        autofocus_merit_function : half_flux_radius #vollath_F4
+        #focuser:
+        #    module: IndiFocuser
+        #    focuser_name: Focuser Simulator
+        #    port: /dev/ttyUSB0
+        #    focus_range:
+        #        min: 32500
+        #        max: 40000
+        #    autofocus_step:
+        #        fine: 750
+        #        coarse: 2500
+        #    autofocus_range:
+        #        fine: 10000
+        #        coarse: 30000
+        #    indi_client:
+        #        indi_host: localhost
+        #        indi_port: 7625
+        #do_filter_wheel: false
+        #filter_wheel:
+        #    module: IndiFilterWheel
+        #    filterwheel_name: Filter Simulator
+        #    filter_list:
+        #        Luminance: 1
+        #        Red: 2
+        #        Green: 3
+        #        Blue: 4
+        #        H_Alpha: 5
+        #        OIII: 6
+        #        SII: 7
+        #        LPR: 8
+        #    indi_client:
+        #        indi_host: localhost
+        #        indi_port: 7625
+        indi_client :
+            indi_host : localhost
+            indi_port : 7626
+            indi_webmanager: #"PlayerOne CCD Ares-M PRO"@localhost:7626
+                module: IndiWebManagerClient
+                master_host: localhost
+                master_port: 8624
+                host: localhost
+                port: 8626
+                profile_name: playerone_science
+
+    - module: IndiAltairCameraNonCool
+      camera_name: Altair AA183MPRO
+      do_acquisition: false
+      SCOPE_INFO: # 50/242 evoguide
+          FOCAL_LENGTH: 242
+          APERTURE: 50
+      sampling_arcsec: 1.88
+      subsample_astrometry: 4
+      do_guiding: false
+      do_pointing: true
+      pointing_seconds: 10
+      do_adjust_pointing: false
+      adjust_center_x: 400
+      adjust_center_y: 400
+      adjust_roi_search_size: 50
+      adjust_pointing_seconds: 5
+      do_autofocus: false
+      autofocus_seconds: 5
+      autofocus_roi_size: 750
+      autofocus_merit_function: half_flux_radius #vollath_F4
+      indi_client:
+          indi_host: localhost
+          indi_port: 7628
+      indi_webmanager:
+          module: IndiWebManagerClient
+          master_host: localhost
+          master_port: 8624
+          host: localhost
+          port: 8628
+          profile_name: altair_pointing
+pointer:
+    module: IterativeSync #DifferentialPointer #IterativeSync
+    gen_hips: False
+    timeout_seconds: 900
+    max_iterations: 10
+    max_pointing_error_seconds: 10
+offset_pointer:
+    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleOffsetPointer
+    timeout_seconds: 300
+    max_identification_error_seconds: 1
+    sync_mount_upon_solve: True
+    use_guider_adjust: True
+    on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
+guider:
+    module : GuiderPHD2
+    host : 127.0.0.1
+    port : 4400
+    do_calibration : False
+    profile_name : backyard
+    exposure_time_sec : 8
+    settle :
+        pixels : 3
+        time : 10
+        timeout : 300
+    dither :
+        pixels : 0.0
+        ra_only : False
+weather_service :
+    #module : IndiOpenWeatherMap
+    #service_name: OpenWeatherMap
+    module : IndiWeather
+    service_name : Weather Simulator
+    key_path : /var/RemoteObservatory/keys.json
+    delay_sec : 10
+    observatory:
+        latitude: 43.934807501800606 # Degrees
+        longitude: 5.710652100000001 # Degrees
+        elevation: 650.0 # Meters
+    limits :
+        MAX_WEATHER_WIND_SPEED_KPH : 25
+        MAX_WEATHER_WIND_GUST_KPH : 30
+        MAX_WEATHER_CLOUD_COVER : 5
+    indi_client :
+        indi_host : localhost
+        indi_port : 7625
+vizualization_service:
+        module: SceneVizualization
+        delay_sky_update_s: 1
+        delay_moving_objects_s: 0.05
+        show_stars: False
+        gps_coord:
+            latitude: 43.934807501800606 # Degrees
+            longitude: 5.710652100000001 # Degrees
+time_service :
+    module : HostTimeService
+messaging_publisher:
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: publisher
+    msg_port: 6510
+messaging_subscriber:
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: subscriber
+    cmd_port: 6500
+paws_subscriber:
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: subscriber
+    cmd_port: 6511
+paws_publisher:
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: publisher
+    msg_port: 6500
+#independant_services:
+#    -
+#        module: NasaGCNService
+#        delay_sec: 60
+## If not provided, sourced from env NASA_GCN_CLIENT_ID and NASA_GCN_CLIENT_SECRET
+##        client_info:
+##            client_id:
+##            client_secret:
+#        messaging_publisher:
+#            module: PanMessagingMQTT
+#            mqtt_host: localhost
+#            mqtt_port: 1883
+#            com_mode: publisher
+
+#Enable to output POCS messages to social accounts
+# social_accounts:
+#     twitter:
+#         consumer_key: [your_consumer_key]
+#         consumer_secret: [your_consumer_secret]
+#         access_token: [your_access_token]
+#         access_token_secret: [your_access_token_secret]
+state_machine: simple_state_table.yaml

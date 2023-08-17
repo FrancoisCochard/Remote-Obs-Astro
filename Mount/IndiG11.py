@@ -1,4 +1,10 @@
-#local
+# Astropy
+import time
+
+import astropy.units as u
+
+# local
+from Mount.IndiMount import IndiMount
 from Mount.IndiAbstractMount import IndiAbstractMount
 
 class IndiG11(IndiAbstractMount):
@@ -75,26 +81,210 @@ class IndiG11(IndiAbstractMount):
      Related to meridian flip:
      https://indilib.org/forum/mounts/3550-losmandy-gemini-2-auto-meridian-flip-in-ekos.html
      https://www.indilib.org/forum/mounts/7946-losmandy-g-11-and-gemini-ii-and-merdian-flips.html
+
+     Losmandy Gemini.CONNECTION.CONNECT=On
+    Losmandy Gemini.CONNECTION.DISCONNECT=Off
+    Losmandy Gemini.DRIVER_INFO.DRIVER_NAME=Losmandy Gemini
+    Losmandy Gemini.DRIVER_INFO.DRIVER_EXEC=indi_lx200gemini
+    Losmandy Gemini.DRIVER_INFO.DRIVER_VERSION=1.6
+    Losmandy Gemini.DRIVER_INFO.DRIVER_INTERFACE=5
+    Losmandy Gemini.POLLING_PERIOD.PERIOD_MS=1000
+    Losmandy Gemini.DEBUG.ENABLE=Off
+    Losmandy Gemini.DEBUG.DISABLE=On
+    Losmandy Gemini.SIMULATION.ENABLE=Off
+    Losmandy Gemini.SIMULATION.DISABLE=On
+    Losmandy Gemini.CONFIG_PROCESS.CONFIG_LOAD=Off
+    Losmandy Gemini.CONFIG_PROCESS.CONFIG_SAVE=Off
+    Losmandy Gemini.CONFIG_PROCESS.CONFIG_DEFAULT=Off
+    Losmandy Gemini.CONFIG_PROCESS.CONFIG_PURGE=Off
+    Losmandy Gemini.CONNECTION_MODE.CONNECTION_SERIAL=Off
+    Losmandy Gemini.CONNECTION_MODE.CONNECTION_TCP=On
+    Losmandy Gemini.DEVICE_ADDRESS.ADDRESS=192.168.8.63
+    Losmandy Gemini.DEVICE_ADDRESS.PORT=11110
+    Losmandy Gemini.CONNECTION_TYPE.TCP=Off
+    Losmandy Gemini.CONNECTION_TYPE.UDP=On
+    Losmandy Gemini.DEVICE_LAN_SEARCH.INDI_ENABLED=Off
+    Losmandy Gemini.DEVICE_LAN_SEARCH.INDI_DISABLED=On
+    Losmandy Gemini.ACTIVE_DEVICES.ACTIVE_GPS=GPS Simulator
+    Losmandy Gemini.ACTIVE_DEVICES.ACTIVE_DOME=Dome Simulator
+    Losmandy Gemini.DOME_POLICY.DOME_IGNORED=On
+    Losmandy Gemini.DOME_POLICY.DOME_LOCKS=Off
+    Losmandy Gemini.TELESCOPE_INFO.TELESCOPE_APERTURE=200
+    Losmandy Gemini.TELESCOPE_INFO.TELESCOPE_FOCAL_LENGTH=800
+    Losmandy Gemini.TELESCOPE_INFO.GUIDER_APERTURE=200
+    Losmandy Gemini.TELESCOPE_INFO.GUIDER_FOCAL_LENGTH=800
+    Losmandy Gemini.SCOPE_CONFIG_NAME.SCOPE_CONFIG_NAME=
+    Losmandy Gemini.STARTUP_MODE.COLD_START=On
+    Losmandy Gemini.STARTUP_MODE.WARM_START=Off
+    Losmandy Gemini.STARTUP_MODE.WARM_RESTART=Off
+    Losmandy Gemini.ON_COORD_SET.TRACK=On
+    Losmandy Gemini.ON_COORD_SET.SLEW=Off
+    Losmandy Gemini.ON_COORD_SET.SYNC=Off
+    Losmandy Gemini.ON_COORD_SET.FLIP=Off
+    Losmandy Gemini.EQUATORIAL_EOD_COORD.RA=8.0608333333333348492
+    Losmandy Gemini.EQUATORIAL_EOD_COORD.DEC=85.342777777777769188
+    Losmandy Gemini.TELESCOPE_ABORT_MOTION.ABORT=Off
+    Losmandy Gemini.TELESCOPE_TRACK_MODE.TRACK_SIDEREAL=On
+    Losmandy Gemini.TELESCOPE_TRACK_MODE.TRACK_CUSTOM=Off
+    Losmandy Gemini.TELESCOPE_TRACK_MODE.TRACK_LUNAR=Off
+    Losmandy Gemini.TELESCOPE_TRACK_MODE.TRACK_SOLAR=Off
+    Losmandy Gemini.TELESCOPE_TRACK_STATE.TRACK_ON=On
+    Losmandy Gemini.TELESCOPE_TRACK_STATE.TRACK_OFF=Off
+    Losmandy Gemini.TELESCOPE_MOTION_NS.MOTION_NORTH=Off
+    Losmandy Gemini.TELESCOPE_MOTION_NS.MOTION_SOUTH=Off
+    Losmandy Gemini.TELESCOPE_MOTION_WE.MOTION_WEST=Off
+    Losmandy Gemini.TELESCOPE_MOTION_WE.MOTION_EAST=Off
+    Losmandy Gemini.TELESCOPE_REVERSE_MOTION.REVERSE_NS=Off
+    Losmandy Gemini.TELESCOPE_REVERSE_MOTION.REVERSE_WE=Off
+    Losmandy Gemini.TELESCOPE_SLEW_RATE.1x=Off
+    Losmandy Gemini.TELESCOPE_SLEW_RATE.2x=Off
+    Losmandy Gemini.TELESCOPE_SLEW_RATE.3x=On
+    Losmandy Gemini.TELESCOPE_SLEW_RATE.4x=Off
+    Losmandy Gemini.TARGET_EOD_COORD.RA=8.0608333333333348492
+    Losmandy Gemini.TARGET_EOD_COORD.DEC=87.213611111111120522
+    Losmandy Gemini.TIME_UTC.UTC=2023-07-28T22:17:12
+    Losmandy Gemini.TIME_UTC.OFFSET=2
+    Losmandy Gemini.GEOGRAPHIC_COORD.LAT=46.233055555555559124
+    Losmandy Gemini.GEOGRAPHIC_COORD.LONG=6.0666666666666664298
+    Losmandy Gemini.GEOGRAPHIC_COORD.ELEV=418.04998799999998482
+    Losmandy Gemini.TELESCOPE_PARK.PARK=Off
+    Losmandy Gemini.TELESCOPE_PARK.UNPARK=On
+    Losmandy Gemini.TELESCOPE_PIER_SIDE.PIER_WEST=Off
+    Losmandy Gemini.TELESCOPE_PIER_SIDE.PIER_EAST=On
+    Losmandy Gemini.PEC.PEC OFF=On
+    Losmandy Gemini.PEC.PEC ON=Off
+    Losmandy Gemini.APPLY_SCOPE_CONFIG.SCOPE_CONFIG1=On
+    Losmandy Gemini.APPLY_SCOPE_CONFIG.SCOPE_CONFIG2=Off
+    Losmandy Gemini.APPLY_SCOPE_CONFIG.SCOPE_CONFIG3=Off
+    Losmandy Gemini.APPLY_SCOPE_CONFIG.SCOPE_CONFIG4=Off
+    Losmandy Gemini.APPLY_SCOPE_CONFIG.SCOPE_CONFIG5=Off
+    Losmandy Gemini.APPLY_SCOPE_CONFIG.SCOPE_CONFIG6=Off
+    Losmandy Gemini.USEJOYSTICK.ENABLE=Off
+    Losmandy Gemini.USEJOYSTICK.DISABLE=On
+    Losmandy Gemini.SNOOP_JOYSTICK.SNOOP_JOYSTICK_DEVICE=Joystick
+    Losmandy Gemini.Use Pulse Cmd.Off=Off
+    Losmandy Gemini.Use Pulse Cmd.On=On
+    Losmandy Gemini.Sites.Site 1=On
+    Losmandy Gemini.Sites.Site 2=Off
+    Losmandy Gemini.Sites.Site 3=Off
+    Losmandy Gemini.Sites.Site 4=Off
+    Losmandy Gemini.Site Name.Name=Hollywood
+    Losmandy Gemini.TELESCOPE_TIMED_GUIDE_NS.TIMED_GUIDE_N=0
+    Losmandy Gemini.TELESCOPE_TIMED_GUIDE_NS.TIMED_GUIDE_S=0
+    Losmandy Gemini.TELESCOPE_TIMED_GUIDE_WE.TIMED_GUIDE_W=0
+    Losmandy Gemini.TELESCOPE_TIMED_GUIDE_WE.TIMED_GUIDE_E=0
+    Losmandy Gemini.Firmware Info.Build Date=Mar 12 2017
+    Losmandy Gemini.Firmware Info.Build Time=08:22:00
+    Losmandy Gemini.Firmware Info.Software Level=5.21
+    Losmandy Gemini.Firmware Info.Product Name=Losmandy Gemini
+    Losmandy Gemini.Firmware Info.=
+    Losmandy Gemini.PARK_SETTINGS.HOME=On
+    Losmandy Gemini.PARK_SETTINGS.STARTUP=Off
+    Losmandy Gemini.PARK_SETTINGS.ZENITH=Off
+    Losmandy Gemini.ENABLE_PEC_AT_BOOT.ENABLE_PEC_AT_BOOT=On
+    Losmandy Gemini.PEC_GUIDING_SPEED.PEC_GUIDING_SPEED=0.5
+    Losmandy Gemini.PEC_COMMANDS.PEC_START_TRAINING=Off
+    Losmandy Gemini.PEC_COMMANDS.PEC_ABORT_TRAINING=Off
+    Losmandy Gemini.PEC_COUNTER.PEC_COUNTER=318
+    Losmandy Gemini.PEC_MAX_STEPS.PEC_MAX_STEPS=6400
+    Losmandy Gemini.PEC_STATE.PEC_STATUS_ACTIVE=No
+    Losmandy Gemini.PEC_STATE.PEC_STATUS_FRESH_TRAINED=No
+    Losmandy Gemini.PEC_STATE.PEC_STATUS_TRAINING_IN_PROGRESS=No
+    Losmandy Gemini.PEC_STATE.PEC_STATUS_TRAINING_COMPLETED=No
+    Losmandy Gemini.PEC_STATE.PEC_STATUS_WILL_TRAIN=No
+    Losmandy Gemini.PEC_STATE.PEC_STATUS_DATA_AVAILABLE=No
+    Losmandy Gemini.SET_CURR_SAFETY.SET_SAFETY=Off
+    Losmandy Gemini.SAFETY_LIMITS.EAST_SAFTEY=114
+    Losmandy Gemini.SAFETY_LIMITS.WEST_SAFTEY=123
+    Losmandy Gemini.SAFETY_LIMITS.WEST_GOTO=2.5
+    Losmandy Gemini.MANUAL_SLEWING_SPEED.MANUAL_SLEWING_SPEED=800
+    Losmandy Gemini.GOTO_SLEWING_SPEED.GOTO_SLEWING_SPEED=800
+    Losmandy Gemini.MOVE_SLEWING_SPEED.MOVE_SPEED=500
+    Losmandy Gemini.GUIDING_SLEWING_SPEED_BOTH.GUIDING_SPEED=0.5
+    Losmandy Gemini.GUIDE_RATE.GUIDE_RATE_WE=0.5
+    Losmandy Gemini.GUIDE_RATE.GUIDE_RATE_NS=0.5
+    Losmandy Gemini.CENTERING_SLEWING_SPEED.CENTERING_SPEED=20
+    Losmandy Gemini.ACTIVE_DEVICES.ACTIVE_GPS=GPS Simulator
+    Losmandy Gemini.ACTIVE_DEVICES.ACTIVE_DOME=Dome Simulator
+    Losmandy Gemini.DOME_POLICY.DOME_IGNORED=On
+    Losmandy Gemini.DOME_POLICY.DOME_LOCKS=Off
+    Losmandy Gemini.TELESCOPE_INFO.TELESCOPE_APERTURE=200
+    Losmandy Gemini.TELESCOPE_INFO.TELESCOPE_FOCAL_LENGTH=800
+    Losmandy Gemini.TELESCOPE_INFO.GUIDER_APERTURE=200
+    Losmandy Gemini.TELESCOPE_INFO.GUIDER_FOCAL_LENGTH=800
+    Losmandy Gemini.SCOPE_CONFIG_NAME.SCOPE_CONFIG_NAME=
+    Losmandy Gemini.USEJOYSTICK.ENABLE=Off
+    Losmandy Gemini.USEJOYSTICK.DISABLE=On
+    Losmandy Gemini.SNOOP_JOYSTICK.SNOOP_JOYSTICK_DEVICE=Joystick
+    Losmandy Gemini.STARTUP_MODE.COLD_START=On
+    Losmandy Gemini.STARTUP_MODE.WARM_START=Off
+    Losmandy Gemini.STARTUP_MODE.WARM_RESTART=Off
     """
     
-    def __init__(self, indi_client, location, serv_time, config):
+    def __init__(self, location, serv_time, config, connect_on_create=False):
 
         if config is None:
-            config = dict(mount_name="Losmandy Gemini")
+            config = dict(
+                module="IndiG11",
+                mount_name="Losmandy Gemini",
+                equatorial_eod="J2000",  # JNOW
+                tcp_host="192.168.8.63",
+                tcp_port="11110",
+                indi_client=dict(
+                    indi_host="localhost",
+                    indi_port=7625)
+            )
+        self.tcp_host = config["tcp_host"]
+        self.tcp_port = config["tcp_port"]
 
-        super().__init__(indi_client=indi_client,
-                         location=location,
+        super().__init__(location=location,
                          serv_time=serv_time,
                          config=config,
-                         connect_on_create=False)
+                         connect_on_create=connect_on_create)
 
+    def initialize(self):
+        self.logger.debug("Initializing from IndiG11")
+        self.connect(connect_device=False)
+        self.set_connectivity_config()
+        self.connect_device()
         self.set_startup_mode(mode='WARM_RESTART')
-        self.connect()
         self.set_park_settings(mode='HOME')
+        self.set_geographic_config()
+        self.set_time_config()
         #TODO TN URGENT as a temporary fix. we decided to park at startup but
         # the proper behaviour for the mount should be parked status by default
         # at startup, see https://indilib.org/forum/general/5497-indi-losmandy-driver-impossible-to-get-proper-park-status.html#41664
-        self.park()
+        IndiMount.unpark(self)
+        self.logger.debug("Successfully initialized from IndiG11")
+
+    def set_time_config(self):
+        """
+            Losmandy Gemini.TIME_UTC.UTC=2023-8-8T21:43:12
+            Losmandy Gemini.TIME_UTC.OFFSET=2
+        :return:
+        """
+        utc_time_str = self.serv_time.get_astropy_time_from_utc().value.strftime("%Y-%m-%dT%H:%M:%S")
+        utc_offset_value = self.serv_time.timezone.localize(self.serv_time.get_astropy_time_from_utc().value).utcoffset().total_seconds()/60/60
+        self.set_text("TIME_UTC", {"UTC": utc_time_str}, sync=True)
+        self.set_number('TIME_UTC', {'OFFSET': utc_offset_value}, sync=True)
+
+    def set_geographic_config(self):
+        self.set_number('GEOGRAPHIC_COORD', {
+                'LAT': self.location.lat.to(u.deg).value,
+                'LONG': self.location.lon.to(u.deg).value,
+                'ELEV': self.location.height.to(u.meter).value},
+            sync=True)
+
+    def set_connectivity_config(self):
+        """
+        In fact it's not tcp but udp, but ok ...
+        :return:
+        """
+        self.set_switch('CONNECTION_MODE', ["CONNECTION_TCP"], sync=True)
+        self.set_switch('CONNECTION_TYPE', ["UDP"], sync=True)
+        self.set_text("DEVICE_ADDRESS",
+                      {"ADDRESS": self.tcp_host,
+                       "PORT":    self.tcp_port}, sync=True)
 
     def set_startup_mode(self, mode='WARM_RESTART'):
         """
@@ -103,7 +293,8 @@ class IndiG11(IndiAbstractMount):
             WARM_START
             WARM_RESTART
         """
-        self.set_switch('STARTUP_MODE', [mode])
+        self.set_switch('STARTUP_MODE', [mode], sync=True, timeout=self.defaultTimeout)
+
 
     def set_park_settings(self, mode='HOME'):
         """
@@ -114,36 +305,7 @@ class IndiG11(IndiAbstractMount):
         """
         self.set_switch('PARK_SETTINGS', [mode])
 
-    # def set_coord(self, coord):
-    #     """
-    #     Subtleties here: coord should be given as Equatorial astrometric epoch
-    #     of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
-    #
-    #     As our software only manipulates J2000. we decided to convert to jnow
-    #     for the generic case
-    #     """
-    #     fk5_j2k = FK5(equinox=Time('J2000'))
-    #     coord_j2k = coord.transform_to(fk5_j2k)
-    #     rahour_decdeg = {'RA': coord_j2k.ra.hour,
-    #                      'DEC': coord_j2k.dec.degree}
-    #     if self.is_parked:
-    #         self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
-    #                             f"mount is parked")
-    #     else:
-    #         self.logger.info(f"Now setting J2k coord: {rahour_decdeg}")
-    #         self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
-    #                        timeout=180)
-#set_numberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
-#        LAT='51.466666666666668561'
-#               LONG='5.7166666666666401397'
-#                      ELEV='0'
-
-#Dispatch command error(-1):
-#<set_switchVector device="Losmandy Gemini" name="TELESCOPE_PARK" state="Ok" timeout="60" timestamp="2019-08-05T00:03:43">
-#    <oneSwitch name="PARK">
-#On
-#    </oneSwitch>
-#    <oneSwitch name="UNPARK">
-#Off
-#    </oneSwitch>
-#</set_switchVector>
+    def set_coord(self, coord):
+        IndiMount.set_coord(self, coord)
+        # Wait for the mount/tube to damper vibrations
+        time.sleep(10)

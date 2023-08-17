@@ -51,7 +51,7 @@ class AbstractMount(Base):
         #self.logger.debug("Mount config: {}".format(self.mount_config))
 
         # Set the initial location
-        #self._location = location
+        self._location = location
 
         # Initial states
         self._is_initialized = False
@@ -78,6 +78,8 @@ class AbstractMount(Base):
 
     def status(self):
         status = {}
+        if self.is_parked:
+            return status
         try:
             guide_rate = self.get_guide_rate()
             if guide_rate is not None: 
@@ -133,7 +135,7 @@ class AbstractMount(Base):
 
     @property
     def is_initialized(self):
-        """ bool: Has mount been initialied with connection """
+        """ bool: Has mount been initialized with connection """
         return self._is_initialized
 
     @property

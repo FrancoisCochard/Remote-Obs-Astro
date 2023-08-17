@@ -23,7 +23,7 @@ def on_enter(event_data):
     # Get the next observation
     try:
         observation = model.manager.get_observation()
-        model.logger.info("Observation: {observation}")
+        model.logger.info(f"Observation: {observation}")
     except error.NoObservation as e:
         model.say("No valid observations found. Cannot schedule. "
                   "Going to park.")
@@ -36,7 +36,7 @@ def on_enter(event_data):
         if existing_observation and (observation.id == 
                                      existing_observation.id):
             model.say(f"I am sticking with observation {observation.id}")
-            model.next_state = 'observing' # TODO TN URGENT, the same logic as for the analyze/update tracking
+            model.next_state = 'tracking' # TODO TN URGENT, the same logic as for the analyze/update tracking
             # applied here
         else:
             model.say(f"Got it! I am going to check out: {observation.name}")

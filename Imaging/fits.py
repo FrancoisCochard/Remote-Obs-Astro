@@ -9,15 +9,16 @@ import numpy as np
 import skimage.io as io
 
 # Astropy
-from astropy.io import fits
-from astropy.wcs import WCS
 from astropy import units as u
+from astropy.io import fits
+from astropy.time import Time
+from astropy.wcs import WCS
 
 # Local
 from utils import error
 
 
-def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
+def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
     """ Plate solves an image.
 
     Args:
@@ -48,7 +49,6 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
             '--match', 'none',
             '--corr', 'none',
             '--wcs', 'none',
-            '--downsample', '1',
         ]
 
         if kwargs.get('overwrite', True):
@@ -65,6 +65,19 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         if 'radius' in kwargs:
             options.append('--radius')
             options.append(str(kwargs.get('radius')))
+        if 'sampling_arcsec' in kwargs:
+            if kwargs["sampling_arcsec"] is not None:
+                options.append('--scale-low')
+                options.append(str(kwargs.get("sampling_arcsec")*0.95))
+                options.append('--scale-high')
+                options.append(str(kwargs.get("sampling_arcsec")*1.05))
+                options.append('--scale-units')
+                options.append("arcsecperpix")
+        if kwargs.get("downsample", 1) > 1:
+            options.append('--downsample')
+            options.append(str(kwargs.get('downsample')))
+            options.append('--plot-scale')
+            options.append(str(1/kwargs.get('downsample')))
 
     cmd = [solve_field_script] + options + [fname]
     if verbose:
@@ -75,13 +88,11 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         proc = subprocess.Popen(cmd, universal_newlines=True,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except OSError as e:
-        raise error.InvalidCommand(
-            "Can't send command to solve_field.sh: {} \t {}".format(e, cmd))
+        raise error.AstrometrySolverError(f"Error: {e} - Can't send command to solve_field.sh: {cmd}")
     except ValueError as e:
-        raise error.InvalidCommand(
-            "Bad parameters to solve_field: {} \t {}".format(e, cmd))
+        raise error.AstrometrySolverError(f"Error: {e} - Bad parameters to solve_field: {cmd}")
     except Exception as e:
-        raise error.PanError("Error on plate solving: {}".format(e))
+        raise error.AstrometrySolverError(f"Error: {e} - Error for solve_field: {cmd}")
 
     if verbose:
         print("Returning proc from solve_field")
@@ -144,14 +155,9 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     if verbose:
         print("Entering get_solve_field:", fname)
 
-    # Set a default radius of 15
-    kwargs.setdefault('radius', 15)
-    #print("#############################################################################")
-    #print(f"SOLVING {fname} with kwargs {kwargs}")
-    #print("#############################################################################")
     proc = solve_field(fname, **kwargs)
     try:
-        output, errs = proc.communicate(timeout=kwargs.get('timeout', 180))
+        output, errs = proc.communicate(timeout=kwargs.get('timeout', 360))
     except subprocess.TimeoutExpired:
         proc.kill()
         raise error.AstrometrySolverError("Timeout while solving")

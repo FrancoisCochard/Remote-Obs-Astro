@@ -53,6 +53,7 @@ class Observatory(Base):
                                     longitude=config['longitude'])
         self.altitude_meter = config['elevation']
         self.horizon = config['horizon']
+        self.max_altitude_degree = config.get("max_altitude_degree", 90)
         self.investigator = config['investigator']
         
         # Now find the timezone from the gps coordinate
@@ -95,21 +96,21 @@ class Observatory(Base):
         # Finished configuring
         self.logger.debug('Configured Observatory successfully')
     
-    def initialize(self):
-        self.logger.debug("Initializing observatory")
-        if self.has_dome:
-            self.dome_controller.initialize()
-        if self.has_scope:
-            self.scope_controller.initialize()
-        self.logger.debug("Successfully initialized observatory")
+    # def initialize(self):
+    #     self.logger.debug("Initializing observatory")
+    #     if self.has_dome:
+    #         self.dome_controller.initialize()
+    #     if self.has_scope:
+    #         self.scope_controller.initialize()
+    #     self.logger.debug("Successfully initialized observatory")
 
-    def deinitialize(self):
-        self.logger.debug("Deinitializing observatory")
-        if self.has_dome:
-            self.dome_controller.deinitialize()
-        if self.has_scope:
-            self.scope_controller.deinitialize()
-        self.logger.debug("Successfully deinitialized observatory")
+    # def deinitialize(self):
+    #     self.logger.debug("Deinitializing observatory")
+    #     if self.has_dome:
+    #         self.dome_controller.deinitialize()
+    #     if self.has_scope:
+    #         self.scope_controller.deinitialize()
+    #     self.logger.debug("Successfully deinitialized observatory")
 
     def get_gps_coordinates(self):
         return self.gps_coordinates
@@ -134,15 +135,33 @@ class Observatory(Base):
     def has_scope(self):
         return not (self.scope_controller is None)
 
+    @property
+    def is_initialized(self):
+        ret = True
+        if self.has_dome and self.dome_controller.is_initialized:
+            ret = ret and self.dome_controller.is_initialized
+        if self.has_scope and self.scope_controller.is_initialized:
+            ret = ret and self.scope_controller.is_initialized
+
+
     def park(self):
-        self.logger.debug('Observatory: parking scope')
+        self.logger.debug('Observatory: parking observatory')
+        if self.has_dome:
+            self.dome_controller.park()
         if self.has_scope:
-            self.scope_controller.close()
+            self.scope_controller.park()
 
     def unpark(self):
-        self.logger.debug('Observatory: unparking scope')
+        self.logger.debug('Observatory: unparking')
+        if self.has_dome:
+            self.dome_controller.unpark()
         if self.has_scope:
-            self.scope_controller.open()
+            self.scope_controller.unpark()
+        self.logger.debug('Successfully unparked Observatory')
+
+    # def reset_config(self):
+    #     if self.has_scope:
+    #         self.scope_controller.reset_config()
 
     def open_everything(self):
         try:

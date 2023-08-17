@@ -30,7 +30,7 @@ class IndiCamera(IndiDevice):
         'both': 'UPLOAD_BOTH'}
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
-    READOUT_TIME_MARGIN = 30
+    READOUT_TIME_MARGIN = 300
 
     def __init__(self, logger=None, config=None, connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class IndiCamera(IndiDevice):
                 camera_name='CCD Simulator',
                 pointing_seconds=30,
                 adjust_center_x=400,
-                adjust_center_y= 400,
+                adjust_center_y=400,
                 adjust_roi_search_size=50,
                 adjust_pointing_seconds=5,
                 autofocus_seconds=5,
@@ -68,10 +68,12 @@ class IndiCamera(IndiDevice):
                     indi_port="7624"
                 ))
         device_name = config['camera_name']
+        indi_driver_name = config.get('indi_driver_name', None)
 
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
+                            indi_driver_name=indi_driver_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
@@ -92,7 +94,8 @@ class IndiCamera(IndiDevice):
 
         # Default exposureTime, gain
         self.exp_time_sec = 5
-        self.gain = 400
+        self.gain = 150
+        self.offset = 30
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
@@ -135,9 +138,6 @@ class IndiCamera(IndiDevice):
         self.logger.debug('on emergency routine started...')
         self.abort_shoot(sync=False)
         self.logger.debug('on emergency routine finished')
-
-    def disable_shoot(self):
-        self.indi_client.disable_blob()
 
     '''
       Indi CCD related stuff
@@ -293,7 +293,8 @@ class IndiCamera(IndiDevice):
                            sync=True, timeout=1200)
 
     def set_cooling_on(self):
-        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=True, timeout=self.defaultTimeout)
+        # No sync, because that's the way it works on indi for the CCD_COOLER property, it stays yellow in the interface
+        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=False)
 
     def set_cooling_off(self):
         self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.defaultTimeout)
@@ -304,6 +305,13 @@ class IndiCamera(IndiDevice):
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
         return gain["GAIN"]
+
+    def set_offset(self, value):
+        self.set_number('CCD_OFFSET', {'OFFSET': value}, sync=True, timeout=self.defaultTimeout)
+
+    def get_offset(self):
+        offset = self.get_number('CCD_OFFSET')
+        return offset["OFFSET"]
 
     def get_frame_type(self):
         return self.get_switch('CCD_FRAME_TYPE')
