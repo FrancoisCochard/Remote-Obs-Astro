@@ -66,13 +66,13 @@ calibration:
         sec: 5
         gain: 150
         offset: 30
-        temperature: -10
+        temperature: 15
     flat:
         nb: 2
         sec: 5
         gain: 150
         offset: 30
-        temperature: -10
+        temperature: 15
     dark:
         dark_nb: 2
     controller:
@@ -163,7 +163,7 @@ cameras:
         #~ module: IndiZwoASI183ProCamera
         camera_name : ZWO CCD ASI183MM Pro # CCD Simulator
         do_acquisition: true
-        working_temperature: -12
+        working_temperature: 15
         SIMULATOR_SETTINGS: # 180mm
             SIM_XRES: 1500 #5496
             SIM_YRES: 1500 #3672

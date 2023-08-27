@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 from skimage import img_as_float
 from skimage import exposure
+from datetime import datetime
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
@@ -72,11 +73,11 @@ if __name__ == '__main__':
     #print('Setting cooling on')
     #cam.set_cooling_on() THIS VECTOR IS EXPECTED TO BE IN BUSY STATE, NOT IDLE NOR OK, THAT's WHY THERE IS TIMEOUT
     print(f"Current camera temperature is: {cam.get_temperature()}")
-    target_temp = -5.5
+    target_temp = 15
     print(f"Now, setting temperature to: {target_temp}")
     cam.set_temperature(target_temp)
     print(f"Current camera temperature is: {cam.get_temperature()}")
-    target_temp = -8
+    target_temp = 15
     print(f"Now, setting temperature to: {target_temp}")
     cam.set_temperature(target_temp)
     print(f"Current camera temperature is: {cam.get_temperature()}")
@@ -94,11 +95,19 @@ if __name__ == '__main__':
     print(f"gain is {cam.get_gain()}")
 
     # Acquire data
+    Avant = datetime.now()
     cam.prepare_shoot()
-    cam.setExpTimeSec(10)
+    cam.setExpTimeSec(15)
     cam.shoot_async()
     cam.synchronize_with_image_reception()
     fits = cam.get_received_image()
+    print(type(fits))
+    ImName = "TESTAEFFACER.fits"
+    fits.writeto(ImName)
+    Apres = datetime.now()
+    duree = (Apres - Avant).total_seconds()
+    ## On affiche le résultat
+    print(f"durée de l'acquisition : {duree} secondes")
 
     # Show image
     fig, ax = plt.subplots(1, figsize=(16, 9))
