@@ -1,5 +1,7 @@
 # local
+from Mount.IndiMount import IndiMount
 from Mount.IndiAbstractMount import IndiAbstractMount
+import time
 
 
 class Indi10Micron(IndiAbstractMount):
@@ -79,3 +81,8 @@ class Indi10Micron(IndiAbstractMount):
     #         self.logger.info(f"Now setting J2k coord: {rahour_decdeg}")
     #         self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
     #                        timeout=180)
+    
+    def set_coord(self, coord):
+        IndiMount.set_coord(self, coord)
+        # Wait for the mount/tube to damper vibrations
+        time.sleep(3)
