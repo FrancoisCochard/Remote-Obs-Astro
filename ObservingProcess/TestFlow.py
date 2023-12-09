@@ -1,3 +1,19 @@
+# -----------------------------------------
+# TestFlow.py
+# Script préliminaire pour déclencher une séquence d'observation.
+# V 0.01 : 09/12/2023 - F. Cochard - version initiale, qui marche à peu près.
+# 
+# L'idée est de pouvoir déclencher une séquence d'observation à partir de l'observatoire, par une API Rest.
+# J'ai le choix de la séquence d'observation.
+# Pour le moment, je ne passe aucun paramètre, mais je sens que ça pourrait se faire plutôt par un fichier centralisé (ou un json).
+# Les différentes séquences possibles (qui correspondent à différents programmes d'observation) sont décrites dans la variable 'sequence'
+# Chaque séquence fait appel à des fonctions de "haut niveau" (ici simplifiées en F1, F2, F3 etc)
+# J'ai 3 commandes API : run pour lancer, state pour demander dans quel étape est le système, et stop pour interrompre (si la pluie arrive par exemple)
+# L'interruption n'est effective qu'à la fin de la fonction Haut Niveau en cours.
+# La classe ProcessObs est instanciée à chaque démarrage d'une séquence d'onservation. C'est la variable A (on pourrait trouver un meilleur nom :>)
+# 
+# -----------------------------------------
+
 import time
 import threading
 from fastapi import FastAPI
