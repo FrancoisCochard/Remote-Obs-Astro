@@ -5,15 +5,15 @@ import sys
 from astropy.utils.exceptions import AstropyWarning
 
 # Local
-from Base.Base import Base
+# from Base.Base import Base
 
 
-class Error(AstropyWarning, Base):
+class Error(AstropyWarning):
 
     """ Base class for Panoptes errors """
 
     def __init__(self, msg=None, exit=False):
-        Base.__init__(self)
+        # Base.__init__(self)
         if msg:
             if exit:
                 self.exit_program(msg)
