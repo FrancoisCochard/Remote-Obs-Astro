@@ -5,7 +5,7 @@
 from IndiDevices.Camera.IndiCamera import IndiCamera
 
 class IndiASICamera(IndiCamera):
-    def __init__(self, config=None, connect_on_create=True):
+    def __init__(self, config=None, connect_on_create=False):
 
         # Parent initialization
         super().__init__(

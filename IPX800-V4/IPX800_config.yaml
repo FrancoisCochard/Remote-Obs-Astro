@@ -1,0 +1,12 @@
+IPX800_host : 192.168.144.18
+
+IO :
+  General_12V : R=01
+  USB3_Hub : R=02
+  Science_Cam : R=03
+  RasPi4_Indi : R=04
+  Focuser : R=05
+  SPOX : R=06
+  Mount_24V : R=07
+  Mount_OnOff_Pulse : R=08
+  Mount_OnOff : VI=001

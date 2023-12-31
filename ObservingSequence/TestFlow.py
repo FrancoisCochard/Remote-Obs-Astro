@@ -18,6 +18,8 @@ import time
 import threading
 from fastapi import FastAPI
 import uvicorn
+from IndiDevices.Camera.IndiASICamera import IndiASICamera
+import yaml
 
 def F1():
     print("F1 - début")
@@ -25,10 +27,12 @@ def F1():
     print("F1 - fin")
     return "OK"
 
-def F2():
-    print("F2 - début")
-    time.sleep(3)
-    print("F2 - fin")
+def TakeOneImage():
+    print("Acquisition - début")
+    # time.sleep(3)
+    camera = devices_list['ScienceCam']
+    TakeImage(camera)
+    print("Acquisition - fin")
     return "OK"
 
 def F3():
@@ -50,10 +54,12 @@ def F5():
     return "OK"
 
 sequence = {
-'main':{"Pointage":F1, "Centrage":F1, "Guidage":F2, "Acquisition":F3, "Flat":F4, "Dark":F5},
-'seq1':{"Pointer":F1, "Centrer":F2, "Acquisition":F3},
-'seq2':{"Guider":F2, "Acquisition":F3, "Flat":F4, "Dark":F5}
+'main':{"Pointage":F1, "Centrage":F1, "Guidage":F3, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5},
+'seq1':{"Pointer":F1, "Centrer":TakeOneImage, "Acquisition":F3},
+'seq2':{"Guider":F1, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5}
 }
+
+devices_list = {}
 
 class ProcessObs:
     
@@ -112,6 +118,51 @@ def ObsState():
     else:
         return False, "Not running"
 
+def ReadDevicesConfig(Fichier):
+    with open(Fichier, 'r') as file:
+        config_data = yaml.safe_load(file)
+    return config_data
+
+def CreatIndiDevices(config_data):
+    
+    # Create ScienceCamera
+    config = config_data['science_camera']
+    science_cam = IndiASICamera(config=config)
+    devices_list['ScienceCam'] = science_cam
+    print("Science Camera: ", science_cam)
+
+    print(devices_list)
+    return True
+
+def StartUpDevices():
+    for dev in list(devices_list):
+        device = devices_list[dev]
+        device.connect()
+        print("Device ", device.name, "connecté")
+
+def DisconnectDevices():
+    for dev in list(devices_list):
+        device = devices_list[dev]
+        device.disconnect_device()
+        print("Device ", device.name, "déconnecté")
+
+def TakeImage(science_cam):
+    if science_cam.is_connected:
+        # science_cam = devices_list[Science]
+        science_cam.prepare_shoot()
+        science_cam.setExpTimeSec(2)
+        print("Je vais démarrer la pose")
+        science_cam.shoot_async()
+        print("J'ai lancé le shoot_async")
+        science_cam.synchronize_with_image_reception()
+        print("Terminé le synchronize")
+        fitsIm = science_cam.get_received_image()
+        print("Image reçue !")
+        ImName = "TESTAEFFACER.fits"
+        fitsIm.writeto(ImName, overwrite=True)
+    else:
+        print("Device pas connecté")
+
 app = FastAPI()
 
 @app.get("/state")
@@ -125,6 +176,28 @@ async def get_run(process):
 @app.get("/stop/{message_stop}")
 async def get_stop(message_stop):
     ObsProcessStop(message_stop)
+    return True
+
+@app.get("/startupdevices")
+async def get_startupdevices():
+    config = ReadDevicesConfig("IndiDevices/device_config.yaml")
+    CreatIndiDevices(config)
+    StartUpDevices()
+    return True
+
+@app.get("/disconnectdevices")
+async def get_disconnectdevices():
+    # config = ReadDevicesConfig("IndiDevices/device_config.yaml")
+    DisconnectDevices()
+    return True
+
+@app.get("/takeimage")
+async def get_takeimage():
+    print("Et là...", devices_list)
+    camera = devices_list['ScienceCam']
+    print("data : ", camera)
+    print("type : ", type(camera))
+    TakeImage(camera)
     return True
 
 if __name__ == "__main__":
