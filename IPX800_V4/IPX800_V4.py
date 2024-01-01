@@ -9,13 +9,14 @@
 import requests
 import yaml
 import time
+import subprocess
 
 def ReadIPX800Config(Fichier):
     with open(Fichier, 'r') as file:
         config_data = yaml.safe_load(file)
     return config_data
 
-Fichier = 'IPX800-V4/IPX800_config.yaml'
+Fichier = 'IPX800_V4/IPX800_config.yaml'
 config_data = ReadIPX800Config(Fichier)
 
 url_base = "http://" + config_data['IPX800_host'] + "/api/xdevices.json?key=apikey&"
@@ -132,11 +133,23 @@ def StartAllPSU():
 
 def StopAllPSU():
     print("On démarre la séquence de mise hors tension")
+
+    # Run the bash command to shutdown the Indi server
+    # Few words about the Indi server Shutdown.
+    # It is required to stop the server before shutting down the power supply.
+    # We've defined a bash script to do the job. It is called indishutdown.
+    # It is in the /usr/sbin/ directory.
+    # Since the shutdown command requires the sudo password, I've updated the /etc/sudoers file, to allow the command without sudo.
+    # And I've setup the ssh key to the client, to make sure the ssh command itself does not require the password.
+    # ... it works!
+
+    # result = subprocess.run("indishutdown", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run("indishutdown")
+    # print("Resultat du shutdown : ", result.stderr)
+    time.sleep(5)
+    print("Indi server (Raspberry Pi) shutdown done")
     
     StopMount()
-    time.sleep(0.5)
-
-    StopRaspiIndiServer()
     time.sleep(0.5)
 
     StopGeneral12V()
@@ -152,11 +165,9 @@ def StopAllPSU():
     time.sleep(0.5)
 
     StopSPOX()
+    time.sleep(3)
+
+    StopRaspiIndiServer()
     time.sleep(0.5)
 
     print("Ok, séquence terminée")
-
-
-StartAllPSU()
-time.sleep(5)
-StopAllPSU()

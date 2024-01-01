@@ -2,6 +2,7 @@
 # TestFlow.py
 # Script préliminaire pour déclencher une séquence d'observation.
 # V 0.01 : 09/12/2023 - F. Cochard - version initiale, qui marche à peu près.
+# V 0.02 : 31/12/2023 - F. Cochard - on dispose maintenant de l'initialisation des devices Indi.
 # 
 # L'idée est de pouvoir déclencher une séquence d'observation à partir de l'observatoire, par une API Rest.
 # J'ai le choix de la séquence d'observation.
@@ -20,6 +21,7 @@ from fastapi import FastAPI
 import uvicorn
 from IndiDevices.Camera.IndiASICamera import IndiASICamera
 import yaml
+from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 
 def F1():
     print("F1 - début")
@@ -200,6 +202,16 @@ async def get_takeimage():
     TakeImage(camera)
     return True
 
+@app.get("/startupallpsu")
+async def get_startupallpsus():
+    StartAllPSU()
+    return True
+
+@app.get("/stopallpsu")
+async def get_StopAllPSU():
+    StopAllPSU()
+    return True
+
 if __name__ == "__main__":
     print("On démarre")
-    uvicorn.run("TestFlow:app", host="0.0.0.0", port=1235, reload=True)
+    uvicorn.run("ObservingSequence:app", host="0.0.0.0", port=1235, reload=True)
