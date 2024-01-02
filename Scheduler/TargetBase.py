@@ -8,11 +8,11 @@ F. Cochard, 04/10/2022
 import sqlite3
 import os
 import random
-from Target.Target import Target
+from Scheduler.Target import Target
 
 class TargetBase():
 	
-    DataBase = os.path.expanduser("~/Obs-St-Pancrasse/INDI-Python/Remote-Obs-Astro/TargetDatabase/TargetBase.db")
+    DataBase = os.path.expanduser("~/Obs-St-Pancrasse/INDI-Python/Remote-Obs-Astro/Scheduler/TargetBase.db")
 
     def query_get(self, Name):
         tdb = sqlite3.connect(self.DataBase)

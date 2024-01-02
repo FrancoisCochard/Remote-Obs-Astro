@@ -15,8 +15,8 @@ Mon idée première est de mettre en oeuvre les modules (à développer) TargetB
 '''
 
 # Import de la classe Target depuis le module Target/Target.py
-from Target.Target import Target
-import TargetDatabase.TargetBase # pour le moment, je n'ai pas de classe dans ce module, alors je charge direct le module
+from Scheduler.Target import Target
+import Scheduler.TargetBase # pour le moment, je n'ai pas de classe dans ce module, alors je charge direct le module
 	
 if __name__ == "__main__":
     print("Je lance le script...")

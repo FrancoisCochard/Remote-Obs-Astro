@@ -1,6 +1,6 @@
 from transitions import Machine, State
 from transitions.extensions import GraphMachine
-from Target.Target import Target
+from Scheduler.Target import Target
 from TargetDatabase.TargetBase import TargetBase # Je charge la base de données
 from helper.IndiClient import IndiClient
 from Mount.Indi10micronMount import Indi10micronMount

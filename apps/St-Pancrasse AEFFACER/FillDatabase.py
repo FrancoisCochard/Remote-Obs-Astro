@@ -6,11 +6,11 @@ F. Cochard, première version 04/10/2022
 Mon intention est d'avoir un petit outil simple pour mettre dans la base de données d'étoiles les données piochées dans Simbad
 '''
 
-from Target.Target import Target
-from TargetDatabase.TargetBase import TargetBase # Je charge la base de données
+from Scheduler.Target import Target
+from Scheduler.TargetBase import TargetBase # Je charge la base de données
 import cmd # Command line lib
 from astroquery.simbad import Simbad
-import warnings # To ingnore the Apstropy warnings
+import warnings # To ignore the Apstropy warnings
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
