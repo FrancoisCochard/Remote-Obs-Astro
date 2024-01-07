@@ -32,58 +32,92 @@ from IndiDevices.Camera.IndiASICamera import IndiASICamera
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
+from ObservingSequence.ObservingOperations import RawPointingTelescope, CheckFocusing, DefineSlitPosition
+from ObservingSequence.ObservingOperations import PrecisePointingTelescope, ActivateAutoguiding, TakeTargetSpectraSeries
+from ObservingSequence.ObservingOperations import StopAutoguiding, TakeCalibSpectraSeries, TakeFlatSpectraSeries
+from ObservingSequence.ObservingOperations import TakeDarkSeries, TakeBiasSeries, CreateObservationFile
+from ObservingSequence.ObservingOperations import F1, TakeOneImage, F3, F4, F5, TakeImage
 
 logger = initLogger('obs')
 
-def F1():
-    print("F1 - début")
-    time.sleep(3)
-    print("F1 - fin")
-    return "OK"
+# def F1():
+#     print("F1 - début")
+#     time.sleep(3)
+#     print("F1 - fin")
+#     return "OK"
 
-def TakeOneImage():
-    print("Acquisition - début")
-    # time.sleep(3)
-    camera = devices_list['ScienceCam']
-    TakeImage(camera)
-    print("Acquisition - fin")
-    return "OK"
+# def TakeOneImage():
+#     print("Acquisition - début")
+#     # time.sleep(3)
+#     camera = devices_list['ScienceCam']
+#     TakeImage(camera)
+#     print("Acquisition - fin")
+#     return "OK"
 
-def F3():
-    print("F3 - début")
-    time.sleep(3)
-    print("F3 - fin")
-    return "OK"
+# def F3():
+#     print("F3 - début")
+#     time.sleep(3)
+#     print("F3 - fin")
+#     return "OK"
 
-def F4():
-    print("F4 - début")
-    time.sleep(3)
-    print("F4 - fin")
-    return "OK"
+# def F4():
+#     print("F4 - début")
+#     time.sleep(3)
+#     print("F4 - fin")
+#     return "OK"
 
-def F5():
-    print("F5 - début")
-    time.sleep(3)
-    print("F5 - fin")
-    return "OK"
+# def F5():
+#     print("F5 - début")
+#     time.sleep(3)
+#     print("F5 - fin")
+#     return "OK"
 
 sequence = {
 'main':{"Pointage":F1, "Centrage":F1, "Guidage":F3, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5},
+'basic':{"Pointage":F1},
+'BeUVEX':{"Pointage":RawPointingTelescope,
+          "Centrage":PrecisePointingTelescope,
+          "Guidage":ActivateAutoguiding,
+          "Acquisition":TakeTargetSpectraSeries,
+          "StopGuiding":StopAutoguiding,
+          "Calibration":TakeCalibSpectraSeries,
+          "Flat":TakeFlatSpectraSeries,
+          "Dark":TakeDarkSeries,
+          "Bias":TakeBiasSeries,
+          "CreateObsFile":CreateObservationFile},
 'seq1':{"Pointer":F1, "Centrer":TakeOneImage, "Acquisition":F3},
 'seq2':{"Guider":F1, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5}
 }
 
 devices_list = {}
 
+class ObservationData:
+
+    nb = 3
+    exptime = 5
+    x1 = 100
+    y1 = 250
+    x2 = 1500
+    y2 = 1400
+    seq = 'BeUVEX'
+    obsfilename = 'toto.yaml'
+
+    def __init__():
+        pass
+
+ObsData = ObservationData
+
 class ProcessObs:
     
-    def __init__(self, seq):
-        self.seq = seq
+    def __init__(self, devices_list, ObsData):
+        self.seq = ObsData.seq
         self.err = "OK"
         self.ix = 'none'
         self.stop = False
         self.X = threading.Thread(target = self.observing_process_thread)
         self.X.start()
+        self.devices_list = devices_list
+        self.ObsData = ObsData
     
     def observing_process_thread(self):
         for step in self.seq:
@@ -92,7 +126,7 @@ class ProcessObs:
                 break
             if self.err == "OK":
                 self.ix = step
-                self.err = self.seq[step]()
+                self.err = self.seq[step](self.devices_list, self.ObsData)
             else :
                 print("BUG")
                 break
@@ -101,18 +135,18 @@ class ProcessObs:
         self.stop = True
         print("Interruption du process : ", message_stop)
 
-def ObsProcessRun(process):
+def ObsProcessRun(devices_list, ObsData):
     global A
     if 'A' in globals() and A.X.is_alive() == True:
         return "Le process tourne déjà"
     else:
-        if process in sequence.keys():
-            logger.info(f"We run the process '{process}'")
-            A = ProcessObs(sequence[process])
-            reply = "Processus démarré : " + process
+        if ObsData.seq in sequence.keys():
+            logger.info(f"We run the process '{ObsData.seq}'")
+            A = ProcessObs(sequence[ObsData.seq])
+            reply = "Processus démarré : " + ObsData.seq
             return reply
         else:
-            logger.warning(f"Process '{process}' requested, but cannot be ran : does not exist")
+            logger.warning(f"Process '{ObsData.seq}' requested, but cannot be ran : does not exist")
             return "Processus inconnu"
 
 def ObsProcessStop(message_stop):
@@ -140,7 +174,6 @@ def ReadDevicesConfig(Fichier):
     return config_data
 
 def CreatIndiDevices(config_data):
-    
     # Create ScienceCamera
     config = config_data['science_camera']
     science_cam = IndiASICamera(config=config)
@@ -162,22 +195,6 @@ def DisconnectDevices():
         device.disconnect_device()
         print("Device ", device.name, "déconnecté")
 
-def TakeImage(science_cam):
-    if science_cam.is_connected:
-        # science_cam = devices_list[Science]
-        science_cam.prepare_shoot()
-        science_cam.setExpTimeSec(2)
-        print("Je vais démarrer la pose")
-        science_cam.shoot_async()
-        print("J'ai lancé le shoot_async")
-        science_cam.synchronize_with_image_reception()
-        print("Terminé le synchronize")
-        fitsIm = science_cam.get_received_image()
-        print("Image reçue !")
-        ImName = "TESTAEFFACER.fits"
-        fitsIm.writeto(ImName, overwrite=True)
-    else:
-        print("Device pas connecté")
 
 app = FastAPI()
 
@@ -231,4 +248,4 @@ if __name__ == "__main__":
     print("On démarre")
     logger.info("Starting of ObservingSequence FastAPI server")
 
-    uvicorn.run("ObservingSequence:app", host="0.0.0.0", port=1235, reload=True)
+    uvicorn.run("ObsSequence:app", host="0.0.0.0", port=1235, reload=True)
