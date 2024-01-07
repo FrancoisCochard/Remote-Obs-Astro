@@ -2,7 +2,7 @@
 import asyncio
 import ctypes
 # import logging
-import time
+# import time
 
 # Indi stuff
 from IndiDevices.device import device, VectorHandler

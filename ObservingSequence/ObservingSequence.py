@@ -1,8 +1,11 @@
+#!/usr/bin/python3
+
 # -----------------------------------------
 # TestFlow.py
 # Script préliminaire pour déclencher une séquence d'observation.
 # V 0.01 : 09/12/2023 - F. Cochard - version initiale, qui marche à peu près.
 # V 0.02 : 31/12/2023 - F. Cochard - on dispose maintenant de l'initialisation des devices Indi.
+# V 0.03 : 07/01/2024 - F. Cochard - j'ajoute le système de Logging (récupéré de ce qu'on avait fait avec Etienne)
 # 
 # L'idée est de pouvoir déclencher une séquence d'observation à partir de l'observatoire, par une API Rest.
 # J'ai le choix de la séquence d'observation.
@@ -13,6 +16,12 @@
 # L'interruption n'est effective qu'à la fin de la fonction Haut Niveau en cours.
 # La classe ProcessObs est instanciée à chaque démarrage d'une séquence d'onservation. C'est la variable A (on pourrait trouver un meilleur nom :>)
 # 
+# 
+# 
+# 
+# 
+# 
+# 
 # -----------------------------------------
 
 import time
@@ -22,6 +31,9 @@ import uvicorn
 from IndiDevices.Camera.IndiASICamera import IndiASICamera
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
+from utils.LoggingUtils import initLogger
+
+logger = initLogger('obs')
 
 def F1():
     print("F1 - début")
@@ -95,10 +107,12 @@ def ObsProcessRun(process):
         return "Le process tourne déjà"
     else:
         if process in sequence.keys():
+            logger.info(f"We run the process '{process}'")
             A = ProcessObs(sequence[process])
             reply = "Processus démarré : " + process
             return reply
         else:
+            logger.warning(f"Process '{process}' requested, but cannot be ran : does not exist")
             return "Processus inconnu"
 
 def ObsProcessStop(message_stop):
@@ -204,6 +218,7 @@ async def get_takeimage():
 
 @app.get("/startupallpsu")
 async def get_startupallpsus():
+
     StartAllPSU()
     return True
 
@@ -214,4 +229,6 @@ async def get_StopAllPSU():
 
 if __name__ == "__main__":
     print("On démarre")
+    logger.info("Starting of ObservingSequence FastAPI server")
+
     uvicorn.run("ObservingSequence:app", host="0.0.0.0", port=1235, reload=True)

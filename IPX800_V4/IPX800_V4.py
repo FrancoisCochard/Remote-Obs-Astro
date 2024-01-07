@@ -107,6 +107,9 @@ def StopRaspiIndiServer():
 
 def StartAllPSU():
     print("On démarre la séquence de mise sous tension")
+    # Test du 06/01/2024... raté. Je dois revoir en profondeur comment marche le système de log dans l'appli
+    # logger.debug(f"Test de message...")
+
     
     StartMount()
     time.sleep(0.5)
