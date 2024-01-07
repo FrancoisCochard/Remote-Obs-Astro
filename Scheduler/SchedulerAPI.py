@@ -7,17 +7,9 @@ F. Cochard, 04/10/2022
 
 import sqlite3
 import os
-# import random
 from Scheduler.Target import Target
-# from astroquery.simbad import Simbad
-# import warnings # To ignore the Apstropy warnings
-# import time
-# import threading
 from fastapi import FastAPI
 import uvicorn
-# from IndiDevices.Camera.IndiASICamera import IndiASICamera
-# import yaml
-# from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 
 class TargetBase():
 	

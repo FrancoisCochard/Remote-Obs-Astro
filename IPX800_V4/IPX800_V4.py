@@ -133,6 +133,24 @@ def StartAllPSU():
     time.sleep(0.5)
 
     print("Ok, séquence terminée")
+    url_indi_server = "http://192.168.144.32:8624/api/server/status"
+    for i in range(25):
+        time.sleep(2)
+        try:
+            r = requests.get(url_indi_server, timeout=2, verify=True)
+            if r.status_code == 200 :
+                break
+        except requests.exceptions.Timeout:
+            print("raté pour le moment... ", i)
+        except requests.exceptions.ConnectionError as conerr: 
+            print("Connection error", i)
+    print("A la fin : ", r.text)
+    result = r.json()
+    print("Serveur status : ", result[0])
+    FFF = result[0]
+    for key in FFF:
+        print(key,":", FFF[key])
+
 
 def StopAllPSU():
     print("On démarre la séquence de mise hors tension")
