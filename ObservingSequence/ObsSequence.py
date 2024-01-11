@@ -109,15 +109,15 @@ ObsData = ObservationData
 
 class ProcessObs:
     
-    def __init__(self, devices_list, ObsData):
-        self.seq = ObsData.seq
+    def __init__(self, seq):
+        self.seq = seq
         self.err = "OK"
         self.ix = 'none'
         self.stop = False
         self.X = threading.Thread(target = self.observing_process_thread)
         self.X.start()
-        self.devices_list = devices_list
-        self.ObsData = ObsData
+        # self.devices_list = devices_list
+        # self.ObsData = ObsData
     
     def observing_process_thread(self):
         for step in self.seq:
@@ -126,7 +126,7 @@ class ProcessObs:
                 break
             if self.err == "OK":
                 self.ix = step
-                self.err = self.seq[step](self.devices_list, self.ObsData)
+                self.err = self.seq[step]()
             else :
                 print("BUG")
                 break
@@ -135,18 +135,18 @@ class ProcessObs:
         self.stop = True
         print("Interruption du process : ", message_stop)
 
-def ObsProcessRun(devices_list, ObsData):
+def ObsProcessRun(process, ):
     global A
     if 'A' in globals() and A.X.is_alive() == True:
         return "Le process tourne déjà"
     else:
-        if ObsData.seq in sequence.keys():
-            logger.info(f"We run the process '{ObsData.seq}'")
-            A = ProcessObs(sequence[ObsData.seq])
-            reply = "Processus démarré : " + ObsData.seq
+        if process in sequence.keys():
+            logger.info(f"We run the process '{process}'")
+            A = ProcessObs(sequence[process])
+            reply = "Processus démarré : " + process
             return reply
         else:
-            logger.warning(f"Process '{ObsData.seq}' requested, but cannot be ran : does not exist")
+            logger.warning(f"Process '{process}' requested, but cannot be ran : does not exist")
             return "Processus inconnu"
 
 def ObsProcessStop(message_stop):
@@ -195,7 +195,6 @@ def DisconnectDevices():
         device.disconnect_device()
         print("Device ", device.name, "déconnecté")
 
-
 app = FastAPI()
 
 @app.get("/state")
@@ -204,6 +203,7 @@ async def get_state():
 
 @app.get("/run/{process}")
 async def get_run(process):
+    print("Ici : ", process)
     return ObsProcessRun(process)
 
 @app.get("/stop/{message_stop}")

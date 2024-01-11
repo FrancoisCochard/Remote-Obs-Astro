@@ -13,67 +13,81 @@
 # -----------------------------------------
 import time
 
-def RawPointingTelescope(devices_list, ObsData):
+def RawPointingTelescope():
     print("Pointing the telescope (raw) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def CheckFocusing(devices_list, ObsData):
+def CheckFocusing():
     print("Check telescope focusing - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def DefineSlitPosition(devices_list, ObsData):
+def DefineSlitPosition():
     print("Define slit position - wait 3s")
     time.sleep(3)
-    X = (ObsData.x1 + ObsData.x2) / 2
-    Y = (ObsData.y1 + ObsData.y2) / 2
+    x1 =1000
+    x2 =1000
+    y1 = 1000
+    y2 = 1000
+    X = (x1 + x2) / 2
+    Y = (y1 + y2) / 2
     return 'OK' #[X, Y]
 
-def PrecisePointingTelescope(devices_list, ObsData):
+def PrecisePointingTelescope():
     print("Pointing the telescope (precise) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def ActivateAutoguiding(devices_list, ObsData):
+def ActivateAutoguiding():
     print("Activate autoguiding (PHD2) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeTargetSpectraSeries(devices_list, ObsData):
-    print(f"Take {ObsData.nb} images of {ObsData.exptime} seconds - wait 3s")
+def TakeTargetSpectraSeries():
+    nb = 3
+    exptime = 2
+    print(f"Take {nb} images of {exptime} seconds - wait 3s")
     print("... en fait, je ne prends qu'une image pour le moment")
     # TakeImage(devices_list['science_cam'])
     time.sleep(3)
     return 'OK'
 
-def StopAutoguiding(devices_list, ObsData):
+def StopAutoguiding():
     print("Stop autoguiding (PHD2) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeCalibSpectraSeries(devices_list, ObsData):
-    print(f"Take {ObsData.nb} calib images of {ObsData.exptime} seconds - wait 3s")
+def TakeCalibSpectraSeries():
+    nb = 3
+    exptime = 2
+    print(f"Take {nb} calib images of {exptime} seconds - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeFlatSpectraSeries(devices_list, ObsData):
-    print(f"Take {ObsData.nb} flat images of {ObsData.exptime} seconds - wait 3s")
+def TakeFlatSpectraSeries():
+    nb = 3
+    exptime = 2
+    print(f"Take {nb} flat images of {exptime} seconds - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeDarkSeries(devices_list, ObsData):
-    print(f"Take {ObsData.nb} dark images of {ObsData.exptime} seconds - wait 3s")
+def TakeDarkSeries():
+    nb = 3
+    exptime = 2
+    print(f"Take {nb} dark images of {exptime} seconds - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeBiasSeries(devices_list, ObsData):
-    print(f"Take {ObsData.nb} bias images - wait 3s")
+def TakeBiasSeries():
+    nb = 3
+    print(f"Take {nb} bias images - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def CreateObservationFile(devices_list, ObsData):
-    print(f"Create the observation file: {ObsData.obsfilename}.yaml - wait 3s")
+def CreateObservationFile():
+    obsfilename = "TEST"
+    print(f"Create the observation file: {obsfilename}.yaml - wait 3s")
     time.sleep(3)
     return 'OK'
 
