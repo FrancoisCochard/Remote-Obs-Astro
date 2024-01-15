@@ -13,17 +13,17 @@
 # -----------------------------------------
 import time
 
-def RawPointingTelescope():
+def RawPointingTelescope(obs_data):
     print("Pointing the telescope (raw) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def CheckFocusing():
+def CheckFocusing(obs_data):
     print("Check telescope focusing - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def DefineSlitPosition():
+def DefineSlitPosition(obs_data):
     print("Define slit position - wait 3s")
     time.sleep(3)
     x1 =1000
@@ -34,17 +34,17 @@ def DefineSlitPosition():
     Y = (y1 + y2) / 2
     return 'OK' #[X, Y]
 
-def PrecisePointingTelescope():
+def PrecisePointingTelescope(obs_data):
     print("Pointing the telescope (precise) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def ActivateAutoguiding():
+def ActivateAutoguiding(obs_data):
     print("Activate autoguiding (PHD2) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeTargetSpectraSeries():
+def TakeTargetSpectraSeries(obs_data):
     nb = 3
     exptime = 2
     print(f"Take {nb} images of {exptime} seconds - wait 3s")
@@ -53,39 +53,39 @@ def TakeTargetSpectraSeries():
     time.sleep(3)
     return 'OK'
 
-def StopAutoguiding():
+def StopAutoguiding(obs_data):
     print("Stop autoguiding (PHD2) - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeCalibSpectraSeries():
+def TakeCalibSpectraSeries(obs_data):
     nb = 3
     exptime = 2
     print(f"Take {nb} calib images of {exptime} seconds - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeFlatSpectraSeries():
+def TakeFlatSpectraSeries(obs_data):
     nb = 3
     exptime = 2
     print(f"Take {nb} flat images of {exptime} seconds - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeDarkSeries():
+def TakeDarkSeries(obs_data):
     nb = 3
     exptime = 2
     print(f"Take {nb} dark images of {exptime} seconds - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def TakeBiasSeries():
+def TakeBiasSeries(obs_data):
     nb = 3
     print(f"Take {nb} bias images - wait 3s")
     time.sleep(3)
     return 'OK'
 
-def CreateObservationFile():
+def CreateObservationFile(obs_data):
     obsfilename = "TEST"
     print(f"Create the observation file: {obsfilename}.yaml - wait 3s")
     time.sleep(3)

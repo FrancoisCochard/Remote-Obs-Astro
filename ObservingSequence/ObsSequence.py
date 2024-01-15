@@ -40,37 +40,6 @@ from ObservingSequence.ObservingOperations import F1, TakeOneImage, F3, F4, F5, 
 
 logger = initLogger('obs')
 
-# def F1():
-#     print("F1 - début")
-#     time.sleep(3)
-#     print("F1 - fin")
-#     return "OK"
-
-# def TakeOneImage():
-#     print("Acquisition - début")
-#     # time.sleep(3)
-#     camera = devices_list['ScienceCam']
-#     TakeImage(camera)
-#     print("Acquisition - fin")
-#     return "OK"
-
-# def F3():
-#     print("F3 - début")
-#     time.sleep(3)
-#     print("F3 - fin")
-#     return "OK"
-
-# def F4():
-#     print("F4 - début")
-#     time.sleep(3)
-#     print("F4 - fin")
-#     return "OK"
-
-# def F5():
-#     print("F5 - début")
-#     time.sleep(3)
-#     print("F5 - fin")
-#     return "OK"
 
 sequence = {
 'main':{"Pointage":F1, "Centrage":F1, "Guidage":F3, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5},
@@ -93,24 +62,48 @@ devices_list = {}
 
 class ObservationData:
 
-    nb = 3
-    exptime = 5
-    x1 = 100
-    y1 = 250
-    x2 = 1500
-    y2 = 1400
-    seq = 'BeUVEX'
-    obsfilename = 'toto.yaml'
+    # Observation parameters
+    obs = {
+        'nb': 3,
+        'exptime': 5,
+        'x1': 100,
+        'y1': 250,
+        'x2': 1500,
+        'y2': 1400,
+        'seq': 'BeUVEX',
+        'obsfilename': 'toto.yaml'
+    }
 
-    def __init__():
+    devices_list = devices_list
+
+    context = {
+        'site': 'St-Pancrasse',
+        'observer': 'F. Cochard',
+        'instrument': 'UVEX 600'
+        # A mettre dans un fichier de config...
+    }
+    
+    def __init__(self):
         pass
+
+    def sequence(self, seq):
+        print('J_essaie ici...')
+        # if seq in sequence.keys():
+        #     self.obs['seq'] = seq
+        #     # logger.info(f"We run the process '{process}'")
+        #     # reply = "Processus démarré : " + process
+        #     # return reply
+        #     return True
+        # else:
+        #     return False
 
 ObsData = ObservationData
 
 class ProcessObs:
     
-    def __init__(self, seq):
+    def __init__(self, seq, obs_data):
         self.seq = seq
+        self.obs_data = obs_data
         self.err = "OK"
         self.ix = 'none'
         self.stop = False
@@ -126,7 +119,7 @@ class ProcessObs:
                 break
             if self.err == "OK":
                 self.ix = step
-                self.err = self.seq[step]()
+                self.err = self.seq[step](self.obs_data)
             else :
                 print("BUG")
                 break
@@ -135,18 +128,19 @@ class ProcessObs:
         self.stop = True
         print("Interruption du process : ", message_stop)
 
-def ObsProcessRun(process, ):
+def ObsProcessRun(obs_data):
     global A
     if 'A' in globals() and A.X.is_alive() == True:
         return "Le process tourne déjà"
     else:
-        if process in sequence.keys():
-            logger.info(f"We run the process '{process}'")
-            A = ProcessObs(sequence[process])
-            reply = "Processus démarré : " + process
+        seq = obs_data.obs['seq']
+        if seq in sequence.keys():
+            logger.info(f"We run the process '{seq}'")
+            A = ProcessObs(sequence[seq], ObsData)
+            reply = "Processus démarré : " + seq
             return reply
         else:
-            logger.warning(f"Process '{process}' requested, but cannot be ran : does not exist")
+            logger.warning(f"Process '{seq}' requested, but cannot be ran : does not exist")
             return "Processus inconnu"
 
 def ObsProcessStop(message_stop):
@@ -204,7 +198,13 @@ async def get_state():
 @app.get("/run/{process}")
 async def get_run(process):
     print("Ici : ", process)
-    return ObsProcessRun(process)
+    print('Là... ', ObsData.obs['seq'])
+    # ObsData.sequence('toto') 
+
+    # ObsData.obs['seq'] = 'toto'
+    print('Là... 2 ', ObsData.obs['seq'])
+    ObsProcessRun(ObsData)
+    return True
 
 @app.get("/stop/{message_stop}")
 async def get_stop(message_stop):
