@@ -14,7 +14,7 @@
 # Chaque séquence fait appel à des fonctions de "haut niveau" (ici simplifiées en F1, F2, F3 etc)
 # J'ai 3 commandes API : run pour lancer, state pour demander dans quel étape est le système, et stop pour interrompre (si la pluie arrive par exemple)
 # L'interruption n'est effective qu'à la fin de la fonction Haut Niveau en cours.
-# La classe ProcessObs est instanciée à chaque démarrage d'une séquence d'onservation. C'est la variable A (on pourrait trouver un meilleur nom :>)
+# La classe ProcessObs est instanciée à chaque démarrage d'une séquence d'observation. C'est la variable A (on pourrait trouver un meilleur nom :>)
 # 
 # 
 # 
@@ -40,7 +40,6 @@ from ObservingSequence.ObservingOperations import F1, TakeOneImage, F3, F4, F5, 
 
 logger = initLogger('obs')
 
-
 sequence = {
 'main':{"Pointage":F1, "Centrage":F1, "Guidage":F3, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5},
 'basic':{"Pointage":F1},
@@ -58,60 +57,39 @@ sequence = {
 'seq2':{"Guider":F1, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5}
 }
 
-devices_list = {}
-
-class ObservationData:
-
-    # Observation parameters
-    obs = {
-        'nb': 3,
-        'exptime': 5,
-        'x1': 100,
-        'y1': 250,
-        'x2': 1500,
-        'y2': 1400,
-        'seq': 'BeUVEX',
-        'obsfilename': 'toto.yaml'
-    }
-
-    devices_list = devices_list
-
-    context = {
-        'site': 'St-Pancrasse',
-        'observer': 'F. Cochard',
-        'instrument': 'UVEX 600'
-        # A mettre dans un fichier de config...
-    }
-    
-    def __init__(self):
-        pass
-
-    def sequence(self, seq):
-        print('J_essaie ici...')
-        # if seq in sequence.keys():
-        #     self.obs['seq'] = seq
-        #     # logger.info(f"We run the process '{process}'")
-        #     # reply = "Processus démarré : " + process
-        #     # return reply
-        #     return True
-        # else:
-        #     return False
-
-ObsData = ObservationData
+# ObsData is the dictionnary that contains all the data required to run and record an observation.
+# This ObsData is given as the single parameter to all the operations of an observation.
+ObsData = {'Observatory': {}, 'Devices': {}, 'Observation': {}}
+ObsData['Observatory'] = {
+    'site': 'St-Pancrasse',
+    'observer': 'F. Cochard',
+    'instrument': 'UVEX 600'
+    # A mettre dans un fichier de config...
+}
+ObsData['Observation'] = {
+    'nb': 3,
+    'exptime': 5,
+    'x1': 100,
+    'y1': 250,
+    'x2': 1500,
+    'y2': 1400,
+    'seq': 'BeUVEX',
+    'obsfilename': 'toto.yaml'
+}
+print('ObsData', ObsData)
 
 class ProcessObs:
     
-    def __init__(self, seq, obs_data):
-        self.seq = seq
+    def __init__(self, obs_data):
+        # self.seq = seq
         self.obs_data = obs_data
+        self.seq = sequence[obs_data['Observation']['seq']]
         self.err = "OK"
         self.ix = 'none'
         self.stop = False
         self.X = threading.Thread(target = self.observing_process_thread)
         self.X.start()
-        # self.devices_list = devices_list
-        # self.ObsData = ObsData
-    
+
     def observing_process_thread(self):
         for step in self.seq:
             if self.stop == True:
@@ -128,15 +106,15 @@ class ProcessObs:
         self.stop = True
         print("Interruption du process : ", message_stop)
 
-def ObsProcessRun(obs_data):
+def ObsProcessRun():
     global A
     if 'A' in globals() and A.X.is_alive() == True:
         return "Le process tourne déjà"
     else:
-        seq = obs_data.obs['seq']
+        seq = ObsData['Observation']['seq']
         if seq in sequence.keys():
             logger.info(f"We run the process '{seq}'")
-            A = ProcessObs(sequence[seq], ObsData)
+            A = ProcessObs(ObsData)
             reply = "Processus démarré : " + seq
             return reply
         else:
@@ -169,23 +147,24 @@ def ReadDevicesConfig(Fichier):
 
 def CreatIndiDevices(config_data):
     # Create ScienceCamera
-    config = config_data['science_camera']
-    science_cam = IndiASICamera(config=config)
-    devices_list['ScienceCam'] = science_cam
+    # ObsData['Devices'] = config_data
+    science_cam = IndiASICamera(config=config_data['science_camera'])
+    ObsData['Devices']['ScienceCam'] = science_cam
     print("Science Camera: ", science_cam)
 
-    print(devices_list)
+    print(ObsData['Devices'])
     return True
 
 def StartUpDevices():
-    for dev in list(devices_list):
-        device = devices_list[dev]
+    print("FFF ", ObsData['Devices'])
+    for dev in list(ObsData['Devices']):
+        device = ObsData['Devices'][dev]
         device.connect()
         print("Device ", device.name, "connecté")
 
 def DisconnectDevices():
-    for dev in list(devices_list):
-        device = devices_list[dev]
+    for dev in list(ObsData['Devices']):
+        device = ObsData['Devices'][dev]
         device.disconnect_device()
         print("Device ", device.name, "déconnecté")
 
@@ -195,15 +174,10 @@ app = FastAPI()
 async def get_state():
     return ObsState()
 
-@app.get("/run/{process}")
-async def get_run(process):
-    print("Ici : ", process)
-    print('Là... ', ObsData.obs['seq'])
-    # ObsData.sequence('toto') 
-
-    # ObsData.obs['seq'] = 'toto'
-    print('Là... 2 ', ObsData.obs['seq'])
-    ObsProcessRun(ObsData)
+@app.get("/run")
+async def get_run():
+    print("Ici : ", ObsData['Observation']['seq'])
+    ObsProcessRun()
     return True
 
 @app.get("/stop/{message_stop}")
@@ -226,8 +200,8 @@ async def get_disconnectdevices():
 
 @app.get("/takeimage")
 async def get_takeimage():
-    print("Et là...", devices_list)
-    camera = devices_list['ScienceCam']
+    print("Et là...", ObsData['Devices'])
+    camera = ObsData['Devices']['ScienceCam']
     print("data : ", camera)
     print("type : ", type(camera))
     TakeImage(camera)
