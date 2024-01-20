@@ -28,10 +28,12 @@ import time
 import threading
 from fastapi import FastAPI
 import uvicorn
-from IndiDevices.Camera.IndiASICamera import IndiASICamera
+# from IndiDevices.Camera.IndiASICamera import IndiASICamera
+from utils import load_module
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
+# import logging as logger
 from ObservingSequence.ObservingOperations import RawPointingTelescope, CheckFocusing, DefineSlitPosition
 from ObservingSequence.ObservingOperations import PrecisePointingTelescope, ActivateAutoguiding, TakeTargetSpectraSeries
 from ObservingSequence.ObservingOperations import StopAutoguiding, TakeCalibSpectraSeries, TakeFlatSpectraSeries
@@ -76,7 +78,6 @@ ObsData['Observation'] = {
     'seq': 'BeUVEX',
     'obsfilename': 'toto.yaml'
 }
-print('ObsData', ObsData)
 
 class ProcessObs:
     
@@ -146,27 +147,36 @@ def ReadDevicesConfig(Fichier):
     return config_data
 
 def CreatIndiDevices(config_data):
-    # Create ScienceCamera
-    # ObsData['Devices'] = config_data
-    science_cam = IndiASICamera(config=config_data['science_camera'])
-    ObsData['Devices']['ScienceCam'] = science_cam
-    print("Science Camera: ", science_cam)
-
-    print(ObsData['Devices'])
+    Devices = {}
+    DevicesList = list(config_data)
+    for i in DevicesList:
+        ModuleName = config_data[i]['module']
+        try:    
+            ModuleDir= config_data[i]['module_dir']
+            DeviceModule = load_module(ModuleDir + '.' + ModuleName)
+            Devices[i] = getattr(DeviceModule, ModuleName)(config_data[i])
+            message = "Device creation OK: " + ModuleName
+            logger.info(message)
+        except:
+            message = "Exception during device creation: " + ModuleName
+            logger.error(message)
+    ObsData['Devices'] = Devices
+    print("Dev : ", Devices)
     return True
 
-def StartUpDevices():
-    print("FFF ", ObsData['Devices'])
+def ConnectDevices():
     for dev in list(ObsData['Devices']):
         device = ObsData['Devices'][dev]
         device.connect()
-        print("Device ", device.name, "connecté")
+        message = "Device Connexion OK: " + str(device)
+        logger.info(message)
 
 def DisconnectDevices():
     for dev in list(ObsData['Devices']):
         device = ObsData['Devices'][dev]
         device.disconnect_device()
-        print("Device ", device.name, "déconnecté")
+        message = "Device disonnexion: " + str(device)
+        logger.info(message)
 
 app = FastAPI()
 
@@ -189,7 +199,7 @@ async def get_stop(message_stop):
 async def get_startupdevices():
     config = ReadDevicesConfig("IndiDevices/device_config.yaml")
     CreatIndiDevices(config)
-    StartUpDevices()
+    ConnectDevices()
     return True
 
 @app.get("/disconnectdevices")
@@ -219,7 +229,7 @@ async def get_StopAllPSU():
     return True
 
 if __name__ == "__main__":
-    print("On démarre")
+    # print("On démarre")
     logger.info("Starting of ObservingSequence FastAPI server")
 
     uvicorn.run("ObsSequence:app", host="0.0.0.0", port=1235, reload=True)

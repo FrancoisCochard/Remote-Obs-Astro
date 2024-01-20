@@ -49,7 +49,9 @@ def TakeTargetSpectraSeries(ObsData):
     exptime = 2
     print(f"Take {nb} images of {exptime} seconds - wait 3s")
     print("... en fait, je ne prends qu'une image pour le moment")
-    camera = ObsData['Devices']['ScienceCam']
+    print(ObsData['Devices'])
+    camera = ObsData['Devices']['science_camera']
+    # camera = ObsData['Devices']['ScienceCam']
     print("GFH ", camera)
     TakeImage(camera)
     time.sleep(3)

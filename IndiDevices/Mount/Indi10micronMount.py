@@ -6,7 +6,8 @@ import json
 import logging
 
 # Indi stuff
-from helper.IndiDevice import IndiDevice
+# from helper.IndiDevice import IndiDevice
+from IndiDevices import IndiDevice
 
 # Astropy stuff
 from astropy import units as u
