@@ -10,7 +10,7 @@
 science_camera:
     module: IndiASICamera
     module_dir: IndiDevices.Camera
-    camera_name : ZWO CCD ASI183MM Pro 
+    camera_name : ZWO CCD ASI183MM Pro
     indi_client :
         indi_host : 192.168.144.32
         indi_port : 7624
@@ -18,13 +18,13 @@ science_camera:
     cooling_capability : -20
 
 mount:
-    module: Indi10micronMount
+    module: IndiMount
     module_dir: IndiDevices.Mount
-    name : 10micron-GM1000
-    equatorial_eod: J2000 # JNOW
+    mount_name : 10micron # 10micron-GM1000
     indi_client :
         indi_host : 192.168.144.32
         indi_port : 7624
+    equatorial_eod: J2000 # JNOW
 
 # guiding_camera:
 #     module: IndiASICamera

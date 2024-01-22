@@ -4,7 +4,7 @@ import json
 import logging
 
 # Indi stuff
-from helper.IndiDevice import IndiDevice
+from IndiDevices.IndiDevice import IndiDevice
 
 # Astropy stuff
 from astropy import units as u
@@ -44,7 +44,8 @@ class IndiMount(IndiDevice):
             PIER_EAST : Mount on the East side of pier (Pointing West).
             PIER_WEST : Mount on the West side of pier (Pointing East).
     """
-    def __init__(self, config=None, connect_on_create=True):
+    def __init__(self, logger=None, config=None, connect_on_create=False):
+        self.logger = logger or logging.getLogger(__name__)
 
         assert (config is not None) and (type(config) == dict), ("Please provide "
             "config as dictionary, with mount_name")

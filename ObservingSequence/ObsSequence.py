@@ -153,8 +153,10 @@ def CreatIndiDevices(config_data):
         ModuleName = config_data[i]['module']
         try:    
             ModuleDir= config_data[i]['module_dir']
+            print(ModuleDir + '.' + ModuleName)
             DeviceModule = load_module(ModuleDir + '.' + ModuleName)
-            Devices[i] = getattr(DeviceModule, ModuleName)(config_data[i])
+            print("Encore là...", DeviceModule, " - ", ModuleDir, " - ", ModuleName, " - ", config_data[i])
+            Devices[i] = getattr(DeviceModule, ModuleName)(config=config_data[i])
             message = "Device creation OK: " + ModuleName
             logger.info(message)
         except:
@@ -167,7 +169,7 @@ def CreatIndiDevices(config_data):
 def ConnectDevices():
     for dev in list(ObsData['Devices']):
         device = ObsData['Devices'][dev]
-        device.connect()
+        device.connect()        
         message = "Device Connexion OK: " + str(device)
         logger.info(message)
 
@@ -204,7 +206,6 @@ async def get_startupdevices():
 
 @app.get("/disconnectdevices")
 async def get_disconnectdevices():
-    # config = ReadDevicesConfig("IndiDevices/device_config.yaml")
     DisconnectDevices()
     return True
 
