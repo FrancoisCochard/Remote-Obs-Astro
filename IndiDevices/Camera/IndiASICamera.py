@@ -5,12 +5,12 @@
 from IndiDevices.Camera.IndiCamera import IndiCamera
 
 class IndiASICamera(IndiCamera):
-    def __init__(self, config=None, connect_on_create=False):
+    def __init__(self, config=None, logger=None, connect_on_create=False):
 
         # Parent initialization
         super().__init__(
-            # serv_time=serv_time,
             config=config,
+            logger=logger,
             connect_on_create=connect_on_create)
 
     def prepare_shoot(self):

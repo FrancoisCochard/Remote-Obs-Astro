@@ -1,6 +1,6 @@
 # Basic stuff
-import io
-import json
+# import io
+# import json
 import logging
 
 # Indi stuff
@@ -11,7 +11,7 @@ from astropy import units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS
-from astropy.coordinates import GCRS
+# from astropy.coordinates import GCRS
 #from astropy.coordinates import ITRS
 #from astropy.coordinates import EarthLocation
 from astropy.coordinates import FK5
@@ -44,21 +44,20 @@ class IndiMount(IndiDevice):
             PIER_EAST : Mount on the East side of pier (Pointing West).
             PIER_WEST : Mount on the West side of pier (Pointing East).
     """
-    def __init__(self, logger=None, config=None, connect_on_create=False):
+    def __init__(self, config=None, logger=None, connect_on_create=False):
         self.logger = logger or logging.getLogger(__name__)
 
-        assert (config is not None) and (type(config) == dict), ("Please provide "
-            "config as dictionary, with mount_name")
+        assert (config is not None) and (type(config) == dict), ("Please provide config as dictionary, with mount_name")
         device_name = config['mount_name']
         indi_driver_name = config.get('indi_driver_name', None)
 
-        logging.debug(f"Indi Mount, mount name is: {device_name}")
+        self.logger.debug(f"Indi Mount, mount name is: {device_name}")
 
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
                             indi_driver_name=indi_driver_name,
-                            indi_client_config=config["indi_client"])
+                            indi_client_config=config['indi_client'])
 
         try:
             #try to get timezone from config file
@@ -251,7 +250,7 @@ class IndiMount(IndiDevice):
           'state': 'OK'}
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
-        #self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
+        self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         if len(track_dict) > 0:
             return [k for k, v in track_dict.items() if v == "On"][0]
         else:

@@ -28,12 +28,10 @@ import time
 import threading
 from fastapi import FastAPI
 import uvicorn
-# from IndiDevices.Camera.IndiASICamera import IndiASICamera
-from utils import load_module
+import importlib
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
-# import logging as logger
 from ObservingSequence.ObservingOperations import RawPointingTelescope, CheckFocusing, DefineSlitPosition
 from ObservingSequence.ObservingOperations import PrecisePointingTelescope, ActivateAutoguiding, TakeTargetSpectraSeries
 from ObservingSequence.ObservingOperations import StopAutoguiding, TakeCalibSpectraSeries, TakeFlatSpectraSeries
@@ -151,13 +149,14 @@ def CreatIndiDevices(config_data):
     DevicesList = list(config_data)
     for i in DevicesList:
         ModuleName = config_data[i]['module']
-        try:    
-            ModuleDir= config_data[i]['module_dir']
-            print(ModuleDir + '.' + ModuleName)
-            DeviceModule = load_module(ModuleDir + '.' + ModuleName)
-            print("Encore là...", DeviceModule, " - ", ModuleDir, " - ", ModuleName, " - ", config_data[i])
-            Devices[i] = getattr(DeviceModule, ModuleName)(config=config_data[i])
-            message = "Device creation OK: " + ModuleName
+        try:
+            moduleDir= config_data[i]['module_dir']
+            device_module = importlib.import_module(moduleDir + '.' + ModuleName)
+            # print("Encore là...", device_module, " - ", moduleDir, " - ", ModuleName, " - ", config_data[i])
+            class_name = config_data[i]['class_name']
+            # print("Et là ?", class_name)
+            Devices[i] = getattr(device_module, class_name)(config=config_data[i], logger=logger, connect_on_create=False)
+            message = "Device creation OK: " + ModuleName + " / " + class_name
             logger.info(message)
         except:
             message = "Exception during device creation: " + ModuleName

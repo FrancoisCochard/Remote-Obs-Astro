@@ -1,6 +1,6 @@
 # Basic stuff
-import io
-import json
+# import io
+# import json
 import logging
 
 # Numerical stuff
@@ -30,7 +30,7 @@ class IndiCamera(IndiDevice):
     MAXIMUM_EXP_TIME_SEC = 3601
     READOUT_TIME_MARGIN = 300
 
-    def __init__(self, logger=None, config=None, connect_on_create=True):
+    def __init__(self, config=None, logger=None, connect_on_create=True):
         self.logger = logger or logging.getLogger(__name__)
         
         if config is None:
