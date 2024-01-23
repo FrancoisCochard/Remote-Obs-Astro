@@ -28,21 +28,25 @@ mount:
         indi_port : 7624
     equatorial_eod: J2000 # JNOW
 
-# guiding_camera:
-#     module: IndiASICamera
-#     camera_name : ZWO CCD ASI174MM Mini
-#     cooling : false
-#     indi_client :
-#         indi_host : 192.168.144.32
-#         indi_port : 7624
+guiding_camera:
+    module: IndiASICamera
+    module_dir: IndiDevices.Camera
+    camera_name : ZWO CCD ASI174MM Mini
+    class_name : IndiASICamera
+    indi_client :
+        indi_host : 192.168.144.32
+        indi_port : 7624
+    cooling : false
 
-# ambiance_camera:
-#     module: IndiASICamera
-#     camera_name : ZWO CCD ASI120
-#     cooling : false
-#     indi_client :
-#         indi_host : 192.168.144.32
-#         indi_port : 7624
+ambiance_camera:
+    module: IndiASICamera
+    module_dir: IndiDevices.Camera
+    camera_name : ZWO CCD ASI120MM-S
+    class_name : IndiASICamera
+    indi_client :
+        indi_host : 192.168.144.32
+        indi_port : 7624
+    cooling : false
 
 # focuser:
 #     module: IndiFocuser

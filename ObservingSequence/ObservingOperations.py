@@ -15,7 +15,10 @@ import time
 
 def RawPointingTelescope(ObsData):
     print("Pointing the telescope (raw) - wait 3s")
-    time.sleep(3)
+    mount = ObsData['Devices']['mount']
+    mount.unpark() # à confirmer...
+    # mount.slew_to_coord_and_stop() # Je dois encore donner les coordonnées
+    # time.sleep(3)
     return 'OK'
 
 def CheckFocusing(ObsData):
@@ -50,7 +53,7 @@ def TakeTargetSpectraSeries(ObsData):
     print(f"Take {nb} images of {exptime} seconds - wait 3s")
     print("... en fait, je ne prends qu'une image pour le moment")
     print(ObsData['Devices'])
-    camera = ObsData['Devices']['science_camera']
+    camera = ObsData['Devices']['ambiance_camera']
     # camera = ObsData['Devices']['ScienceCam']
     print("GFH ", camera)
     TakeImage(camera)
