@@ -54,10 +54,12 @@ def TakeTargetSpectraSeries(ObsData):
     print("... en fait, je ne prends qu'une image pour le moment")
     print(ObsData['Devices'])
     camera = ObsData['Devices']['ambiance_camera']
-    # camera = ObsData['Devices']['ScienceCam']
-    print("GFH ", camera)
-    TakeImage(camera)
-    time.sleep(3)
+    TakeImage(camera, "Ambiance.fits")
+    camera = ObsData['Devices']['science_camera']
+    TakeImage(camera, "Science.fits")
+    camera = ObsData['Devices']['guiding_camera']
+    TakeImage(camera, "Guiding.fits")
+    # time.sleep(3)
     return 'OK'
 
 def StopAutoguiding(ObsData):
@@ -102,20 +104,20 @@ def CreateObservationFile(ObsData):
 # Temporary functions
 #--------------------------
 
-def TakeImage(science_cam):
+def TakeImage(camID, image_name):
     print("Ho...") #, science_cam)
-    if science_cam.is_connected:
+    if camID.is_connected:
         # science_cam = devices_list[Science]
-        science_cam.prepare_shoot()
-        science_cam.setExpTimeSec(2)
+        camID.prepare_shoot()
+        camID.setExpTimeSec(2)
         print("Je vais démarrer la pose")
-        science_cam.shoot_async()
+        camID.shoot_async()
         print("J'ai lancé le shoot_async")
-        science_cam.synchronize_with_image_reception()
+        camID.synchronize_with_image_reception()
         print("Terminé le synchronize")
-        fitsIm = science_cam.get_received_image()
+        fitsIm = camID.get_received_image()
         print("Image reçue !")
-        ImName = "TESTAEFFACER.fits"
+        ImName = image_name or "TESTAEFFACER.fits"
         fitsIm.writeto(ImName, overwrite=True)
     else:
         print("Device pas connecté")
