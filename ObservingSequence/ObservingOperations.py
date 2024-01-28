@@ -12,13 +12,25 @@
 # 
 # -----------------------------------------
 import time
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 def RawPointingTelescope(ObsData):
     print("Pointing the telescope (raw) - wait 3s")
     mount = ObsData['Devices']['mount']
-    mount.unpark() # à confirmer...
+    # mount.unpark() # à confirmer...
     # mount.slew_to_coord_and_stop() # Je dois encore donner les coordonnées
     # time.sleep(3)
+    # c = SkyCoord("12h56m02s	 +38d19m06s", frame='icrs') # vEGA ?
+    c = SkyCoord("01h13m43s	 +07d34m31s", frame='icrs')
+    print("BEFORE SLEWING --------------------------")
+    c_true = mount.get_current_coordinates()
+    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+    mount.slew_to_coord_and_track(c)
+    print("After SLEWING --------------------------")
+    c_true = mount.get_current_coordinates()
+    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+    print("Le télescope est maintenant sur la cible")
     return 'OK'
 
 def CheckFocusing(ObsData):

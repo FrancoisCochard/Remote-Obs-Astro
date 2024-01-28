@@ -48,37 +48,39 @@ ambiance_camera:
         indi_port : 7624
     cooling : false
 
-# focuser:
-#     module: IndiFocuser
-#     name: FocusLynx_F1
-#     focus_range:
-#         min: 10200
-#         max: 11400
-#     autofocus_step:
-#         fine: 300
-#         coarse: 300
-#     autofocus_range:
-#         fine: 2000
-#         coarse: 2000
-#     indi_client:
-#         indi_host: 192.168.144.32 # localhost
-#         indi_port: 7624
+focuser:
+    module: IndiFocuser
+    module_dir: IndiDevices.Focuser
+    focuser_name: FocusLynx F1
+    class_name : IndiFocuser
+    port: /dev/serial/by-id/usb-Optec__Inc._Optec_USB_Serial_Cable_OP5AORA9-if00-port0
+    indi_client:
+        indi_host: 192.168.144.32
+        indi_port: 7624
+    focus_range:
+        min: 10200
+        max: 11400
+    autofocus_step:
+        fine: 300
+        coarse: 300
+    autofocus_range:
+        fine: 2000
+        coarse: 2000
         
-# filter_wheel:
-#     module: IndiFilterWheel
-#     name: Filter Simulator
-#     filter_list:
-#         Luminance: 1
-#         Red: 2
-#         Green: 3
-#         Blue: 4
-#         H_Alpha: 5
-#         OIII: 6
-#         SII: 7
-#         LPR: 8
-#     indi_client:
-#         indi_host: localhost
-#         indi_port: 7624
+filter_wheel:
+    module: IndiFilterWheel
+    module_dir: IndiDevices.FilterWheel
+    filterwheel_name: ASI EFW
+    class_name : IndiFilterWheel
+    indi_client: 
+        indi_host: 192.168.144.32
+        indi_port: 7624
+    filter_list:
+        Empty: 1
+        530nm: 2
+        630nm: 3
+        None1: 4
+        None2: 5
 
 # UVEX:
 #     module: UVEX

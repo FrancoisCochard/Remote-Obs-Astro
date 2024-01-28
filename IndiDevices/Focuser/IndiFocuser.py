@@ -1,21 +1,20 @@
 # Basic stuff
-import io
-import json
+# import io
+# import json
 import logging
 
 # Numerical stuff
 import numpy as np
 
 # Indi stuff
-from helper.IndiDevice import IndiDevice
+from IndiDevices.IndiDevice import IndiDevice
 
 class IndiFocuser(IndiDevice):
     """
 
     """
-    def __init__(self, logger=None, config=None,
-                 connect_on_create=True):
-        logger = logger or logging.getLogger(__name__)
+    def __init__(self, config=None, logger=None, connect_on_create=False):
+        self.logger = logger or logging.getLogger(__name__)
 
         if config is None:
             config = dict(
@@ -36,20 +35,24 @@ class IndiFocuser(IndiDevice):
                     indi_port="7624"
                 ))
 
+        device_name=config['focuser_name']
+        indi_driver_name=config.get('indi_driver_name', None),
+
         self.port = config['port']
         self.focus_range = config['focus_range']
         self.autofocus_step = config['autofocus_step']
         self.autofocus_range = config['autofocus_range']
 
-        logger.debug(f"Indi Focuser, focuser name is: {config['focuser_name']}")
+        self.logger.debug(f"Indi Focuser, focuser name is: {device_name}")
 
         # device related intialization
         IndiDevice.__init__(self,
-                            device_name=config['focuser_name'],
-                            indi_driver_name=config.get('indi_driver_name', None),
+                            device_name=device_name,
+                            indi_driver_name=indi_driver_name,
                             indi_client_config=config["indi_client"])
+        
         if connect_on_create:
-            self.initialize()
+            self.connect()
 
         # Finished configuring
         self.logger.debug('Indi Focuser configured successfully')

@@ -1,14 +1,23 @@
+#!/usr/bin/python3
+
+# --------------------------------------
+# Indi Filter wheel device
+# This is tha generic description of a Indi filterwheel
+# 
+# Status 28/01/2024
+# - Connexion OK
+# - All methods OK, tested on EFW (Zwo)
+# --------------------------------------
+
 # Basic stuff
-import io
-import json
 import logging
 
 # Indi stuff
-from Base.Base import Base
-from helper.IndiDevice import IndiDevice
+from IndiDevices.IndiDevice import IndiDevice
 
-class IndiFilterWheel(IndiDevice, Base):
-    def __init__(self, config, connect_on_create=True):
+class IndiFilterWheel(IndiDevice):
+    def __init__(self, config=None, logger=None, connect_on_create=False):
+        self.logger = logger or logging.getLogger(__name__)
         
         if config is None:
             config = dict(
@@ -33,8 +42,7 @@ class IndiFilterWheel(IndiDevice, Base):
 
         self.filterList = config['filter_list']
 
-        logging.debug('Indi FilterWheel, filterwheel name is: {}'.format(
-                     device_name))
+        self.logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(device_name))
       
         # device related intialization
         IndiDevice.__init__(self,
@@ -54,11 +62,8 @@ class IndiFilterWheel(IndiDevice, Base):
 
     def initFilterWheelConfiguration(self):
         for filterName, filterNumber in self.filterList.items():
-            self.logger.debug('IndiFilterWheel: Initializing filter number {}'
-                              ' to filter name {}'.format(filterNumber,
-                              filterName))
-            self.set_text('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(
-                                         filterNumber):filterName})
+            self.logger.debug('IndiFilterWheel: Initializing filter number {} to name {}'.format(filterNumber, filterName))
+            self.set_text('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(filterNumber):filterName})
 
     def set_filter(self, name):
         self.logger.debug('setting filter {}'.format(name)) 
@@ -70,13 +75,14 @@ class IndiFilterWheel(IndiDevice, Base):
 
     def currentFilter(self):
         ctl = self.get_number('FILTER_SLOT')
-        number = int(ctl[0].value)
+        number = int(ctl['FILTER_SLOT_VALUE'])
         return number, self.filterName(number)
 
     def filters(self):
         ctl = self.get_text('FILTER_NAME')
-        filters = [(x.text, IndiFilterWheel.__name2number(x.name)) for x in ctl]
-        return dict(filters)
+
+        filters = [(ctl[x], self.__name2number(x)) for x in ctl]
+        return  dict(filters)
 
     def filterName(self, number):
         return [a for a, b in self.filters().items() if b == number][0]

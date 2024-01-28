@@ -152,9 +152,9 @@ def CreatIndiDevices(config_data):
         try:
             moduleDir= config_data[i]['module_dir']
             device_module = importlib.import_module(moduleDir + '.' + ModuleName)
-            # print("Encore là...", device_module, " - ", moduleDir, " - ", ModuleName, " - ", config_data[i])
+            print("Encore là...", device_module, " - ", moduleDir, " - ", ModuleName, " - ", config_data[i])
             class_name = config_data[i]['class_name']
-            # print("Et là ?", class_name)
+            print("Et là ?", class_name)
             Devices[i] = getattr(device_module, class_name)(config=config_data[i], logger=logger, connect_on_create=False)
             message = "Device creation OK: " + ModuleName + " / " + class_name
             logger.info(message)
