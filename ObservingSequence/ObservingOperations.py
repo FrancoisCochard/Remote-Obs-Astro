@@ -15,6 +15,8 @@ import time
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
+# print("TEST IMPORT")
+
 def RawPointingTelescope(ObsData):
     print("Pointing the telescope (raw) - wait 3s")
     mount = ObsData['Devices']['mount']
@@ -118,21 +120,22 @@ def CreateObservationFile(ObsData):
 
 def TakeImage(camID, image_name):
     print("Ho...") #, science_cam)
-    if camID.is_connected:
-        # science_cam = devices_list[Science]
-        camID.prepare_shoot()
-        camID.setExpTimeSec(2)
-        print("Je vais démarrer la pose")
-        camID.shoot_async()
-        print("J'ai lancé le shoot_async")
-        camID.synchronize_with_image_reception()
-        print("Terminé le synchronize")
-        fitsIm = camID.get_received_image()
-        print("Image reçue !")
-        ImName = image_name or "TESTAEFFACER.fits"
-        fitsIm.writeto(ImName, overwrite=True)
-    else:
-        print("Device pas connecté")
+    # if camID.is_connected:
+    #     # science_cam = devices_list[Science]
+    #     camID.prepare_shoot()
+    #     camID.setExpTimeSec(2)
+    #     print("Je vais démarrer la pose")
+    #     camID.shoot_async()
+    #     print("J'ai lancé le shoot_async")
+    #     camID.synchronize_with_image_reception()
+    #     print("Terminé le synchronize")
+    #     fitsIm = camID.get_received_image()
+    #     print("Image reçue !")
+    #     ImName = image_name or "TESTAEFFACER.fits"
+    #     fitsIm.writeto(ImName, overwrite=True)
+    # else:
+    #     print("Device pas connecté")
+    return "OK"
 
 def F1(devices_list, ObsData):
     print("F1 - début")

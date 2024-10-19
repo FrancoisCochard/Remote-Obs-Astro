@@ -32,29 +32,30 @@ import importlib
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
-from ObservingSequence.ObservingOperations import RawPointingTelescope, CheckFocusing, DefineSlitPosition
-from ObservingSequence.ObservingOperations import PrecisePointingTelescope, ActivateAutoguiding, TakeTargetSpectraSeries
-from ObservingSequence.ObservingOperations import StopAutoguiding, TakeCalibSpectraSeries, TakeFlatSpectraSeries
-from ObservingSequence.ObservingOperations import TakeDarkSeries, TakeBiasSeries, CreateObservationFile
-from ObservingSequence.ObservingOperations import F1, TakeOneImage, F3, F4, F5, TakeImage
+# from ObservingSequence.ObservingOperations import RawPointingTelescope, CheckFocusing, DefineSlitPosition
+# from ObservingSequence.ObservingOperations import PrecisePointingTelescope, ActivateAutoguiding, TakeTargetSpectraSeries
+# from ObservingSequence.ObservingOperations import StopAutoguiding, TakeCalibSpectraSeries, TakeFlatSpectraSeries
+# from ObservingSequence.ObservingOperations import TakeDarkSeries, TakeBiasSeries, CreateObservationFile
+# from ObservingSequence.ObservingOperations import F1, TakeOneImage, F3, F4, F5, TakeImage
+import ObservingSequence.ObservingOperations as Seq
 
 logger = initLogger('obs')
 
 sequence = {
-'main':{"Pointage":F1, "Centrage":F1, "Guidage":F3, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5},
-'basic':{"Pointage":F1},
-'BeUVEX':{"Pointage":RawPointingTelescope,
-          "Centrage":PrecisePointingTelescope,
-          "Guidage":ActivateAutoguiding,
-          "Acquisition":TakeTargetSpectraSeries,
-          "StopGuiding":StopAutoguiding,
-          "Calibration":TakeCalibSpectraSeries,
-          "Flat":TakeFlatSpectraSeries,
-          "Dark":TakeDarkSeries,
-          "Bias":TakeBiasSeries,
-          "CreateObsFile":CreateObservationFile},
-'seq1':{"Pointer":F1, "Centrer":TakeOneImage, "Acquisition":F3},
-'seq2':{"Guider":F1, "Acquisition":TakeOneImage, "Flat":F4, "Dark":F5}
+'main':{"Pointage":Seq.F1, "Centrage":Seq.F1, "Guidage":Seq.F3, "Acquisition":Seq.TakeOneImage, "Flat":Seq.F4, "Dark":Seq.F5},
+'basic':{"Pointage":Seq.F1},
+'BeUVEX':{"Pointage":Seq.RawPointingTelescope,
+          "Centrage":Seq.PrecisePointingTelescope,
+          "Guidage":Seq.ActivateAutoguiding,
+          "Acquisition":Seq.TakeTargetSpectraSeries,
+          "StopGuiding":Seq.StopAutoguiding,
+          "Calibration":Seq.TakeCalibSpectraSeries,
+          "Flat":Seq.TakeFlatSpectraSeries,
+          "Dark":Seq.TakeDarkSeries,
+          "Bias":Seq.TakeBiasSeries,
+          "CreateObsFile":Seq.CreateObservationFile},
+'seq1':{"Pointer":Seq.F1, "Centrer":Seq.TakeOneImage, "Acquisition":Seq.F3},
+'seq2':{"Guider":Seq.F1, "Acquisition":Seq.TakeOneImage, "Flat":Seq.F4, "Dark":Seq.F5}
 }
 
 # ObsData is the dictionnary that contains all the data required to run and record an observation.
@@ -139,7 +140,7 @@ def ObsState():
     else:
         return False, "Not running"
 
-def ReadDevicesConfig(Fichier):
+def ReadYamlConfig(Fichier):
     with open(Fichier, 'r') as file:
         config_data = yaml.safe_load(file)
     return config_data
@@ -152,22 +153,37 @@ def CreatIndiDevices(config_data):
         try:
             moduleDir= config_data[i]['module_dir']
             device_module = importlib.import_module(moduleDir + '.' + ModuleName)
-            print("Encore là...", device_module, " - ", moduleDir, " - ", ModuleName, " - ", config_data[i])
+            # print("Encore là...", device_module, " - ", moduleDir, " - ", ModuleName, " - ", config_data[i])
             class_name = config_data[i]['class_name']
-            print("Et là ?", class_name)
+            # print("Et là ?", class_name)
+            # print("MODULE : ", device_module)
+            # print("CLASSE : ", class_name)
+            # print("CONF : ", config_data[i])
             Devices[i] = getattr(device_module, class_name)(config=config_data[i], logger=logger, connect_on_create=False)
-            message = "Device creation OK: " + ModuleName + " / " + class_name
+            # print("DEVICE : ", Devices[i])
+            # print("DEVICES : ", Devices)
+            # print("T1 : ", device_module)
+            # print("T2 : ", class_name)
+            # print("T3 : ", config_data[i])
+            # print("T4 : ", getattr(device_module, class_name))
+            # print("T5 : ", device_module)
+            # print("T1 : ", device_module)
+            # print("T1 : ", device_module)
+            # print("TEST : ", getattr(device_module, class_name)(config=config_data[i], logger=logger, connect_on_create=False))
+            message = "Device creation OK: " + ModuleName + " / " + class_name # + " // " + Devices[i]
+            # print("Dev : ", Devices[i])
             logger.info(message)
         except:
             message = "Exception during device creation: " + ModuleName
             logger.error(message)
     ObsData['Devices'] = Devices
-    print("Dev : ", Devices)
+    # print("Dev : ", Devices)
     return True
 
 def ConnectDevices():
     for dev in list(ObsData['Devices']):
         device = ObsData['Devices'][dev]
+        print("CONNEXION  :", device)
         device.connect()        
         message = "Device Connexion OK: " + str(device)
         logger.info(message)
@@ -198,9 +214,11 @@ async def get_stop(message_stop):
 
 @app.get("/startupdevices")
 async def get_startupdevices():
-    config = ReadDevicesConfig("IndiDevices/device_config.yaml")
-    CreatIndiDevices(config)
+    configINDIdevices = ReadYamlConfig("IndiDevices/device_config.yaml")
+    CreatIndiDevices(configINDIdevices)
+    # return True
     ConnectDevices()
+    # Pour mémoire (feb 2024), je peux ajouter ici la lecture du fichier de config de PHD2... à réfléchir
     return True
 
 @app.get("/disconnectdevices")
@@ -211,10 +229,11 @@ async def get_disconnectdevices():
 @app.get("/takeimage")
 async def get_takeimage():
     print("Et là...", ObsData['Devices'])
-    camera = ObsData['Devices']['ScienceCam']
-    print("data : ", camera)
-    print("type : ", type(camera))
-    TakeImage(camera)
+    # camera = ObsData['Devices']['science_camera']
+    # print("data : ", camera)
+    # print("type : ", type(camera))
+    # Seq.TakeImage(camera)
+    # Seq.TakeImage(ZWO CCD ASI183MM Pro)
     return True
 
 @app.get("/startupallpsu")

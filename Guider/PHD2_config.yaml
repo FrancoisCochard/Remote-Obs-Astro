@@ -1,0 +1,9 @@
+host: 192.168.144.32
+port: 4400
+do_calibration: False
+profile_name: St-Pancrasse
+exposure_time_sec: 0.3
+settle:
+    pixels: 7
+    time: 3
+    timeout: 120

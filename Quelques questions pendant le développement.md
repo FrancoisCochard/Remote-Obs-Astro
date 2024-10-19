@@ -72,3 +72,23 @@ De fait, j'ai quelques bricoles à voir avec Thibault :
 6. A quoi sert la fonction Thumbnail ? Il me semble que je n'en ai pas besoin (et je peux simplifier... pas d'accès à numpy...)
 
 7. OK pour faire un directory avec les devices INDI (bas niveau), et un autre avec les fns Haut Niveau (astro) ?
+
+## A propos de PHD2
+
+17/02/2024 - J'ai pas mal avancé ces derniers mois. Un peu avec Thibault, et un peu de mon côté;
+
+Là, je veux gamberger un peu sur PHD2 ; j'ai pu le faire marcher, mais maintenant je veux fignoler la librairie qui me va bien.
+
+Ce dont j'ai besoin :
+
+- Fonctions de connexion, du serveur et du profil
+- Fonctions de base (qui n'attendent pas que l'action soit terminée)
+  - TakeImage
+  - Loop
+  - Findstar
+  - startGuiding
+  - StopGuiding
+- Fonctions spectro
+  - GuideFromTo
+  - Gérer le cas de 'star lost'
+  - 

@@ -1,11 +1,4 @@
-#~ directories:
-    #~ base: /var/RemoteObservatory
-    #~ images: images
-    #~ webcam: webcams
-    #~ data: data
-    #~ resources: resources/
-    #~ targets: resources/targets
-    #~ mounts: resources/mounts
+# This is the configuration file for all the INDI devices
 
 science_camera:
     module: IndiASICamera
@@ -21,7 +14,7 @@ science_camera:
 mount:
     module: Indi10micronMount
     module_dir: IndiDevices.Mount
-    mount_name : 10micron # 10micron-GM1000
+    mount_name : LX200 10micron # 10micron-GM1000
     class_name : Indi10micronMount
     indi_client :
         indi_host : 192.168.144.32
@@ -70,7 +63,7 @@ focuser:
 filter_wheel:
     module: IndiFilterWheel
     module_dir: IndiDevices.FilterWheel
-    filterwheel_name: ASI EFW
+    filterwheel_name: ZWO EFW
     class_name : IndiFilterWheel
     indi_client: 
         indi_host: 192.168.144.32
@@ -82,9 +75,11 @@ filter_wheel:
         None1: 4
         None2: 5
 
-# UVEX:
-#     module: UVEX
-#     name: UVEX Spectroscope
-#     indi_client:
-#         indi_host: localhost
-#         indi_port: 7624
+UVEX:
+    module: IndiUsisSpectro
+    module_dir: IndiDevices.UsisSpectroscope
+    USIS_spectro_name: Shelyak Usis
+    class_name: IndiUsisSpectro
+    indi_client:
+        indi_host: 192.168.144.32
+        indi_port: 7624

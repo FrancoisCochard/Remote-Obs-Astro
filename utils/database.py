@@ -12,11 +12,12 @@ import weakref
 # Local
 from utils import serializers as json_util
 from utils.config import load_config
-from Service.HostTimeService import HostTimeService
+# from Service.HostTimeService import HostTimeService
 
 class AbstractDB(metaclass=abc.ABCMeta):
-    def __init__(self, db_name=None, collection_names=list(), logger=None,
-                 serv_time=HostTimeService(), **kwargs):
+    def __init__(self, db_name=None, collection_names=list(), logger=None, **kwargs):
+                #  serv_time=HostTimeService(), **kwargs):
+                #  serv_time=HostTimeService(), 
         """
         Init base class for db instances.
 
@@ -29,7 +30,7 @@ class AbstractDB(metaclass=abc.ABCMeta):
         self.db_name = db_name
         self.collection_names = collection_names
         self.logger = logger or logging.getLogger(__name__)
-        self.serv_time = serv_time
+        # self.serv_time = serv_time
 
     def _warn(self, *args, **kwargs):
         if self.logger:
@@ -154,10 +155,10 @@ def get_shared_mongo_client(host, port, connect):
     return client
 
 
-def create_storage_obj(collection, data, obj_id=None,
-                       serv_time=HostTimeService()):
+def create_storage_obj(collection, data, obj_id=None):
+                    #    serv_time=HostTimeService()):
     """Returns the object to be stored in the database"""
-    obj = dict(data=data, type=collection, date=serv_time.get_utc())
+    obj = dict(data=data, type=collection) #, date=serv_time.get_utc())
     if obj_id:
         obj['_id'] = obj_id
     return obj
