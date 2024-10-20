@@ -32,30 +32,25 @@ import importlib
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
-# from ObservingSequence.ObservingOperations import RawPointingTelescope, CheckFocusing, DefineSlitPosition
-# from ObservingSequence.ObservingOperations import PrecisePointingTelescope, ActivateAutoguiding, TakeTargetSpectraSeries
-# from ObservingSequence.ObservingOperations import StopAutoguiding, TakeCalibSpectraSeries, TakeFlatSpectraSeries
-# from ObservingSequence.ObservingOperations import TakeDarkSeries, TakeBiasSeries, CreateObservationFile
-# from ObservingSequence.ObservingOperations import F1, TakeOneImage, F3, F4, F5, TakeImage
-import ObservingSequence.ObservingOperations as Seq
+import ObservingSequence.ObservingOperations as SeqOp # SeqOp means 'Sequence Operation', or a basic operation in an observing sequence.
 
 logger = initLogger('obs')
 
 sequence = {
-'main':{"Pointage":Seq.F1, "Centrage":Seq.F1, "Guidage":Seq.F3, "Acquisition":Seq.TakeOneImage, "Flat":Seq.F4, "Dark":Seq.F5},
-'basic':{"Pointage":Seq.F1},
-'BeUVEX':{"Pointage":Seq.RawPointingTelescope,
-          "Centrage":Seq.PrecisePointingTelescope,
-          "Guidage":Seq.ActivateAutoguiding,
-          "Acquisition":Seq.TakeTargetSpectraSeries,
-          "StopGuiding":Seq.StopAutoguiding,
-          "Calibration":Seq.TakeCalibSpectraSeries,
-          "Flat":Seq.TakeFlatSpectraSeries,
-          "Dark":Seq.TakeDarkSeries,
-          "Bias":Seq.TakeBiasSeries,
-          "CreateObsFile":Seq.CreateObservationFile},
-'seq1':{"Pointer":Seq.F1, "Centrer":Seq.TakeOneImage, "Acquisition":Seq.F3},
-'seq2':{"Guider":Seq.F1, "Acquisition":Seq.TakeOneImage, "Flat":Seq.F4, "Dark":Seq.F5}
+'main':{"Pointage":SeqOp.F1, "Centrage":SeqOp.F1, "Guidage":SeqOp.F3, "Acquisition":SeqOp.TakeOneImage, "Flat":SeqOp.F4, "Dark":SeqOp.F5},
+'basic':{"Pointage":SeqOp.F1},
+'BeUVEX':{"Pointage":SeqOp.RawPointingTelescope,
+          "Centrage":SeqOp.PrecisePointingTelescope,
+          "Guidage":SeqOp.ActivateAutoguiding,
+          "Acquisition":SeqOp.TakeTargetSpectraSeries,
+          "StopGuiding":SeqOp.StopAutoguiding,
+          "Calibration":SeqOp.TakeCalibSpectraSeries,
+          "Flat":SeqOp.TakeFlatSpectraSeries,
+          "Dark":SeqOp.TakeDarkSeries,
+          "Bias":SeqOp.TakeBiasSeries,
+          "CreateObsFile":SeqOp.CreateObservationFile},
+'seq1':{"Pointer":SeqOp.F1, "Centrer":SeqOp.TakeOneImage, "Acquisition":SeqOp.F3},
+'seq2':{"Guider":SeqOp.F1, "Acquisition":SeqOp.TakeOneImage, "Flat":SeqOp.F4, "Dark":SeqOp.F5}
 }
 
 # ObsData is the dictionnary that contains all the data required to run and record an observation.
@@ -81,7 +76,6 @@ ObsData['Observation'] = {
 class ProcessObs:
     
     def __init__(self, obs_data):
-        # self.seq = seq
         self.obs_data = obs_data
         self.seq = sequence[obs_data['Observation']['seq']]
         self.err = "OK"
@@ -153,25 +147,9 @@ def CreatIndiDevices(config_data):
         try:
             moduleDir= config_data[i]['module_dir']
             device_module = importlib.import_module(moduleDir + '.' + ModuleName)
-            # print("Encore là...", device_module, " - ", moduleDir, " - ", ModuleName, " - ", config_data[i])
             class_name = config_data[i]['class_name']
-            # print("Et là ?", class_name)
-            # print("MODULE : ", device_module)
-            # print("CLASSE : ", class_name)
-            # print("CONF : ", config_data[i])
             Devices[i] = getattr(device_module, class_name)(config=config_data[i], logger=logger, connect_on_create=False)
-            # print("DEVICE : ", Devices[i])
-            # print("DEVICES : ", Devices)
-            # print("T1 : ", device_module)
-            # print("T2 : ", class_name)
-            # print("T3 : ", config_data[i])
-            # print("T4 : ", getattr(device_module, class_name))
-            # print("T5 : ", device_module)
-            # print("T1 : ", device_module)
-            # print("T1 : ", device_module)
-            # print("TEST : ", getattr(device_module, class_name)(config=config_data[i], logger=logger, connect_on_create=False))
             message = "Device creation OK: " + ModuleName + " / " + class_name # + " // " + Devices[i]
-            # print("Dev : ", Devices[i])
             logger.info(message)
         except:
             message = "Exception during device creation: " + ModuleName
@@ -230,10 +208,8 @@ async def get_takeimage():
     print("Et là...", ObsData['Devices'])
     camera = ObsData['Devices']['science_camera']
     print("data : ", camera)
-    # print("type : ", type(camera))
     print("Jusque ici OK ")
-    Seq.TakeImage(ObsData, "TOTO.fits")
-    # Seq.TakeImage(ZWO CCD ASI183MM Pro)
+    SeqOp.TakeImage(ObsData, "TOTO.fits")
     return True
 
 @app.get("/startupallpsu")
@@ -248,7 +224,5 @@ async def get_StopAllPSU():
     return True
 
 if __name__ == "__main__":
-    # print("On démarre")
     logger.info("Starting of ObservingSequence FastAPI server")
-
     uvicorn.run("ObsSequence:app", host="0.0.0.0", port=1235, reload=True)

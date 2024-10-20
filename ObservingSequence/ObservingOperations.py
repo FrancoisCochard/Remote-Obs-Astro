@@ -117,12 +117,9 @@ def CreateObservationFile(ObsData):
 #--------------------------
 
 def TakeImage(ObsData, image_name):
-    print("Ho...") #, science_cam)
+    print("Ho...") 
     camID = ObsData['Devices']['science_camera']
-    # camID = "toto"
-    # print("data : ", camID)
     if camID.is_connected:
-        # science_cam = devices_list[Science]
         print("Ca va ")
         camID.prepare_shoot()
         camID.setExpTimeSec(2)
