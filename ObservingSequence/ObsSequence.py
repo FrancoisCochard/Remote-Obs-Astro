@@ -192,7 +192,6 @@ def CreatIndiDevices(config_data):
 def ConnectDevices():
     for dev in list(ObsData["Devices"]):
         device = ObsData["Devices"][dev]
-        print("CONNEXION  :", device)
         device.connect()
         message = "Device Connexion OK: " + str(device)
         logger.info(message)
