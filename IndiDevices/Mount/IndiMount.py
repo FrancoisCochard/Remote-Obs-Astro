@@ -321,7 +321,7 @@ class IndiMount(IndiDevice):
 ###############################################################################
 
     def __str__(self):
-        return 'Mount: {}'.format(self.device_name)
+        return 'Mount {}'.format(self.device_name)
 
     def __repr__(self):
         return self.__str__()

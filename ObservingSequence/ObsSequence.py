@@ -177,7 +177,7 @@ def CreatIndiDevices(config_data):
             message = "Exception during device creation: " + ModuleName
             logger.error(message)
     ObsData['Devices'] = Devices
-    # print("Dev : ", Devices)
+    print("Dev : ", Devices)
     return True
 
 def ConnectDevices():
@@ -216,7 +216,6 @@ async def get_stop(message_stop):
 async def get_startupdevices():
     configINDIdevices = ReadYamlConfig("IndiDevices/device_config.yaml")
     CreatIndiDevices(configINDIdevices)
-    # return True
     ConnectDevices()
     # Pour mémoire (feb 2024), je peux ajouter ici la lecture du fichier de config de PHD2... à réfléchir
     return True
@@ -229,10 +228,11 @@ async def get_disconnectdevices():
 @app.get("/takeimage")
 async def get_takeimage():
     print("Et là...", ObsData['Devices'])
-    # camera = ObsData['Devices']['science_camera']
-    # print("data : ", camera)
+    camera = ObsData['Devices']['science_camera']
+    print("data : ", camera)
     # print("type : ", type(camera))
-    # Seq.TakeImage(camera)
+    print("Jusque ici OK ")
+    Seq.TakeImage(ObsData, "TOTO.fits")
     # Seq.TakeImage(ZWO CCD ASI183MM Pro)
     return True
 
