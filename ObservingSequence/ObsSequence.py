@@ -121,6 +121,7 @@ class ProcessObs:
 
 
 def ObsProcessRun():
+    """To start the Observing process"""
     global A
     if "A" in globals() and A.X.is_alive() == True:
         return "Le process tourne déjà"
@@ -261,6 +262,36 @@ async def get_startupallpsus():
 @app.get("/stopallpsu")
 async def get_StopAllPSU():
     StopAllPSU()
+    return True
+
+
+@app.get("/startInstrument")
+async def get_startInstrument():
+    StartAllPSU()
+    configINDIdevices = ReadYamlConfig("IndiDevices/device_config.yaml")
+    CreatIndiDevices(configINDIdevices)
+    ConnectDevices()
+    return True
+
+
+@app.get("/stopInstrument")
+async def get_stopInstrument():
+    DisconnectDevices()
+    StopAllPSU()
+    return True
+
+
+@app.get("/startObserving")
+async def get_startObserving():
+
+    observingAgreement = True
+    return True
+
+
+@app.get("/stopObserving")
+async def get_stopObserving():
+
+    observingAgreement = False
     return True
 
 
