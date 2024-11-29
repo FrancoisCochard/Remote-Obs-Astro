@@ -57,9 +57,36 @@ def DefineSlitPosition(ObsData):
     return "OK"  # [X, Y]
 
 
-def PrecisePointingTelescope(ObsData):
-    print("Pointing the telescope (precise) - wait 3s")
-    time.sleep(3)
+def PointingTelescope(ObsData):
+    """Fonction FC Nov. 2024.
+    On part de l'hypothèse que le télescope est proche de la cible - pour être du bon côté du pilier."""
+    print("Pointing the telescope (precise)")
+    # On lit le fichier Observatoire
+    # On lit le fichier Target
+    # On établit la position du centre de la fente (à partir du fichier observatoire)
+    # On établit l'écart max de pointage (tolérance)
+    # On interroge le côté de la monture (Est / Ouest vs le pilier)
+    # On calcule les coordonnées corrigées (étoile dans la fente)
+    Iteration = 0
+    PointingOK = False
+    while PointingOK == False and Iteration < 5:
+        # On pointe le télescope
+        # On fait une image de guidage
+        # On fait la mesure astrométrique
+        # On mesure l'écart de pointage (+ log)
+        # Si l'écart est plus faible que la tolérance on arrête là
+            # PointingOK = True
+        # Sinon :
+            # Itération += 1
+            # On calcule les nouvelles coordonnées
+        pass
+    if Iteration >= 5:
+        # Le pointage a échoué
+        pass
+    if PointingOK == True:
+        # Le pointage a réussi
+        pass
+    #time.sleep(3)
     return "OK"
 
 

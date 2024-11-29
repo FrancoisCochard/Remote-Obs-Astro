@@ -48,7 +48,7 @@ sequence = {
     "basic": {"Pointage": SeqOp.F1},
     "BeUVEX": {
         "Pointage": SeqOp.RawPointingTelescope,
-        "Centrage": SeqOp.PrecisePointingTelescope,
+        "Centrage": SeqOp.PointingTelescope,
         "Guidage": SeqOp.ActivateAutoguiding,
         "Acquisition": SeqOp.TakeTargetSpectraSeries,
         "StopGuiding": SeqOp.StopAutoguiding,
