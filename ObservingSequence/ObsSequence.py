@@ -47,7 +47,7 @@ sequence = {
     },
     "basic": {"Pointage": SeqOp.F1},
     "BeUVEX": {
-        "Pointage": SeqOp.RawPointingTelescope,
+        "Pointage": SeqOp.PointingTelescopeToCoord,
         "Centrage": SeqOp.PointingTelescope,
         "Guidage": SeqOp.ActivateAutoguiding,
         "Acquisition": SeqOp.TakeTargetSpectraSeries,
@@ -73,23 +73,24 @@ sequence = {
 
 # ObsData is the dictionnary that contains all the data required to run and record an observation.
 # This ObsData is given as the single parameter to all the operations of an observation.
-ObsData = {"Observatory": {}, "Devices": {}, "Observation": {}}
-ObsData["Observatory"] = {
-    "site": "St-Pancrasse",
-    "observer": "F. Cochard",
-    "instrument": "UVEX 600",
-    # A mettre dans un fichier de config...
-}
-ObsData["Observation"] = {
-    "nb": 3,
-    "exptime": 5,
-    "x1": 100,
-    "y1": 250,
-    "x2": 1500,
-    "y2": 1400,
-    "seq": "BeUVEX",
-    "obsfilename": "toto.yaml",
-}
+# ObsData = {"Observatory": {}, "Devices": {}, "Observation": {}}
+ObsData = {"Devices": {}}
+# ObsData["Observatory"] = {
+#     "site": "St-Pancrasse",
+#     "observer": "F. Cochard",
+#     "instrument": "UVEX 600",
+#     # A mettre dans un fichier de config...
+# }
+# ObsData["Observation"] = {
+#     "nb": 3,
+#     "exptime": 5,
+#     "x1": 100,
+#     "y1": 250,
+#     "x2": 1500,
+#     "y2": 1400,
+#     "seq": "BeUVEX",
+#     "obsfilename": "toto.yaml",
+# }
 
 
 class ProcessObs:
@@ -218,6 +219,12 @@ async def get_state():
 async def get_run():
     print("Ici : ", ObsData["Observation"]["seq"])
     ObsProcessRun()
+    return True
+
+@app.get("/TEST-pointage")
+async def get_pointingTest():
+    # print("Ici : ", ObsData["Observation"]["seq"])
+    SeqOp.PointingTelescope()
     return True
 
 

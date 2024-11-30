@@ -12,24 +12,40 @@
 #
 # -----------------------------------------
 import time
+import json
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io import fits as F
+from astropy.wcs import WCS
+import os.path
 
 
-def RawPointingTelescope(ObsData):
+def PointingTelescopeToCoord(ObsData, Coordinates):
     print("Pointing the telescope (raw) - wait 3s")
     mount = ObsData["Devices"]["mount"]
+    # On lit le fichier Target
+    fileTarget = "ObservingSequence/CurrentObs/CurrentTarget.json"
+    print(f"Fichier Target existe : {os.path.exists(fileTarget)}")
+    with open(fileTarget, "r") as file:
+        pass
+        Target = json.load(file)
+    print(f"Data Obs : {Target}")
+    RA = Target["RA"]
+    DEC = Target["DEC"]
     # mount.unpark() # à confirmer...
     # mount.slew_to_coord_and_stop() # Je dois encore donner les coordonnées
     # time.sleep(3)
     # c = SkyCoord("12h56m02s	 +38d19m06s", frame='icrs') # vEGA ?
-    c = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
+    # c = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
+    TargetCoord = SkyCoord(RA, DEC, frame="icrs")
+    print(f"Coordonées à pointer : {TargetCoord}")
+
     print("BEFORE SLEWING --------------------------")
     c_true = mount.get_current_coordinates()
     print(
         f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}"
     )
-    mount.slew_to_coord_and_track(c)
+    mount.slew_to_coord_and_track(TargetCoord)
     print("After SLEWING --------------------------")
     c_true = mount.get_current_coordinates()
     print(
@@ -57,36 +73,108 @@ def DefineSlitPosition(ObsData):
     return "OK"  # [X, Y]
 
 
-def PointingTelescope(ObsData):
+def PointingTelescope():
     """Fonction FC Nov. 2024.
-    On part de l'hypothèse que le télescope est proche de la cible - pour être du bon côté du pilier."""
+    On part de l'hypothèse que le télescope est proche de la cible - pour être du bon côté du pilier.
+    """
     print("Pointing the telescope (precise)")
     # On lit le fichier Observatoire
+    fileObservatory = "ObservingSequence/ObservatoryParameters.json"
+    print(f"Fichier OBS existe : {os.path.exists(fileObservatory)}")
+    with open(fileObservatory, "r") as file:
+        pass
+        Observatory = json.load(file)
+    print(f"Data Obs : {Observatory}")
+
     # On lit le fichier Target
-    # On établit la position du centre de la fente (à partir du fichier observatoire)
-    # On établit l'écart max de pointage (tolérance)
+    fileTarget = "ObservingSequence/CurrentObs/CurrentTarget.json"
+    print(f"Fichier Target existe : {os.path.exists(fileTarget)}")
+    with open(fileTarget, "r") as file:
+        pass
+        Target = json.load(file)
+    print(f"Data Obs : {Target}")
+    RA = Target["RA"]
+    DEC = Target["DEC"]
+    TargetCoord = SkyCoord(RA, DEC, frame="icrs")
+    print(f"Coordonées à pointer : {TargetCoord}")
+
+    # On pointe le télescope
+
+    # On lit l'image de guidage... NON ? (ce dont on a besoin, c'est les RADEC, et on les connaît déjà)
+    file = "ObservingSequence/CurrentObs/Guidage.fits"
+    print(f"Fichier existe : {os.path.exists(file)}")
+    hdr = F.getheader(file)
+    RA = hdr["RA"]
+    DEC = hdr["DEC"]
+    print(f"RA : {RA}, DEC : {DEC}")
+    CurrentCoordinates = SkyCoord(ra=RA * u.degree, dec=DEC * u.degree, frame="fk5")
+    print(f"Sky Coord FK5 : {CurrentCoordinates.fk5}")
+    # CurrentCoordinates = SkyCoord(ra=RA*u.degree, dec=DEC*u.degree, frame='icrs')
+    print(f"Sky Coord ICRS : {CurrentCoordinates.icrs}")
+
     # On interroge le côté de la monture (Est / Ouest vs le pilier)
-    # On calcule les coordonnées corrigées (étoile dans la fente)
+    PierSide = hdr["PIERSIDE"]
+    print(f"Pier side : {PierSide}")
+
+    # On établit la position du centre de la fente (à partir du fichier observatoire)
+    SlitX = Observatory["SlitX"]
+    SlitY = Observatory["SlitY"]
+    Scale = Observatory["pixelScale-arcsec"]
+    CenterX = (hdr["NAXIS1"] - 1) / 2
+    CenterY = (hdr["NAXIS2"] - 1) / 2
+    print(f"Slit : {SlitX}, {SlitY}")
+
+    # On calcule la position cible pour mettre l'étoile dans la fente
+    if PierSide == 'WEST':
+        CorrectedRA = RA + (SlitX - CenterX) * Scale
+        CorrectedDEC = DEC + (SlitY - CenterY) * Scale
+
     Iteration = 0
     PointingOK = False
-    while PointingOK == False and Iteration < 5:
+    while PointingOK == False and Iteration < 3:
         # On pointe le télescope
+
         # On fait une image de guidage
+
         # On fait la mesure astrométrique
+        file = "ObservingSequence/CurrentObs/Guidage.fits"
+        # f = F.open(file)
+        hdr = F.getheader(file)
+        RA = hdr["RA"]
+        DEC = hdr["DEC"]
+        Command = (
+            "solve-field --overwrite  --no-plots --new-fits none --ra "
+            + str(RA)
+            + " --dec "
+            + str(DEC)
+            + " --radius 1.0 "
+            + file
+        )
+        print(f"Commande : {Command}")
+        Resultat = os.system(Command)
+        print(f"Res: {Resultat}")
+
         # On mesure l'écart de pointage (+ log)
-        # Si l'écart est plus faible que la tolérance on arrête là
-            # PointingOK = True
-        # Sinon :
-            # Itération += 1
-            # On calcule les nouvelles coordonnées
+        file = "ObservingSequence/CurrentObs/Guidage.new"
+        print(f"WCS Fichier existe : {os.path.exists(file)}")
+        hdr = F.getheader(file)
+        w = WCS(hdr)
+        CenterX = (hdr["NAXIS1"] - 1) / 2
+        CenterY = (hdr["NAXIS2"] - 1) / 2
+        RealCoordinates = w.pixel_to_world(CenterX, CenterY)
+        print(f"SKY : {RealCoordinates}")
+
+        # Si
+        Iteration += 1
+        #    On calcule les nouvelles coordonnées
         pass
-    if Iteration >= 5:
-        # Le pointage a échoué
+    if Iteration >= 3:
+        print(f"Le pointage a échoué, trop d'itérations")
         pass
     if PointingOK == True:
         # Le pointage a réussi
         pass
-    #time.sleep(3)
+    # time.sleep(3)
     return "OK"
 
 

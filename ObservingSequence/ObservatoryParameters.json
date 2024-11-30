@@ -1,0 +1,9 @@
+{
+    "site": "St-Pancrasse",
+    "observer": "F. Cochard",
+    "instrument": "UVEX 600",
+    "SlitX":1200.0,
+    "SlitY":850.0,
+    "PointingTolerance-arcmin":1.0,
+    "pixelScale-arcsec":0.758453 
+}
