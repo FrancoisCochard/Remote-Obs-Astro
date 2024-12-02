@@ -20,24 +20,26 @@ from astropy.wcs import WCS
 import os.path
 
 
-def PointingTelescopeToCoord(ObsData, Coordinates):
+def PointingTelescopeToCoord(ObsData, TargetCoord):
     print("Pointing the telescope (raw) - wait 3s")
+    print(f"Devices Telescope : {ObsData}")
     mount = ObsData["Devices"]["mount"]
+    print(f"Hello : {mount}")
     # On lit le fichier Target
-    fileTarget = "ObservingSequence/CurrentObs/CurrentTarget.json"
-    print(f"Fichier Target existe : {os.path.exists(fileTarget)}")
-    with open(fileTarget, "r") as file:
-        pass
-        Target = json.load(file)
-    print(f"Data Obs : {Target}")
-    RA = Target["RA"]
-    DEC = Target["DEC"]
+    # fileTarget = "ObservingSequence/CurrentObs/CurrentTarget.json"
+    # print(f"Fichier Target existe : {os.path.exists(fileTarget)}")
+    # with open(fileTarget, "r") as file:
+    #     pass
+    #     Target = json.load(file)
+    # print(f"Data Obs : {Target}")
+    # RA = Target["RA"]
+    # DEC = Target["DEC"]
     # mount.unpark() # à confirmer...
     # mount.slew_to_coord_and_stop() # Je dois encore donner les coordonnées
     # time.sleep(3)
     # c = SkyCoord("12h56m02s	 +38d19m06s", frame='icrs') # vEGA ?
     # c = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
-    TargetCoord = SkyCoord(RA, DEC, frame="icrs")
+    # TargetCoord = SkyCoord(RA, DEC, frame="icrs")
     print(f"Coordonées à pointer : {TargetCoord}")
 
     print("BEFORE SLEWING --------------------------")
@@ -125,7 +127,7 @@ def PointingTelescope():
     print(f"Slit : {SlitX}, {SlitY}")
 
     # On calcule la position cible pour mettre l'étoile dans la fente
-    if PierSide == 'WEST':
+    if PierSide == "WEST":
         CorrectedRA = RA + (SlitX - CenterX) * Scale
         CorrectedDEC = DEC + (SlitY - CenterY) * Scale
 
@@ -192,7 +194,7 @@ def TakeTargetSpectraSeries(ObsData):
     print(ObsData["Devices"])
     # camera = ObsData["Devices"]["ambiance_camera"]
     # TakeImage(camera, "Ambiance.fits")
-    TakeImage(ObsData, "Ambiance.fits")
+    TakeScienceImage(ObsData, "Ambiance.fits")
     # camera = ObsData["Devices"]["science_camera"]
     # TakeImage(camera, "Science.fits")
     # camera = ObsData["Devices"]["guiding_camera"]
@@ -250,9 +252,30 @@ def CreateObservationFile(ObsData):
 # --------------------------
 
 
-def TakeImage(ObsData, image_name):
+def TakeScienceImage(ObsData, image_name):
     print("Ho...")
     camID = ObsData["Devices"]["science_camera"]
+    if camID.is_connected:
+        print("Ca va ")
+        camID.prepare_shoot()
+        camID.setExpTimeSec(2)
+        print("Je vais démarrer la pose")
+        camID.shoot_async()
+        print("J'ai lancé le shoot_async")
+        camID.synchronize_with_image_reception()
+        print("Terminé le synchronize")
+        fitsIm = camID.get_received_image()
+        print("Image reçue !")
+        ImName = image_name or "TESTAEFFACER.fits"
+        fitsIm.writeto(ImName, overwrite=True)
+    else:
+        print("Device pas connecté")
+    return "OK"
+
+
+def TakeGuideImage(ObsData, image_name):
+    print("Ho...")
+    camID = ObsData["Devices"]["guiding_camera"]
     if camID.is_connected:
         print("Ca va ")
         camID.prepare_shoot()
@@ -278,11 +301,18 @@ def F1(devices_list, ObsData):
     return "OK"
 
 
-def TakeOneImage(devices_list, ObsData):
-    print("Acquisition - début")
-    # time.sleep(3)
+def TakeOneGuidingImage(devices_list, ObsData):
+    print("Acquisition Guidage - début")
     camera = devices_list["ScienceCam"]
-    TakeImage(camera)
+    TakeGuideImage(camera)
+    print("Acquisition - fin")
+    return "OK"
+
+
+def TakeOneScienceImage(devices_list, ObsData):
+    print("Acquisition Guidage - début")
+    camera = devices_list["ScienceCam"]
+    TakeScienceImage(camera)
     print("Acquisition - fin")
     return "OK"
 

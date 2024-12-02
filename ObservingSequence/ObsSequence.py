@@ -33,6 +33,8 @@ import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
 import ObservingSequence.ObservingOperations as SeqOp  # SeqOp means 'Sequence Operation', or a basic operation in an observing sequence.
+from astropy.coordinates import SkyCoord
+
 
 logger = initLogger("obs")
 
@@ -41,7 +43,7 @@ sequence = {
         "Pointage": SeqOp.F1,
         "Centrage": SeqOp.F1,
         "Guidage": SeqOp.F3,
-        "Acquisition": SeqOp.TakeOneImage,
+        "Acquisition": SeqOp.TakeOneScienceImage,
         "Flat": SeqOp.F4,
         "Dark": SeqOp.F5,
     },
@@ -60,12 +62,12 @@ sequence = {
     },
     "seq1": {
         "Pointer": SeqOp.F1,
-        "Centrer": SeqOp.TakeOneImage,
+        "Centrer": SeqOp.TakeOneScienceImage,
         "Acquisition": SeqOp.F3,
     },
     "seq2": {
         "Guider": SeqOp.F1,
-        "Acquisition": SeqOp.TakeOneImage,
+        "Acquisition": SeqOp.TakeOneScienceImage,
         "Flat": SeqOp.F4,
         "Dark": SeqOp.F5,
     },
@@ -207,6 +209,12 @@ def DisconnectDevices():
         logger.info(message)
 
 
+def PointingTEST(TargetCoord):
+    # TargetCoord = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
+    print(f"Ici, OK {ObsData}")
+    SeqOp.PointingTelescopeToCoord(ObsData, TargetCoord)
+
+
 app = FastAPI()
 
 
@@ -220,6 +228,7 @@ async def get_run():
     print("Ici : ", ObsData["Observation"]["seq"])
     ObsProcessRun()
     return True
+
 
 @app.get("/TEST-pointage")
 async def get_pointingTest():
@@ -250,12 +259,12 @@ async def get_disconnectdevices():
 
 
 @app.get("/takeimage")
-async def get_takeimage():
+async def get_takescienceimage():
     print("Et là...", ObsData["Devices"])
     camera = ObsData["Devices"]["science_camera"]
     print("data : ", camera)
     print("Jusque ici OK ")
-    SeqOp.TakeImage(ObsData, "TOTO.fits")
+    SeqOp.TakeScienceImage(ObsData, "TOTO.fits")
     return True
 
 
@@ -299,6 +308,14 @@ async def get_startObserving():
 async def get_stopObserving():
 
     observingAgreement = False
+    return True
+
+
+@app.get("/PointageTelescope")
+async def get_pointing():
+
+    TargetCoord = SkyCoord("03h13m43s +15d34m31s", frame="icrs")
+    PointingTEST(TargetCoord)
     return True
 
 
