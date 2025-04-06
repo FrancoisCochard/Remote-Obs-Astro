@@ -91,4 +91,33 @@ Ce dont j'ai besoin :
 - Fonctions spectro
   - GuideFromTo
   - Gérer le cas de 'star lost'
-  - 
+
+## Organisation générale du logiciel
+
+14/12/2024 - une nouvelle fois, je reprends le boulot de développement (après la dynamique des RCE).
+
+J'ai pris quelques décisions structurelles (du type "il y a maintenant 5 modules indépendants"). Je me concentre ici sur le module "séquence d'observation" qui est le plus critique à l'heure actuelle. L'objectif est donc d’enchaîner une observation complète - considérant que les conditions sont bonnes et que l'observatoire est ouvert. 
+
+J'ai maintenant 3 fichiers qui décrivent le contexte :
+
+- Le fichier qui décrit l'observatoire (coordonnées, nom de l'observatoire, etc)
+- Le fichier qui décrit les devices disponibles (INDI)
+- Le fichier qui décrit la cible en cours d'observation
+
+Je bute sur un problème d'organisation du logiciel.
+
+J'ai des fonctions de bas niveau, qui ne concernent qu'un seul device (prendre une image, pointer le télescope). Par ailleurs, j'ai des fonctions de haut-niveau, qui réalisent une activité astronomique. Du genre "autofocus", ou "mettre l'étoile dans la fente". Ces fonctions travaillent (quasiment ?) toutes avec plusieurs devices (typiquement télescope + caméra). 
+
+J'aimerais que chaque fonction, de bas niveau comme de haut niveau, puisse être appelée par une API Rest. Ca me semble important pour le debug. Le problème est de savoir comment je passe les paramètres (en gros les 3 fichiers ci-dessus) aux fonctions ; et là je pense surtout aux fonctions de haut niveau (mais ça concerne peut-être aussi les bas niveau).
+
+En fonctionnement normal, c'est le séquenceur d'observation qui va lire les fichiers, puis passer les infos (3 fichiers) en paramètres. En procédant ainsi, je ne lis les fichiers qu'une seule fois, puis je les garde en mémoire pour toute l'observation. 
+
+Mais si je veux passer par une API, ça ne va pas le faire, puisque je n'aurai pas en mémoire les fameux trois fichiers.
+
+Faut-il alors que chaque opération lise les 3 fichiers ? Ca me semble carrément très lourd - et pas beau.
+
+Peut-être une option : ne lire à chaque fois les 3 fichiers uniquement dans le cadre des API. Cela veut dire que je fais une première fonction qui lit les 3 fichiers, que j'appelle systématiquement dans les API, puis ensuite j'appelle chaque fonction astronomique. 
+
+Cela ne marchera que si je n'ai pas besoin de passer d'autre paramètre que les 3 fichiers à chacune des fonctions, haut ou bas niveau. Je pense que c'est jouable - et ce sera même un des éléments fondamentaux de l'organisation du logiciel - mais c'est à vérifier. Cela implique aussi que chaque fonction ne retourne pas de valeur particulière, en dehors d'un statut (success / failed).
+
+Je pense par ailleurs que je vais rapidement séparer les fonctions bas niveau et haut niveau dans des fichiers python séparés. Pour une meilleure lisibilité (le découpage est simple à décrire).
