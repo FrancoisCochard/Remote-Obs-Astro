@@ -41,6 +41,16 @@ ambiance_camera:
         indi_port : 7624
     cooling : false
 
+pointing_camera:
+    module: IndiASICamera
+    module_dir: IndiDevices.Camera
+    camera_name : ZWO CCD ASI120MM-S 1
+    class_name : IndiASICamera
+    indi_client :
+        indi_host : 192.168.144.32
+        indi_port : 7624
+    cooling : false
+
 focuser:
     module: IndiFocuser
     module_dir: IndiDevices.Focuser

@@ -19,6 +19,9 @@ from astropy.io import fits as F
 from astropy.wcs import WCS
 import os.path
 
+# --------------------
+# MOUNT functions
+# --------------------
 
 def PointingTelescopeToCoord(ObsData, TargetCoord):
     print("Pointing the telescope (raw) - wait 3s")
@@ -73,6 +76,7 @@ def DefineSlitPosition(ObsData):
     X = (x1 + x2) / 2
     Y = (y1 + y2) / 2
     return "OK"  # [X, Y]
+
 
 
 def PointingTelescope():

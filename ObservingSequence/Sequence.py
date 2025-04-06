@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 
 # -----------------------------------------
-# TestFlow.py
-# Script préliminaire pour déclencher une séquence d'observation.
+# Sequence.py
+# Script préliminaire (de moins en moins, en fait) pour déclencher une séquence d'observation.
 # V 0.01 : 09/12/2023 - F. Cochard - version initiale, qui marche à peu près.
 # V 0.02 : 31/12/2023 - F. Cochard - on dispose maintenant de l'initialisation des devices Indi.
 # V 0.03 : 07/01/2024 - F. Cochard - j'ajoute le système de Logging (récupéré de ce qu'on avait fait avec Etienne)
+# V 0.05 : 06/04/2025 - F. Cochard - je transforme l'organisation des fichiers (low_level, high_level, API, etc)
 #
 # L'idée est de pouvoir déclencher une séquence d'observation à partir de l'observatoire, par une API Rest.
 # J'ai le choix de la séquence d'observation.
@@ -16,60 +17,55 @@
 # L'interruption n'est effective qu'à la fin de la fonction Haut Niveau en cours.
 # La classe ProcessObs est instanciée à chaque démarrage d'une séquence d'observation. C'est la variable A (on pourrait trouver un meilleur nom :>)
 #
-#
-#
+# Le 06/04/2025, je transforme l'orgaisation générale, pour aller vers un truc plus ambitieux
+# L'idée est de mettre dans ce fichier toute la mécanique qui gère la séquence d'opérations.
 #
 #
 #
 #
 # -----------------------------------------
 
-import time
 import threading
-from fastapi import FastAPI
-import uvicorn
 import importlib
 import yaml
 from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from utils.LoggingUtils import initLogger
-import ObservingSequence.ObservingOperations as SeqOp  # SeqOp means 'Sequence Operation', or a basic operation in an observing sequence.
-from astropy.coordinates import SkyCoord
-
+import ObservingSequence.High_level_operations as hilev  # hilev means 'High Level Operation', or a rich operation in an observing sequence.
 
 logger = initLogger("obs")
 
 sequence = {
     "main": {
-        "Pointage": SeqOp.F1,
-        "Centrage": SeqOp.F1,
-        "Guidage": SeqOp.F3,
-        "Acquisition": SeqOp.TakeOneScienceImage,
-        "Flat": SeqOp.F4,
-        "Dark": SeqOp.F5,
+        "Pointage": hilev.F1,
+        "Centrage": hilev.F1,
+        "Guidage": hilev.F3,
+        "Acquisition": hilev.TakeOneScienceImage,
+        "Flat": hilev.F4,
+        "Dark": hilev.F5,
     },
-    "basic": {"Pointage": SeqOp.F1},
+    "basic": {"Pointage": hilev.F1},
     "BeUVEX": {
-        "Pointage": SeqOp.PointingTelescopeToCoord,
-        "Centrage": SeqOp.PointingTelescope,
-        "Guidage": SeqOp.ActivateAutoguiding,
-        "Acquisition": SeqOp.TakeTargetSpectraSeries,
-        "StopGuiding": SeqOp.StopAutoguiding,
-        "Calibration": SeqOp.TakeCalibSpectraSeries,
-        "Flat": SeqOp.TakeFlatSpectraSeries,
-        "Dark": SeqOp.TakeDarkSeries,
-        "Bias": SeqOp.TakeBiasSeries,
-        "CreateObsFile": SeqOp.CreateObservationFile,
+        "Pointage": hilev.lowlev.PointingTelescopeToCoord,
+        "Centrage": hilev.PointingTelescope,
+        "Guidage": hilev.ActivateAutoguiding,
+        "Acquisition": hilev.lowlev.TakeTargetSpectraSeries,
+        "StopGuiding": hilev.StopAutoguiding,
+        "Calibration": hilev.lowlev.TakeCalibSpectraSeries,
+        "Flat": hilev.lowlev.TakeFlatSpectraSeries,
+        "Dark": hilev.lowlev.TakeDarkSeries,
+        "Bias": hilev.lowlev.   TakeBiasSeries,
+        "CreateObsFile": hilev.CreateObservationFile,
     },
     "seq1": {
-        "Pointer": SeqOp.F1,
-        "Centrer": SeqOp.TakeOneScienceImage,
-        "Acquisition": SeqOp.F3,
+        "Pointer": hilev.F1,
+        "Centrer": hilev.TakeOneScienceImage,
+        "Acquisition": hilev.F3,
     },
     "seq2": {
-        "Guider": SeqOp.F1,
-        "Acquisition": SeqOp.TakeOneScienceImage,
-        "Flat": SeqOp.F4,
-        "Dark": SeqOp.F5,
+        "Guider": hilev.F1,
+        "Acquisition": hilev.TakeOneScienceImage,
+        "Flat": hilev.F4,
+        "Dark": hilev.F5,
     },
 }
 
@@ -210,115 +206,5 @@ def DisconnectDevices():
 
 
 def PointingTEST(TargetCoord):
-    # TargetCoord = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
     print(f"Ici, OK {ObsData}")
-    SeqOp.PointingTelescopeToCoord(ObsData, TargetCoord)
-
-
-app = FastAPI()
-
-
-@app.get("/state")
-async def get_state():
-    return ObsState()
-
-
-@app.get("/run")
-async def get_run():
-    print("Ici : ", ObsData["Observation"]["seq"])
-    ObsProcessRun()
-    return True
-
-
-@app.get("/TEST-pointage")
-async def get_pointingTest():
-    # print("Ici : ", ObsData["Observation"]["seq"])
-    SeqOp.PointingTelescope()
-    return True
-
-
-@app.get("/stop/{message_stop}")
-async def get_stop(message_stop):
-    ObsProcessStop(message_stop)
-    return True
-
-
-@app.get("/startupdevices")
-async def get_startupdevices():
-    configINDIdevices = ReadYamlConfig("IndiDevices/device_config.yaml")
-    CreatIndiDevices(configINDIdevices)
-    ConnectDevices()
-    # Pour mémoire (feb 2024), je peux ajouter ici la lecture du fichier de config de PHD2... à réfléchir
-    return True
-
-
-@app.get("/disconnectdevices")
-async def get_disconnectdevices():
-    DisconnectDevices()
-    return True
-
-
-@app.get("/takeimage")
-async def get_takescienceimage():
-    print("Et là...", ObsData["Devices"])
-    camera = ObsData["Devices"]["science_camera"]
-    print("data : ", camera)
-    print("Jusque ici OK ")
-    SeqOp.TakeScienceImage(ObsData, "TOTO.fits")
-    return True
-
-
-@app.get("/startupallpsu")
-async def get_startupallpsus():
-
-    StartAllPSU()
-    return True
-
-
-@app.get("/stopallpsu")
-async def get_StopAllPSU():
-    StopAllPSU()
-    return True
-
-
-@app.get("/startInstrument")
-async def get_startInstrument():
-    StartAllPSU()
-    configINDIdevices = ReadYamlConfig("IndiDevices/device_config.yaml")
-    CreatIndiDevices(configINDIdevices)
-    ConnectDevices()
-    return True
-
-
-@app.get("/stopInstrument")
-async def get_stopInstrument():
-    DisconnectDevices()
-    StopAllPSU()
-    return True
-
-
-@app.get("/startObserving")
-async def get_startObserving():
-
-    observingAgreement = True
-    return True
-
-
-@app.get("/stopObserving")
-async def get_stopObserving():
-
-    observingAgreement = False
-    return True
-
-
-@app.get("/PointageTelescope")
-async def get_pointing():
-
-    TargetCoord = SkyCoord("03h13m43s +15d34m31s", frame="icrs")
-    PointingTEST(TargetCoord)
-    return True
-
-
-if __name__ == "__main__":
-    logger.info("Starting of ObservingSequence FastAPI server")
-    uvicorn.run("ObsSequence:app", host="0.0.0.0", port=1235, reload=True)
+    hilev.PointingTelescopeToCoord(ObsData, TargetCoord)

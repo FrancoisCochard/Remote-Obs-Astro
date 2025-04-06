@@ -1,0 +1,248 @@
+#!/usr/bin/python3
+
+# -----------------------------------------
+# 
+#
+#
+#
+#
+#
+#
+# -----------------------------------------
+
+import time
+import json
+from astropy.coordinates import SkyCoord
+from astropy.io import fits as F
+from astropy.wcs import WCS
+import os.path
+from astropy import units as u
+import ObservingSequence.Low_level_operations as lowlev  # lowlev means 'Low Level Operation', or a basic operation in an observing sequence.
+
+
+# --------------------
+# GENERAL functions
+# --------------------
+
+def CreateObservationFile(ObsData):
+    obsfilename = "TEST"
+    print(f"Create the observation file: {obsfilename}.yaml - wait 3s")
+    time.sleep(3)
+    return "OK"
+
+# --------------------
+# FOCUS functions
+# --------------------
+
+def CheckFocusing(ObsData):
+    print("Check telescope focusing - wait 3s")
+    time.sleep(3)
+    return "OK"
+
+# --------------------
+# SLIT POSITION functions
+# --------------------
+
+def DefineSlitPosition(ObsData):
+    print("Define slit position - wait 3s")
+    time.sleep(3)
+    x1 = 1000
+    x2 = 1000
+    y1 = 1000
+    y2 = 1000
+    X = (x1 + x2) / 2
+    Y = (y1 + y2) / 2
+    return "OK"  # [X, Y]
+
+# --------------------
+# AUTOGUIDING functions
+# --------------------
+
+def ActivateAutoguiding(ObsData):
+    print("Activate autoguiding (PHD2) - wait 3s")
+    time.sleep(3)
+    return "OK"
+
+def StopAutoguiding(ObsData):
+    print("Stop autoguiding (PHD2) - wait 3s")
+    time.sleep(3)
+    return "OK"
+
+# --------------------
+# TARGET POINTING functions
+# --------------------
+
+def PointingTelescope():
+    """Fonction FC Nov. 2024.
+    On part de l'hypothèse que le télescope est proche de la cible - pour être du bon côté du pilier.
+    """
+    print("Pointing the telescope (precise)")
+    # On lit le fichier Observatoire
+    fileObservatory = "ObservingSequence/ObservatoryParameters.json"
+    print(f"Fichier OBS existe : {os.path.exists(fileObservatory)}")
+    with open(fileObservatory, "r") as file:
+        pass
+        Observatory = json.load(file)
+    print(f"Data Obs : {Observatory}")
+
+    # On lit le fichier Target
+    fileTarget = "ObservingSequence/CurrentObs/CurrentTarget.json"
+    print(f"Fichier Target existe : {os.path.exists(fileTarget)}")
+    with open(fileTarget, "r") as file:
+        pass
+        Target = json.load(file)
+    print(f"Data Obs : {Target}")
+    RA = Target["RA"]
+    DEC = Target["DEC"]
+    TargetCoord = SkyCoord(RA, DEC, frame="icrs")
+    print(f"Coordonées à pointer : {TargetCoord}")
+
+    # On pointe le télescope
+
+    # On lit l'image de guidage... NON ? (ce dont on a besoin, c'est les RADEC, et on les connaît déjà)
+    file = "ObservingSequence/CurrentObs/Guidage.fits"
+    print(f"Fichier existe : {os.path.exists(file)}")
+    hdr = F.getheader(file)
+    RA = hdr["RA"]
+    DEC = hdr["DEC"]
+    print(f"RA : {RA}, DEC : {DEC}")
+    CurrentCoordinates = SkyCoord(ra=RA * u.degree, dec=DEC * u.degree, frame="fk5")
+    print(f"Sky Coord FK5 : {CurrentCoordinates.fk5}")
+    # CurrentCoordinates = SkyCoord(ra=RA*u.degree, dec=DEC*u.degree, frame='icrs')
+    print(f"Sky Coord ICRS : {CurrentCoordinates.icrs}")
+
+    # On interroge le côté de la monture (Est / Ouest vs le pilier)
+    PierSide = hdr["PIERSIDE"]
+    print(f"Pier side : {PierSide}")
+
+    # On établit la position du centre de la fente (à partir du fichier observatoire)
+    SlitX = Observatory["SlitX"]
+    SlitY = Observatory["SlitY"]
+    Scale = Observatory["pixelScale-arcsec"]
+    CenterX = (hdr["NAXIS1"] - 1) / 2
+    CenterY = (hdr["NAXIS2"] - 1) / 2
+    print(f"Slit : {SlitX}, {SlitY}")
+
+    # On calcule la position cible pour mettre l'étoile dans la fente
+    if PierSide == "WEST":
+        CorrectedRA = RA + (SlitX - CenterX) * Scale
+        CorrectedDEC = DEC + (SlitY - CenterY) * Scale
+
+    Iteration = 0
+    PointingOK = False
+    while PointingOK == False and Iteration < 3:
+        # On pointe le télescope
+
+        # On fait une image de guidage
+
+        # On fait la mesure astrométrique
+        file = "ObservingSequence/CurrentObs/Guidage.fits"
+        # f = F.open(file)
+        hdr = F.getheader(file)
+        RA = hdr["RA"]
+        DEC = hdr["DEC"]
+        Command = (
+            "solve-field --overwrite  --no-plots --new-fits none --ra "
+            + str(RA)
+            + " --dec "
+            + str(DEC)
+            + " --radius 1.0 "
+            + file
+        )
+        print(f"Commande : {Command}")
+        Resultat = os.system(Command)
+        print(f"Res: {Resultat}")
+
+        # On mesure l'écart de pointage (+ log)
+        file = "ObservingSequence/CurrentObs/Guidage.new"
+        print(f"WCS Fichier existe : {os.path.exists(file)}")
+        hdr = F.getheader(file)
+        w = WCS(hdr)
+        CenterX = (hdr["NAXIS1"] - 1) / 2
+        CenterY = (hdr["NAXIS2"] - 1) / 2
+        RealCoordinates = w.pixel_to_world(CenterX, CenterY)
+        print(f"SKY : {RealCoordinates}")
+
+        # Si
+        Iteration += 1
+        #    On calcule les nouvelles coordonnées
+        pass
+    if Iteration >= 3:
+        print(f"Le pointage a échoué, trop d'itérations")
+        pass
+    if PointingOK == True:
+        # Le pointage a réussi
+        pass
+    # time.sleep(3)
+    return "OK"
+
+# --------------------------
+# Temporary functions
+# Cette partie a vocation à disparaître !
+# --------------------------
+
+
+
+def TakeGuideImage(ObsData, image_name):
+    print("Ho...")
+    camID = ObsData["Devices"]["guiding_camera"]
+    if camID.is_connected:
+        print("Ca va ")
+        camID.prepare_shoot()
+        camID.setExpTimeSec(2)
+        print("Je vais démarrer la pose")
+        camID.shoot_async()
+        print("J'ai lancé le shoot_async")
+        camID.synchronize_with_image_reception()
+        print("Terminé le synchronize")
+        fitsIm = camID.get_received_image()
+        print("Image reçue !")
+        ImName = image_name or "TESTAEFFACER.fits"
+        fitsIm.writeto(ImName, overwrite=True)
+    else:
+        print("Device pas connecté")
+    return "OK"
+
+
+def F1(devices_list, ObsData):
+    print("F1 - début")
+    time.sleep(3)
+    print("F1 - fin")
+    return "OK"
+
+
+def TakeOneGuidingImage(devices_list, ObsData):
+    print("Acquisition Guidage - début")
+    camera = devices_list["ScienceCam"]
+    TakeGuideImage(camera)
+    print("Acquisition - fin")
+    return "OK"
+
+
+def TakeOneScienceImage(devices_list, ObsData):
+    print("Acquisition Guidage - début")
+    camera = devices_list["ScienceCam"]
+    lowlev.TakeScienceImage(camera) 
+    print("Acquisition - fin")
+    return "OK"
+
+
+def F3(devices_list, ObsData):
+    print("F3 - début")
+    time.sleep(3)
+    print("F3 - fin")
+    return "OK"
+
+
+def F4(devices_list, ObsData):
+    print("F4 - début")
+    time.sleep(3)
+    print("F4 - fin")
+    return "OK"
+
+
+def F5(devices_list, ObsData):
+    print("F5 - début")
+    time.sleep(3)
+    print("F5 - fin")
+    return "OK"
