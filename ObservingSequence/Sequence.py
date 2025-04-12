@@ -39,7 +39,7 @@ sequence = {
         "Pointage": hilev.F1,
         "Centrage": hilev.F1,
         "Guidage": hilev.F3,
-        "Acquisition": hilev.TakeOneScienceImage,
+        "Acquisition": hilev.TakeScienceImage,
         "Flat": hilev.F4,
         "Dark": hilev.F5,
     },
@@ -58,12 +58,12 @@ sequence = {
     },
     "seq1": {
         "Pointer": hilev.F1,
-        "Centrer": hilev.TakeOneScienceImage,
+        "Centrer": hilev.TakeScienceImage,
         "Acquisition": hilev.F3,
     },
     "seq2": {
         "Guider": hilev.F1,
-        "Acquisition": hilev.TakeOneScienceImage,
+        "Acquisition": hilev.TakeScienceImage,
         "Flat": hilev.F4,
         "Dark": hilev.F5,
     },
@@ -208,3 +208,6 @@ def DisconnectDevices():
 def PointingTEST(TargetCoord):
     print(f"Ici, OK {ObsData}")
     hilev.PointingTelescopeToCoord(ObsData, TargetCoord)
+
+def test():
+    print("Hello...")

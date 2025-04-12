@@ -11,6 +11,7 @@
 # -----------------------------------------
 
 import time
+import datetime
 import json
 from astropy.coordinates import SkyCoord
 from astropy.io import fits as F
@@ -18,7 +19,6 @@ from astropy.wcs import WCS
 import os.path
 from astropy import units as u
 import ObservingSequence.Low_level_operations as lowlev  # lowlev means 'Low Level Operation', or a basic operation in an observing sequence.
-
 
 # --------------------
 # GENERAL functions
@@ -29,6 +29,12 @@ def CreateObservationFile(ObsData):
     print(f"Create the observation file: {obsfilename}.yaml - wait 3s")
     time.sleep(3)
     return "OK"
+
+def CreateImageFileName(TargetOrType='NoName', ExpTime=0.0):
+    # UniqueDate = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
+    UniqueDate = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
+    ImageFileName = UniqueDate + '-' + TargetOrType + '-' + str(ExpTime) + 's'
+    return ImageFileName    
 
 # --------------------
 # FOCUS functions
@@ -177,31 +183,73 @@ def PointingTelescope():
     return "OK"
 
 # --------------------------
+# Cameras functions
+# --------------------------
+
+def TakeScienceImage(camera, nb, Exptime, Name='NoName'):
+    # print(f"A : {camera}, B : {nb}, C : {Exptime}")
+    print("Acquisition Science - début")
+    # camera = devices_list["science_camera"]
+    # FC, 12/04/2025 : je bride la taille des images parce que la lib INDI n'aime pas la pleine image
+    ImageName = CreateImageFileName(TargetOrType=Name, ExpTime=Exptime)
+    # print(f"Acquisition NOM - {ImageName}, {nb}, {Exptime}")
+    nb = int(nb)
+    Exptime = float(Exptime)
+    # print("type de Nb : ", type(nb))
+    if (nb > 1) :
+        # print("titi")
+        # print(f"Je suis sur une série : {nb}")
+        for i in range(nb):
+            ImageNameSerie = ImageName + '-' + str(i + 1) + '.fits'
+            # print(f"Acquisition série {ImageNameSerie}, {i}")
+            Err, FitsIm = lowlev.TakeImage(camera, Exptime, ROI={'X':0, 'Y':1336, 'WIDTH':5495, 'HEIGHT':1000}) 
+            Impath = '/tmp/' + ImageNameSerie
+            # print(f"Im : {Impath}")
+            FitsIm.writeto(Impath, overwrite=True)
+    else : # Only one image
+        # print("tata")
+        # print(f"Acquisition unique {ImageName}")
+        Err, FitsIm = lowlev.TakeImage(camera, Exptime, ROI={'X':0, 'Y':1336, 'WIDTH':5495, 'HEIGHT':1000}) 
+        Impath = '/tmp/' + ImageName + '.fits'
+        FitsIm.writeto(Impath, overwrite=True)
+    # print(f"Acquisition - fin, {Err}")
+    return "OK"
+
+def TakeGuideImage(camera, nb, Exptime):
+    print(f"A : {camera}, B : {nb}, C : {Exptime}")
+    print("Acquisition Guidage - début")
+    # camera = devices_list["science_camera"]
+    Err, FitsIm = lowlev.TakeImage(camera, Exptime) 
+    print(f"Acquisition guidage - fin, {Err}")
+    FitsIm.writeto("TotoGuidage.fits", overwrite=True)
+    return "OK"
+
+# --------------------------
 # Temporary functions
 # Cette partie a vocation à disparaître !
 # --------------------------
 
 
 
-def TakeGuideImage(ObsData, image_name):
-    print("Ho...")
-    camID = ObsData["Devices"]["guiding_camera"]
-    if camID.is_connected:
-        print("Ca va ")
-        camID.prepare_shoot()
-        camID.setExpTimeSec(2)
-        print("Je vais démarrer la pose")
-        camID.shoot_async()
-        print("J'ai lancé le shoot_async")
-        camID.synchronize_with_image_reception()
-        print("Terminé le synchronize")
-        fitsIm = camID.get_received_image()
-        print("Image reçue !")
-        ImName = image_name or "TESTAEFFACER.fits"
-        fitsIm.writeto(ImName, overwrite=True)
-    else:
-        print("Device pas connecté")
-    return "OK"
+# def TakeGuideImage(ObsData, image_name):
+#     print("Ho...")
+#     camID = ObsData["Devices"]["guiding_camera"]
+#     if camID.is_connected:
+#         print("Ca va ")
+#         camID.prepare_shoot()
+#         camID.setExpTimeSec(2)
+#         print("Je vais démarrer la pose")
+#         camID.shoot_async()
+#         print("J'ai lancé le shoot_async")
+#         camID.synchronize_with_image_reception()
+#         print("Terminé le synchronize")
+#         fitsIm = camID.get_received_image()
+#         print("Image reçue !")
+#         ImName = image_name or "TESTAEFFACER.fits"
+#         fitsIm.writeto(ImName, overwrite=True)
+#     else:
+#         print("Device pas connecté")
+#     return "OK"
 
 
 def F1(devices_list, ObsData):
@@ -211,20 +259,12 @@ def F1(devices_list, ObsData):
     return "OK"
 
 
-def TakeOneGuidingImage(devices_list, ObsData):
-    print("Acquisition Guidage - début")
-    camera = devices_list["ScienceCam"]
-    TakeGuideImage(camera)
-    print("Acquisition - fin")
-    return "OK"
-
-
-def TakeOneScienceImage(devices_list, ObsData):
-    print("Acquisition Guidage - début")
-    camera = devices_list["ScienceCam"]
-    lowlev.TakeScienceImage(camera) 
-    print("Acquisition - fin")
-    return "OK"
+# def TakeOneGuidingImage(devices_list, ObsData):
+#     print("Acquisition Guidage - début")
+#     camera = devices_list["ScienceCam"]
+#     TakeGuideImage(camera)
+#     print("Acquisition - fin")
+#     return "OK"
 
 
 def F3(devices_list, ObsData):
@@ -246,3 +286,6 @@ def F5(devices_list, ObsData):
     time.sleep(3)
     print("F5 - fin")
     return "OK"
+
+def test():
+    print("Hello de High level...")

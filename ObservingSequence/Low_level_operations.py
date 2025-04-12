@@ -6,9 +6,9 @@
 # V 0.02 - 06/04/2025 - F. Cochard je réorganise les fichiers pour la séquence d'observation
 # This script contains the operations used by the Observing sequences. These are the elementary bricks of the observations.
 #
-#
-#
-#
+# Quelques règles (06/04/2025):
+# - C'est le seul fichier avec des fonctions qui causent au serveur INDI
+# - Aucun message de log depuis ces fonctions
 #
 #
 # -----------------------------------------
@@ -58,6 +58,32 @@ def PointingTelescopeToCoord(ObsData, TargetCoord):
 # --------------------
 # CAMERAS functions
 # --------------------
+
+def TakeImage(camID, Exptime, Bin=None, ROI=None):
+    # Take one image (basic operation)
+    # camID = ObsData["Devices"]["science_camera"]
+    if camID.is_connected:
+        # print("Ca va ")
+        camID.prepare_shoot()
+        camID.setExpTimeSec(Exptime)
+        if (Bin != None):
+            camID.set_binning(Bin)
+        # camID.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
+        if (ROI != None):
+            camID.set_roi(ROI)
+        # print("Je vais démarrer la pose")
+        camID.shoot_async()
+        # print("J'ai lancé le shoot_async")
+        camID.synchronize_with_image_reception()
+        # print("Terminé le synchronize")
+        fitsIm = camID.get_received_image()
+        # print("Image reçue !")
+        # ImName = image_name or "TESTAEFFACER.fits"
+        # fitsIm.writeto(ImName, overwrite=True)
+        return 0, fitsIm
+    else:
+        print("Device pas connecté")
+        return "OK"
 
 def TakeScienceImage(ObsData, image_name):
     print("Ho...")

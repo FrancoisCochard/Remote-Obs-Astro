@@ -25,6 +25,7 @@
 # -----------------------------------------
 
 from fastapi import FastAPI
+
 import uvicorn
 from utils.LoggingUtils import initLogger
 import Sequence as sq
@@ -74,13 +75,24 @@ async def get_disconnectdevices():
     return True
 
 
-@app.get("/takeimage")
-async def get_takescienceimage():
-    print("Et là...", sq.ObsData["Devices"])
+@app.get("/takeScienceImage", tags=["2. High level operations"])
+async def get_takescienceimage(Exptime=1.0, Nb=1, Name=''):
+    # print("Et là...", sq.ObsData["Devices"], Exptime, Nb)
     camera = sq.ObsData["Devices"]["science_camera"]
     print("data : ", camera)
-    print("Jusque ici OK ")
-    sq.lowlev.TakeScienceImage(sq.ObsData, "TOTO.fits")
+    # print("Jusque ici OK ")
+    sq.hilev.TakeScienceImage(camera, Nb, Exptime, Name)
+    # sq.hilev.test()
+    return True
+
+@app.get("/takeGuideImage", tags=["2. High level operations"])
+async def get_takeguideimage():
+    print("pour info : ", sq.ObsData["Devices"])
+    camera = sq.ObsData["Devices"]["guiding_camera"]
+    print("data : ", camera)
+    print("Jusque ici OK (guidage) ")
+    sq.hilev.TakeGuideImage(camera, 1, 1.0)
+    # sq.hilev.test()
     return True
 
 
@@ -97,7 +109,7 @@ async def get_StopAllPSU():
     return True
 
 
-@app.get("/startInstrument")
+@app.get("/startInstrument", tags=["1. Main operations"])
 async def get_startInstrument():
     sq.StartAllPSU()
     configINDIdevices = sq.ReadYamlConfig("IndiDevices/device_config.yaml")
@@ -106,7 +118,7 @@ async def get_startInstrument():
     return True
 
 
-@app.get("/stopInstrument")
+@app.get("/stopInstrument", tags=["1. Main operations"])
 async def get_stopInstrument():
     sq.DisconnectDevices()
     sq.StopAllPSU()

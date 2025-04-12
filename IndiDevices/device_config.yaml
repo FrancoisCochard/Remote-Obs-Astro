@@ -85,11 +85,11 @@ filter_wheel:
         None1: 4
         None2: 5
 
-UVEX:
-    module: IndiUsisSpectro
-    module_dir: IndiDevices.UsisSpectroscope
-    USIS_spectro_name: Shelyak Usis
-    class_name: IndiUsisSpectro
-    indi_client:
-        indi_host: 192.168.144.32
-        indi_port: 7624
+# UVEX:
+#     module: IndiUsisSpectro
+#     module_dir: IndiDevices.UsisSpectroscope
+#     USIS_spectro_name: Shelyak Usis
+#     class_name: IndiUsisSpectro
+#     indi_client:
+#         indi_host: 192.168.144.32
+#         indi_port: 7624
