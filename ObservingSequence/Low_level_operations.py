@@ -19,11 +19,10 @@ from astropy import units as u
 # MOUNT functions
 # --------------------
 
-def PointingTelescopeToCoord(ObsData, TargetCoord):
-    print("Pointing the telescope (raw) - wait 3s")
-    print(f"Devices Telescope : {ObsData}")
-    mount = ObsData["Devices"]["mount"]
-    print(f"Hello : {mount}")
+def PointingTelescopeToCoord(Mount, TargetCoord):
+    print(f"Low lev - Devices Telescope : {Mount}")
+    # mount = ObsData["Devices"]["mount"]
+    # print(f"Hello : {mount}")
     # On lit le fichier Target
     # fileTarget = "ObservingSequence/CurrentObs/CurrentTarget.json"
     # print(f"Fichier Target existe : {os.path.exists(fileTarget)}")
@@ -39,19 +38,16 @@ def PointingTelescopeToCoord(ObsData, TargetCoord):
     # c = SkyCoord("12h56m02s	 +38d19m06s", frame='icrs') # vEGA ?
     # c = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
     # TargetCoord = SkyCoord(RA, DEC, frame="icrs")
-    print(f"Coordonées à pointer : {TargetCoord}")
+    print(f"Coordonées à pointer : {TargetCoord.ra.to(u.hourangle)} et {TargetCoord.dec.to(u.degree)}")
 
     print("BEFORE SLEWING --------------------------")
-    c_true = mount.get_current_coordinates()
-    print(
-        f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}"
-    )
-    mount.slew_to_coord_and_track(TargetCoord)
+    c_true = Mount.get_current_coordinates()
+    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+    Mount.slew_to_coord_and_track(TargetCoord)
+    time.sleep(5) # On attend un peu
     print("After SLEWING --------------------------")
-    c_true = mount.get_current_coordinates()
-    print(
-        f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}"
-    )
+    c_true = Mount.get_current_coordinates()
+    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
     print("Le télescope est maintenant sur la cible")
     return "OK"
 
@@ -85,25 +81,48 @@ def TakeImage(camID, Exptime, Bin=None, ROI=None):
         print("Device pas connecté")
         return "OK"
 
-def TakeScienceImage(ObsData, image_name):
-    print("Ho...")
-    camID = ObsData["Devices"]["science_camera"]
+def SetCameraTemperature(camID, Temperature):
     if camID.is_connected:
-        print("Ca va ")
-        camID.prepare_shoot()
-        camID.setExpTimeSec(2)
-        print("Je vais démarrer la pose")
-        camID.shoot_async()
-        print("J'ai lancé le shoot_async")
-        camID.synchronize_with_image_reception()
-        print("Terminé le synchronize")
-        fitsIm = camID.get_received_image()
-        print("Image reçue !")
-        ImName = image_name or "TESTAEFFACER.fits"
-        fitsIm.writeto(ImName, overwrite=True)
+        camID.set_temperature(Temperature)
+        camID.set_cooling_on()
     else:
         print("Device pas connecté")
     return "OK"
+
+def StopCameraCooling(camID):
+    if camID.is_connected:
+        camID.set_cooling_off()
+    else:
+        print("Device pas connecté")
+    return "OK"
+
+def SetGainAndOffset(camID, Gain, Offset):
+    if camID.is_connected:
+        camID.set_gain(Gain)
+        camID.set_offset(Offset)
+    else:
+        print("Device pas connecté")
+    return "OK"
+
+# def TakeScienceImage(ObsData, image_name):
+#     print("Ho...")
+#     camID = ObsData["Devices"]["science_camera"]
+#     if camID.is_connected:
+#         print("Ca va ")
+#         camID.prepare_shoot()
+#         camID.setExpTimeSec(2)
+#         print("Je vais démarrer la pose")
+#         camID.shoot_async()
+#         print("J'ai lancé le shoot_async")
+#         camID.synchronize_with_image_reception()
+#         print("Terminé le synchronize")
+#         fitsIm = camID.get_received_image()
+#         print("Image reçue !")
+#         ImName = image_name or "TESTAEFFACER.fits"
+#         fitsIm.writeto(ImName, overwrite=True)
+#     else:
+#         print("Device pas connecté")
+#     return "OK"
 
 
 def TakeTargetSpectraSeries(ObsData):
@@ -114,7 +133,7 @@ def TakeTargetSpectraSeries(ObsData):
     print(ObsData["Devices"])
     # camera = ObsData["Devices"]["ambiance_camera"]
     # TakeImage(camera, "Ambiance.fits")
-    TakeScienceImage(ObsData, "Ambiance.fits")
+    # TakeScienceImage(ObsData, "Ambiance.fits")
     # camera = ObsData["Devices"]["science_camera"]
     # TakeImage(camera, "Science.fits")
     # camera = ObsData["Devices"]["guiding_camera"]

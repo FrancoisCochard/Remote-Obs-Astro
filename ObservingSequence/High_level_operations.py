@@ -77,6 +77,11 @@ def StopAutoguiding(ObsData):
 # --------------------
 # TARGET POINTING functions
 # --------------------
+def QuickPointing(Mount, RA, DEC):
+    TargetCoord = SkyCoord(RA, DEC, frame="icrs")
+    # print(f"Target : {TargetCoord}")
+    lowlev.PointingTelescopeToCoord(Mount, TargetCoord)
+    return "OK"
 
 def PointingTelescope():
     """Fonction FC Nov. 2024.
@@ -187,42 +192,41 @@ def PointingTelescope():
 # --------------------------
 
 def TakeScienceImage(camera, nb, Exptime, Name='NoName'):
-    # print(f"A : {camera}, B : {nb}, C : {Exptime}")
     print("Acquisition Science - début")
-    # camera = devices_list["science_camera"]
-    # FC, 12/04/2025 : je bride la taille des images parce que la lib INDI n'aime pas la pleine image
     ImageName = CreateImageFileName(TargetOrType=Name, ExpTime=Exptime)
-    # print(f"Acquisition NOM - {ImageName}, {nb}, {Exptime}")
     nb = int(nb)
     Exptime = float(Exptime)
-    # print("type de Nb : ", type(nb))
     if (nb > 1) :
-        # print("titi")
-        # print(f"Je suis sur une série : {nb}")
         for i in range(nb):
             ImageNameSerie = ImageName + '-' + str(i + 1) + '.fits'
-            # print(f"Acquisition série {ImageNameSerie}, {i}")
+            # FC, 12/04/2025 : je bride la taille des images parce que la lib INDI n'aime pas la pleine image ASI183
             Err, FitsIm = lowlev.TakeImage(camera, Exptime, ROI={'X':0, 'Y':1336, 'WIDTH':5495, 'HEIGHT':1000}) 
             Impath = '/tmp/' + ImageNameSerie
-            # print(f"Im : {Impath}")
             FitsIm.writeto(Impath, overwrite=True)
     else : # Only one image
-        # print("tata")
-        # print(f"Acquisition unique {ImageName}")
         Err, FitsIm = lowlev.TakeImage(camera, Exptime, ROI={'X':0, 'Y':1336, 'WIDTH':5495, 'HEIGHT':1000}) 
         Impath = '/tmp/' + ImageName + '.fits'
         FitsIm.writeto(Impath, overwrite=True)
-    # print(f"Acquisition - fin, {Err}")
     return "OK"
 
-def TakeGuideImage(camera, nb, Exptime):
-    print(f"A : {camera}, B : {nb}, C : {Exptime}")
-    print("Acquisition Guidage - début")
-    # camera = devices_list["science_camera"]
+def TakeNoScienceImage(camera, Exptime):
+    print("Acquisition - début")
     Err, FitsIm = lowlev.TakeImage(camera, Exptime) 
-    print(f"Acquisition guidage - fin, {Err}")
-    FitsIm.writeto("TotoGuidage.fits", overwrite=True)
+    FitsIm.writeto("/tmp/OtherImage.fits", overwrite=True)
+    print(f"Acquisition - fin, {Err}")
     return "OK"
+
+def SetupCamera(camera, Gain=100, Offset=20, Temperature=None):
+    # This is to setup the camera parameters (specially for the Science)
+    if (Temperature != None):
+        lowlev.SetCameraTemperature(camera, Temperature)
+    lowlev.SetGainAndOffset(camera, Gain, Offset)
+    return "OK"
+
+def StopCoolingCamera(camera):
+    lowlev.StopCameraCooling(camera)
+    return "OK"
+
 
 # --------------------------
 # Temporary functions

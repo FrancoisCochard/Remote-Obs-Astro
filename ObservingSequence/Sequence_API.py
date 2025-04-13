@@ -47,10 +47,12 @@ async def get_run():
     return True
 
 
-@app.get("/TEST-pointage")
-async def get_pointingTest():
+@app.get("/PointageTelescope", tags=["2. High level operations"])
+async def get_pointingTest(RA="12h56m02s", DEC="+38d19m06s"):
     # print("Ici : ", ObsData["Observation"]["seq"])
-    sq.lowlev.PointingTelescope()
+    Mount = sq.ObsData["Devices"]["mount"]
+    # print(f"data : {Mount}, RA : {RA}, DEC : {DEC}")
+    sq.hilev.QuickPointing(Mount, RA, DEC)
     return True
 
 
@@ -86,15 +88,25 @@ async def get_takescienceimage(Exptime=1.0, Nb=1, Name=''):
     return True
 
 @app.get("/takeGuideImage", tags=["2. High level operations"])
-async def get_takeguideimage():
-    print("pour info : ", sq.ObsData["Devices"])
+async def get_takeguideimage(Exptime=1.0):
     camera = sq.ObsData["Devices"]["guiding_camera"]
     print("data : ", camera)
-    print("Jusque ici OK (guidage) ")
-    sq.hilev.TakeGuideImage(camera, 1, 1.0)
-    # sq.hilev.test()
+    sq.hilev.TakeNoScienceImage(camera, Exptime)
     return True
 
+@app.get("/takeAmbianceImage", tags=["2. High level operations"])
+async def get_takeguideimage(Exptime=1.0):
+    camera = sq.ObsData["Devices"]["ambiance_camera"]
+    print("data : ", camera)
+    sq.hilev.TakeNoScienceImage(camera, Exptime)
+    return True
+
+@app.get("/takePointingImage", tags=["2. High level operations"])
+async def get_takeguideimage(Exptime=1.0):
+    camera = sq.ObsData["Devices"]["pointing_camera"]
+    print("data : ", camera)
+    sq.hilev.TakeNoScienceImage(camera, Exptime)
+    return True
 
 @app.get("/startupallpsu")
 async def get_startupallpsus():
@@ -139,12 +151,12 @@ async def get_stopObserving():
     return True
 
 
-@app.get("/PointageTelescope")
-async def get_pointing():
+# @app.get("/PointageTelescope")
+# async def get_pointing():
 
-    TargetCoord = sq.SkyCoord("03h13m43s +15d34m31s", frame="icrs")
-    sq.PointingTEST(TargetCoord)
-    return True
+#     TargetCoord = sq.SkyCoord("03h13m43s +15d34m31s", frame="icrs")
+#     sq.PointingTEST(TargetCoord)
+#     return True
 
 
 if __name__ == "__main__":
