@@ -207,14 +207,14 @@ def TakeScienceImage(camera, nb, Exptime, Name='NoName'):
         Err, FitsIm = lowlev.TakeImage(camera, Exptime, ROI={'X':0, 'Y':1336, 'WIDTH':5495, 'HEIGHT':1000}) 
         Impath = '/tmp/' + ImageName + '.fits'
         FitsIm.writeto(Impath, overwrite=True)
-    return "OK"
+    return ImageName
 
 def TakeNoScienceImage(camera, Exptime):
     print("Acquisition - début")
     Err, FitsIm = lowlev.TakeImage(camera, Exptime) 
     FitsIm.writeto("/tmp/OtherImage.fits", overwrite=True)
     print(f"Acquisition - fin, {Err}")
-    return "OK"
+    return "/tmp/OtherImage.fits"
 
 def SetupCamera(camera, Gain=100, Offset=20, Temperature=None):
     # This is to setup the camera parameters (specially for the Science)

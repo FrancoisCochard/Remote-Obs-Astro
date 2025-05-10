@@ -34,7 +34,7 @@ guiding_camera:
 ambiance_camera:
     module: IndiASICamera
     module_dir: IndiDevices.Camera
-    camera_name : ZWO CCD ASI120MM-S
+    camera_name : ZWO CCD ASI120MM-S 1
     class_name : IndiASICamera
     indi_client :
         indi_host : 192.168.144.32
@@ -44,7 +44,7 @@ ambiance_camera:
 pointing_camera:
     module: IndiASICamera
     module_dir: IndiDevices.Camera
-    camera_name : ZWO CCD ASI120MM-S 1
+    camera_name : ZWO CCD ASI120MM-S
     class_name : IndiASICamera
     indi_client :
         indi_host : 192.168.144.32

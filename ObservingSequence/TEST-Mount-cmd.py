@@ -52,6 +52,8 @@ vega =  SkyCoord("8h26m55.44s -03d59m26.41s", frame="icrs")
 #         cks = cks ^ car
 #     return cks
 
+def hms_coord(SkyCoord):
+    return SkyCoord.to_string(style="hmsdms", precision=1)
 # ----------------------------------------------------------------------------------------------
 # End of functions definition
 # ----------------------------------------------------------------------------------------------
@@ -92,13 +94,15 @@ class UVEX(cmd.Cmd):
         Mount = sq.ObsData["Devices"]["mount"]
         print(f"Monture : {Mount}")
         c_true = Mount.get_current_coordinates()
-        print(f"Position : {c_true}")
+        # print(f"Position : {c_true.ra.hms}, {c_true.dec.dms}")
+        print(f'Position : {c_true.to_string(style="hmsdms", precision=1)}') #  sep=":",
+        # to_string(style="hmsdms", sep=":", precision=1)
 
     def do_set_position(self,arg):
         """Pour déplacer la monture"""
         Mount = sq.ObsData["Devices"]["mount"]
-        print(f"Monture : {Mount}")
-        if len(arg.split()) == 0:  # 1 argument is required
+        # print(f"Monture : {Mount}")
+        if len(arg.split()) == 0:  # NO argument is required
             # RA = arg.split(" ")[0]
             # DEC = arg.split(" ")[1]
             # TargetCoord = SkyCoord(RA, DEC, frame="icrs")
@@ -111,16 +115,63 @@ class UVEX(cmd.Cmd):
             print("Requires no argument")
 
     def do_goto_vega(self,arg):
-        if len(arg.split()) == 0:  # 1 argument is required
-            print(f"Vega : {vega}")
+        """Pour aller sur Vega (ou étoile enregistrée en dur)"""
+        if len(arg.split()) == 0:  # NO argument is required
+            # print(f"Vega : {vega}")
             Mount = sq.ObsData["Devices"]["mount"]
-            print(f"Monture : {Mount}")
+            c_true = Mount.get_current_coordinates()
+            print(f"Avant pointage : {hms_coord(c_true)}")
+            # print(f"Monture : {Mount}")
+            print(f"Cible : {hms_coord(vega)}")
             sq.hilev.QuickPointing(Mount, vega)
+            print("Le télescope est maintenant sur la cible")
+            c_true = Mount.get_current_coordinates()
+            print(f"Après pointage : {hms_coord(c_true)}")
         else:
             print("Requires no argument")
 
+    def do_image_science(self,arg):
+        """Faire une série d'images science"""
+        if len(arg.split()) == 2:  # 2 argument are required
+            nb = int(arg.split(" ")[0])
+            exptime = int(arg.split(" ")[1])
+            camera = sq.ObsData["Devices"]["science_camera"]
+            image_name = sq.hilev.TakeScienceImage(camera, nb, exptime, Name='TEST')
+            print(f"Image(s) enregistrée(s) sous : {image_name} ({nb} image(s) de {exptime} sec)")
+        else:
+            print("Requires 2 arguments (nb and exposure time)")
     
+    def do_image_guidage(self,arg):
+        """Faire une images guidage"""
+        if len(arg.split()) == 1:  # 1 argument is required
+            exptime = int(arg.split(" ")[0])
+            camera = sq.ObsData["Devices"]["guiding_camera"]
+            image_name = sq.hilev.TakeNoScienceImage(camera, exptime)
+            print(f"Image enregistrée sous : {image_name} ({exptime} sec)")
+        else:
+            print("Requires 1 argument (exposure time)")
     
+    def do_image_ambiance(self,arg):
+        """Faire une images d'ambiance"""
+        if len(arg.split()) == 1:  # 1 argument is required
+            exptime = int(arg.split(" ")[0])
+            camera = sq.ObsData["Devices"]["ambiance_camera"]
+            image_name = sq.hilev.TakeNoScienceImage(camera, exptime)
+            print(f"Image enregistrée sous : {image_name} ({exptime} sec)")
+        else:
+            print("Requires 1 argument (exposure time)")
+ 
+    def do_image_pointage(self,arg):
+        """Faire une images de pointage"""
+        if len(arg.split()) == 1:  # 1 argument is required
+            exptime = int(arg.split(" ")[0])
+            camera = sq.ObsData["Devices"]["pointing_camera"]
+            image_name = sq.hilev.TakeNoScienceImage(camera, exptime)
+            print(f"Image enregistrée sous : {image_name} ({exptime} sec)")
+        else:
+            print("Requires 1 argument (exposure time)")
+ 
+
 # ----------------------------------------------------------------------------------------------
 # Main program
 # ----------------------------------------------------------------------------------------------

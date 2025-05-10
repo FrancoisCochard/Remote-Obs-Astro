@@ -38,20 +38,20 @@ def PointingTelescopeToCoord(Mount, TargetCoord):
     # c = SkyCoord("12h56m02s	 +38d19m06s", frame='icrs') # vEGA ?
     # c = SkyCoord("01h13m43s	 +07d34m31s", frame="icrs")
     # TargetCoord = SkyCoord(RA, DEC, frame="icrs")
-    print(f"Coordonées à pointer : {TargetCoord.ra.to(u.hourangle)} et {TargetCoord.dec.to(u.degree)}")
+    # print(f"Coordonées à pointer : {TargetCoord.ra.to(u.hourangle)} et {TargetCoord.dec.to(u.degree)}")
 
-    print(f"Parking : {Mount.is_parked}")
-    print(f"Track mode : {Mount.get_track_mode()}")
-    print(f"Pier side : {Mount.get_pier_side()}")
-    print("BEFORE SLEWING --------------------------")
+    # print(f"Parking : {Mount.is_parked}")
+    # print(f"Track mode : {Mount.get_track_mode()}")
+    # print(f"Pier side : {Mount.get_pier_side()}")
+    # print("BEFORE SLEWING --------------------------")
     c_true = Mount.get_current_coordinates()
-    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+    # print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
     Mount.slew_to_coord_and_track(TargetCoord)
     # time.sleep(5) # On attend un peu
-    print("After SLEWING --------------------------")
-    c_true = Mount.get_current_coordinates()
-    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
-    print("Le télescope est maintenant sur la cible")
+    # print("After SLEWING --------------------------")
+    # c_true = Mount.get_current_coordinates()
+    # print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+    # print("Le télescope est maintenant sur la cible")
     return "OK"
 
 # --------------------
