@@ -77,11 +77,11 @@ def StopAutoguiding(ObsData):
 # --------------------
 # TARGET POINTING functions
 # --------------------
-def QuickPointing(Mount, RA, DEC):
-    TargetCoord = SkyCoord(RA, DEC, frame="icrs")
+def QuickPointing(Mount, TargetCoord):
+    # TargetCoord = SkyCoord(RA, DEC, frame="icrs")
     # print(f"Target : {TargetCoord}")
     lowlev.PointingTelescopeToCoord(Mount, TargetCoord)
-    return "OK"
+    return "OK (from High Level)"
 
 def PointingTelescope():
     """Fonction FC Nov. 2024.
