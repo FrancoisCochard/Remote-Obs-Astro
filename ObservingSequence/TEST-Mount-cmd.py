@@ -170,7 +170,16 @@ class UVEX(cmd.Cmd):
             print(f"Image enregistrée sous : {image_name} ({exptime} sec)")
         else:
             print("Requires 1 argument (exposure time)")
- 
+
+    def do_solve_image(self,arg):
+        """Faire une astrométrie sur une image"""
+        if len(arg.split()) == 0:  # 1 argument is required
+            # exptime = int(arg.split(" ")[0])
+            image = "~/TEST-solve/HD133131.fits"
+            CenterCoord = solveImage(image)
+            print(f"Coordonnées du centre de l'image : {CenterCoord}")
+        else:
+            print("Requires no argument... for the moment") 
 
 # ----------------------------------------------------------------------------------------------
 # Main program
