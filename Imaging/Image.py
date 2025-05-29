@@ -14,7 +14,7 @@ from astropy.io import fits
 from astropy.time import Time
 
 # Local stuff
-from Base.Base import Base
+from Base import Base
 from Imaging import fits as fits_utils
 
 OffsetError = namedtuple('OffsetError', ['delta_ra', 'delta_dec', 'magnitude'])
