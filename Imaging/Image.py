@@ -14,7 +14,7 @@ from astropy.io import fits
 from astropy.time import Time
 
 # Local stuff
-from Base.Base import Base
+# from Base.Base import Base
 from Imaging import fits as fits_utils
 
 OffsetError = namedtuple('OffsetError', ['delta_ra', 'delta_dec', 'magnitude'])
@@ -31,7 +31,7 @@ class OffsetError:
         return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
 
 
-class Image(Base):
+class Image():
 
     def __init__(self, fits_file, wcs_file=None, location=None):
         """Object to represent a single image from a PANOPTES camera.
