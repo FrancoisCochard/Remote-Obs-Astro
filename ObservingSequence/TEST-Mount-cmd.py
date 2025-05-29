@@ -23,6 +23,7 @@ from utils.LoggingUtils import initLogger
 import Sequence as sq
 from astropy.coordinates import SkyCoord
 from Imaging import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
+from Imaging.Image import Image
 
 logger = initLogger("obs")
 # ----------------------------------------------------------------------------------------------
@@ -56,34 +57,34 @@ def hms_coord(SkyCoord):
     return SkyCoord.to_string(style="hmsdms", precision=1)
 
 # Copier-coller de Imaging.py FC, 29/05/2025
-def solve_field(self, **kwargs):
-    """ Solve field and populate WCS information
-        If you use basic catalog for astrometry.net, it is J2K!
-    Args:
-        **kwargs (dict): Options to be passed to `get_solve_field`
-    """
-    if kwargs.get("use_header_position", False):
-        kwargs.update(dict(
-            ra=self.header_pointing.ra.value,
-            dec=self.header_pointing.dec.value,
-        ))
-        if "radius" not in kwargs:
-            kwargs["radius"] = 1
-    solve_info = fits_utils.get_solve_field(
-        self.fits_file,
-        config=self.config,
-        **kwargs)
-    self.wcs_file = solve_info['solved_fits_file']
-    self.get_wcs_pointing()
+# def solve_field(self, **kwargs):
+#     """ Solve field and populate WCS information
+#         If you use basic catalog for astrometry.net, it is J2K!
+#     Args:
+#         **kwargs (dict): Options to be passed to `get_solve_field`
+#     """
+#     if kwargs.get("use_header_position", False):
+#         kwargs.update(dict(
+#             ra=self.header_pointing.ra.value,
+#             dec=self.header_pointing.dec.value,
+#         ))
+#         if "radius" not in kwargs:
+#             kwargs["radius"] = 1
+#     solve_info = fits_utils.get_solve_field(
+#         self.fits_file,
+#         config=self.config,
+#         **kwargs)
+#     self.wcs_file = solve_info['solved_fits_file']
+#     self.get_wcs_pointing()
 
-    # Remove some fields
-    for header in ['COMMENT', 'HISTORY']:
-        try:
-            del solve_info[header]
-        except KeyError:
-            pass
+#     # Remove some fields
+#     for header in ['COMMENT', 'HISTORY']:
+#         try:
+#             del solve_info[header]
+#         except KeyError:
+#             pass
 
-    return solve_info
+#     return solve_info
 # ----------------------------------------------------------------------------------------------
 # End of functions definition
 # ----------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ def solve_field(self, **kwargs):
 # ----------------------------------------------------------------------------------------------
 
 
-class UVEX(cmd.Cmd):
+class OBS_CLI(cmd.Cmd):
     """This class offers a command line tool.
     Each method starting with 'do_' is a command available for the user"""
 
@@ -205,8 +206,9 @@ class UVEX(cmd.Cmd):
         """Faire une astrométrie sur une image"""
         if len(arg.split()) == 0:  # 1 argument is required
             # exptime = int(arg.split(" ")[0])
-            image = "~/TEST-solve/HD133131.fits"
-            CenterCoord = solve_field(image)
+            image = "/home/observatoire/TEST-solve/HD133131.fits"
+            FitsImage = Image(image)
+            CenterCoord = FitsImage.solve_field(image)
             print(f"Coordonnées du centre de l'image : {CenterCoord}")
         else:
             print("Requires no argument... for the moment") 
@@ -222,4 +224,4 @@ sq.CreatIndiDevices(configINDIdevices)
 sq.ConnectDevices()
 
 # Run the CMD loop (command line interpreter)
-UVEX().cmdloop()
+OBS_CLI().cmdloop()

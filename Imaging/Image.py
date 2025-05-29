@@ -14,7 +14,7 @@ from astropy.io import fits
 from astropy.time import Time
 
 # Local stuff
-# from Base.Base import Base
+from Base.Base import Base
 from Imaging import fits as fits_utils
 
 OffsetError = namedtuple('OffsetError', ['delta_ra', 'delta_dec', 'magnitude'])
@@ -31,7 +31,7 @@ class OffsetError:
         return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
 
 
-class Image():
+class Image(Base):
 
     def __init__(self, fits_file, wcs_file=None, location=None):
         """Object to represent a single image from a PANOPTES camera.
@@ -67,12 +67,19 @@ class Image():
             'FITS file must contain the EXPTIME keyword')
 
         # Location Information
+        # if location is None:
+        #     cfg_loc = self.config['observatory']
+        #     location = EarthLocation(lat=cfg_loc['latitude'],
+        #                              lon=cfg_loc['longitude'],
+        #                              height=cfg_loc['elevation'],
+        #                              )
+
         if location is None:
-            cfg_loc = self.config['observatory']
-            location = EarthLocation(lat=cfg_loc['latitude'],
-                                     lon=cfg_loc['longitude'],
-                                     height=cfg_loc['elevation'],
+            location = EarthLocation(lat=45.0,
+                                     lon=5.0,
+                                     height=900.0,
                                      )
+
         # Time Information
         self.starttime = Time(self.header['DATE-OBS'], location=location)
         self.exptime = float(self.header['EXPTIME']) * u.second
