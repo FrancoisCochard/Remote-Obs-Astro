@@ -24,6 +24,7 @@ import Sequence as sq
 from astropy.coordinates import SkyCoord
 from Imaging import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
 from Imaging.Image import Image
+from Imaging import fits
 
 logger = initLogger("obs")
 # ----------------------------------------------------------------------------------------------
@@ -208,8 +209,16 @@ class OBS_CLI(cmd.Cmd):
             # exptime = int(arg.split(" ")[0])
             image = "/home/observatoire/TEST-solve/HD133131.fits"
             FitsImage = Image(image)
-            CenterCoord = FitsImage.solve_field(image)
-            print(f"Coordonnées du centre de l'image : {CenterCoord}")
+            # CenterCoord = FitsImage.solve_field()
+            options = [
+            '--no-verify',
+            '--crpix-center',
+            '--match', 'none',
+            '--corr', 'none',
+            # '--wcs', 'yes',
+            ]
+            fits.solve_field(image, solve_opts=options, verbose=True)
+            print(f"Coordonnées du centre de l'image : {image}")
         else:
             print("Requires no argument... for the moment") 
 

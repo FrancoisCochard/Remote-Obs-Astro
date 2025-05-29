@@ -14,7 +14,7 @@ from astropy.io import fits
 from astropy.time import Time
 
 # Local stuff
-from Base import Base
+from Base.Base import Base
 from Imaging import fits as fits_utils
 
 OffsetError = namedtuple('OffsetError', ['delta_ra', 'delta_dec', 'magnitude'])
@@ -180,8 +180,10 @@ class Image(Base):
         """
         try:
             self.header_pointing = SkyCoord(
-                ra=float(self.header['RA-FIELD']) * u.degree,
-                dec=float(self.header['DEC-FIELD']) * u.degree,
+                # ra=float(self.header['RA-FIELD']) * u.degree,
+                # dec=float(self.header['DEC-FIELD']) * u.degree,
+                ra=248.73 * u.degree,
+                dec=79.15 * u.degree,
                 frame='icrs', equinox='J2000.0')
 
             self.header_ra = self.header_pointing.ra.to(u.hourangle)
