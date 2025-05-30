@@ -3,16 +3,36 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Spectro Robotic Observatory's documentation
-======================================================
+Welcome to the Spectro Robotic Observatory for Astronomy
+========================================================
 
+The goal of this project is to develop a network of amateur (and professional) observatories to run Robotic Spectroscopic astronomical observations.
+All together, we can offer a new tool to the Science to better understand our Universe.
+
+This project is based on Open Source tools only.
+
+Robotic observation means that **no human action** is required. From opening the dome (or shelter) to process the data and sharing the result, all is automated. 
+
+The project is developed by the community: any contribution from you is welcome.
+Our intention is to propose a system that can be adapted from small to biggest telescopes.
+
+The system is made of 5 independant modules:
+
+* Module 1: The dome/shelter control
+* Module 2: Shelduler (what is the next target to observe)
+* Module 3: Sequencer (run the actual observation)
+* Module 4: Data reduction (to get a scientific result)
+* Module 5: Display and share the results
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    ./intro.rst
-
+   ./GetStarted.rst
+   ./Contribute.rst
+   ./FiveModules.rst
+   ./Principles.rst
 
 Indices and tables
 ==================

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Introduction &mdash; Robotic_Observatory  documentation</title>
+  <title>Basic principles &mdash; Robotic_Observatory  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -19,8 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Get started" href="GetStarted.html" />
-    <link rel="prev" title="Welcome to the Spectro Robotic Observatory for Astronomy" href="index.html" /> 
+    <link rel="prev" title="The five modules" href="FiveModules.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,11 +43,11 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="GetStarted.html">Get started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">How to Contribute</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FiveModules.html">The five modules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Principles.html">Basic principles</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic principles</a></li>
 </ul>
 
         </div>
@@ -65,9 +64,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Introduction</li>
+      <li class="breadcrumb-item active">Basic principles</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/Principles.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -75,17 +74,38 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h1>
-<p>This project proposes to setup your own robotic observatory for Astronomical Spectro observations.</p>
+  <section id="basic-principles">
+<h1>Basic principles<a class="headerlink" href="#basic-principles" title="Permalink to this heading"></a></h1>
+<p>The project is based on important principles. Here they are.</p>
+<ul class="simple">
+<li><p>We use only Open Source tools:</p>
+<ul>
+<li><p>Linux</p></li>
+<li><p>Python (3.10 or above) as much as possible</p></li>
+<li><p>Rest API interfaces (to split front-end and back-end)</p></li>
+<li><p>User interfaces in (JavaScript / TypeScript)</p></li>
+<li><p>INDI server and devices (INDI is for Linux what ASCOM is for Windows)</p></li>
+<li><p>Few standard Python libraries :</p>
+<ul>
+<li><p>FastAPI for the Rest API interfaces</p></li>
+<li><p>MQTT and TIG (Telegraf / InfluxDB / Grafana) to reacord real time data</p></li>
+<li><p>Logging for the loggers (all actions are recorded)</p></li>
+<li><p>PyTransitions (for finite states machine)</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>The dome or shelter can open and close whatever is the telescope position.</p></li>
+<li><p>Each module can be installed locally or remotely (client-server architecture)</p></li>
+<li><p>We use Kstars for monitoring the actions (very useful for debugging)</p></li>
+</ul>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to the Spectro Robotic Observatory for Astronomy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="GetStarted.html" class="btn btn-neutral float-right" title="Get started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="FiveModules.html" class="btn btn-neutral float-left" title="The five modules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
