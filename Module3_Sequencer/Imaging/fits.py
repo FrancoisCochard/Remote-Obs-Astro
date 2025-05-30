@@ -15,7 +15,7 @@ from astropy.time import Time
 from astropy.wcs import WCS
 
 # Local
-from utils import error
+from Module3_Sequencer.utils import error
 
 
 def solve_field(fname, timeout=360, solve_opts=None, **kwargs):

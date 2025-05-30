@@ -7,7 +7,7 @@ import yaml
 from astropy import units as u
 
 # Local stuff
-from utils import listify
+from Module3_Sequencer.utils import listify
 
 
 def load_config(config_files=None, parse=True, ignore_local=False):

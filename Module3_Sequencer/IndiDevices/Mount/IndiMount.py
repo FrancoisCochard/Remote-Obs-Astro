@@ -4,7 +4,7 @@
 import logging
 
 # Indi stuff
-from IndiDevices.IndiDevice import IndiDevice
+from Module3_Sequencer.IndiDevices.IndiDevice import IndiDevice
 
 # Astropy stuff
 from astropy import units as u

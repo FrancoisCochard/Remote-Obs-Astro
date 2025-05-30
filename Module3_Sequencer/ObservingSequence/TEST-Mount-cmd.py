@@ -19,12 +19,12 @@ from threading import Lock  # to manage multi-threading
 import time  # gère le timing (for the function sleep)
 # import serial  # Manages the serial port
 # import serial.tools.list_ports  # Manages the serial ports list
-from utils.LoggingUtils import initLogger
-import Sequence as sq
+from Module3_Sequencer.utils.LoggingUtils import initLogger
+import Module3_Sequencer.ObservingSequence.Sequence as sq
 from astropy.coordinates import SkyCoord
-from Imaging import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
-from Imaging.Image import Image
-from Imaging import fits
+from Module3_Sequencer.Imaging import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
+from Module3_Sequencer.Imaging.Image import Image
+# from Imaging import fits
 
 logger = initLogger("obs")
 # ----------------------------------------------------------------------------------------------
@@ -111,6 +111,7 @@ class OBS_CLI(cmd.Cmd):
         """bye - to quit the shelter control program."""
         # if SerialPortAvailable == True:
         #     port_serie.close()
+        # sq.DisconnectDevices()
         print("End of the script.\nGood bye!")
         exit()
 
@@ -217,7 +218,7 @@ class OBS_CLI(cmd.Cmd):
             '--corr', 'none',
             # '--wcs', 'yes',
             ]
-            fits.solve_field(image, solve_opts=options, verbose=True)
+            fits_utils.solve_field(image, solve_opts=options, verbose=True)
             print(f"Coordonnées du centre de l'image : {image}")
         else:
             print("Requires no argument... for the moment") 
@@ -228,7 +229,7 @@ class OBS_CLI(cmd.Cmd):
 
 
 sq.StartAllPSU()
-configINDIdevices = sq.ReadYamlConfig("IndiDevices/device_config.yaml")
+configINDIdevices = sq.ReadYamlConfig("Module3_Sequencer/IndiDevices/device_config.yaml")
 sq.CreatIndiDevices(configINDIdevices)
 sq.ConnectDevices()
 

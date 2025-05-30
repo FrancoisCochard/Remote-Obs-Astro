@@ -18,7 +18,7 @@ from astropy.io import fits as F
 from astropy.wcs import WCS
 import os.path
 from astropy import units as u
-import ObservingSequence.Low_level_operations as lowlev  # lowlev means 'Low Level Operation', or a basic operation in an observing sequence.
+import Module3_Sequencer.ObservingSequence.Low_level_operations as lowlev  # lowlev means 'Low Level Operation', or a basic operation in an observing sequence.
 
 # --------------------
 # GENERAL functions

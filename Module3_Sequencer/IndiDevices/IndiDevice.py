@@ -5,12 +5,12 @@ import ctypes
 # import time
 
 # Indi stuff
-from IndiDevices.device import device, VectorHandler
-from IndiDevices.IndiWebManagerClient import IndiWebManagerClient
+from Module3_Sequencer.IndiDevices.device import device, VectorHandler
+from Module3_Sequencer.IndiDevices.IndiWebManagerClient import IndiWebManagerClient
 
 #Local
-from IndiDevices.IndiClient import IndiClient
-from utils.error import IndiClientPredicateTimeoutError
+from Module3_Sequencer.IndiDevices.IndiClient import IndiClient
+from Module3_Sequencer.utils.error import IndiClientPredicateTimeoutError
 
 class PyIndi():
     """

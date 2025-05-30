@@ -10,8 +10,8 @@ from warnings import warn
 import weakref
 
 # Local
-from utils import serializers as json_util
-from utils.config import load_config
+from Module3_Sequencer.utils import serializers as json_util
+from Module3_Sequencer.utils.config import load_config
 # from Service.HostTimeService import HostTimeService
 
 class AbstractDB(metaclass=abc.ABCMeta):

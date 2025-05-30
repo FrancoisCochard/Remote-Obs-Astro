@@ -19,7 +19,7 @@ def initLogger( name: str ) -> Logger:
         #     fpath = os.path.join(curpath, "logger.win.cfg" )
         # else:
         #     fpath = os.path.join(curpath, "logger.cfg" )
-        fpath = 'utils/Logger.cfg'
+        fpath = 'Module3_Sequencer/utils/Logger.cfg'
 
         config.fileConfig( fpath, disable_existing_loggers=True )
         logger = getLogger( name )

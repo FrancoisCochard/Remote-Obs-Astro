@@ -2,7 +2,7 @@
 
 # Local stuff
 # from Camera.IndiAbstractCamera import IndiAbstractCamera
-from IndiDevices.Camera.IndiCamera import IndiCamera
+from Module3_Sequencer.IndiDevices.Camera.IndiCamera import IndiCamera
 
 class IndiASICamera(IndiCamera):
     def __init__(self, config=None, logger=None, connect_on_create=False):

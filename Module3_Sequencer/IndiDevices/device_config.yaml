@@ -2,7 +2,7 @@
 
 science_camera:
     module: IndiASICamera
-    module_dir: IndiDevices.Camera
+    module_dir: Module3_Sequencer.IndiDevices.Camera
     camera_name : ZWO CCD ASI183MM Pro 
     class_name : IndiASICamera
     indi_client :
@@ -13,7 +13,7 @@ science_camera:
 
 mount:
     module: Indi10micronMount
-    module_dir: IndiDevices.Mount
+    module_dir: Module3_Sequencer.IndiDevices.Mount
     mount_name : LX200 10micron # 10micron-GM1000
     class_name : Indi10micronMount
     indi_client :
@@ -23,7 +23,7 @@ mount:
 
 guiding_camera:
     module: IndiASICamera
-    module_dir: IndiDevices.Camera
+    module_dir: Module3_Sequencer.IndiDevices.Camera
     camera_name : ZWO CCD ASI174MM Mini
     class_name : IndiASICamera
     indi_client :
@@ -33,7 +33,7 @@ guiding_camera:
 
 ambiance_camera:
     module: IndiASICamera
-    module_dir: IndiDevices.Camera
+    module_dir: Module3_Sequencer.IndiDevices.Camera
     camera_name : ZWO CCD ASI120MM-S 1
     class_name : IndiASICamera
     indi_client :
@@ -43,7 +43,7 @@ ambiance_camera:
 
 pointing_camera:
     module: IndiASICamera
-    module_dir: IndiDevices.Camera
+    module_dir: Module3_Sequencer.IndiDevices.Camera
     camera_name : ZWO CCD ASI120MM-S
     class_name : IndiASICamera
     indi_client :
@@ -53,7 +53,7 @@ pointing_camera:
 
 focuser:
     module: IndiFocuser
-    module_dir: IndiDevices.Focuser
+    module_dir: Module3_Sequencer.IndiDevices.Focuser
     focuser_name: FocusLynx F1
     class_name : IndiFocuser
     port: /dev/serial/by-id/usb-Optec__Inc._Optec_USB_Serial_Cable_OP5AORA9-if00-port0
@@ -72,7 +72,7 @@ focuser:
         
 filter_wheel:
     module: IndiFilterWheel
-    module_dir: IndiDevices.FilterWheel
+    module_dir: Module3_Sequencer.IndiDevices.FilterWheel
     filterwheel_name: ZWO EFW
     class_name : IndiFilterWheel
     indi_client: 

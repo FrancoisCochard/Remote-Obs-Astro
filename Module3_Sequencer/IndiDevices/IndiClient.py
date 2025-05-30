@@ -5,9 +5,9 @@ import logging
 import threading
 
 # Indi stuff
-from IndiDevices.client import INDIClient
-from IndiDevices.IndiWebManagerClient import IndiWebManagerClient, IndiWebManagerDummy
-from utils.error import IndiClientPredicateTimeoutError
+from Module3_Sequencer.IndiDevices.client import INDIClient
+from Module3_Sequencer.IndiDevices.IndiWebManagerClient import IndiWebManagerClient, IndiWebManagerDummy
+from Module3_Sequencer.utils.error import IndiClientPredicateTimeoutError
 
 # Imaging and Fits stuff
 from astropy.io import fits

@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 # Indi stuff
-from IndiDevices.IndiDevice import IndiDevice
+from Module3_Sequencer.IndiDevices.IndiDevice import IndiDevice
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -17,7 +17,7 @@ import astropy.units as u
 
 # Local stuff: Focuser
 # from utils import load_module
-from utils.error import ImageAcquisitionError
+from Module3_Sequencer.utils.error import ImageAcquisitionError
 
 class IndiCamera(IndiDevice):
     """ Indi Camera """

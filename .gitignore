@@ -33,8 +33,8 @@ documentation/papers/latex/**/*.run.xml
 documentation/papers/latex/**/*.tmp
 documentation/papers/latex/**/*.toc
 
-conf_files/config.yaml
 
 # Custom files F. Cochard
+Module3-Sequencer/conf_files/config.yaml
 .vscode
 Remote-Obs-Astro.code-workspace

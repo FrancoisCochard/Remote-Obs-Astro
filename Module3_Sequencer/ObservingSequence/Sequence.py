@@ -28,9 +28,9 @@
 import threading
 import importlib
 import yaml
-from IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
-from utils.LoggingUtils import initLogger
-import ObservingSequence.High_level_operations as hilev  # hilev means 'High Level Operation', or a rich operation in an observing sequence.
+from Module3_Sequencer.IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
+from Module3_Sequencer.utils.LoggingUtils import initLogger
+import Module3_Sequencer.ObservingSequence.High_level_operations as hilev  # hilev means 'High Level Operation', or a rich operation in an observing sequence.
 
 logger = initLogger("obs")
 

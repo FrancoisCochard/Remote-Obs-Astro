@@ -13,7 +13,7 @@
 import logging
 
 # Indi stuff
-from IndiDevices.IndiDevice import IndiDevice
+from Module3_Sequencer.IndiDevices.IndiDevice import IndiDevice
 
 class IndiFilterWheel(IndiDevice):
     def __init__(self, config=None, logger=None, connect_on_create=False):

@@ -8,8 +8,8 @@ from serial.tools.list_ports import comports as get_comports
 import time
 
 # local stuff
-from Module3_Sequencer.Base.Base import Base
-from Module3_Sequencer.utils.error import BadSerialConnection
+from Base.Base import Base
+from utils.error import BadSerialConnection
 
 
 def _parse_json(line, logger, min_error_pos=0):

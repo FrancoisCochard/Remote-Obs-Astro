@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Robotic Observatory'
+project = 'Robotic_Observatory'
 copyright = '2025, F. Cochard, T. Notargiacomo'
 author = 'F. Cochard, T. Notargiacomo'
 

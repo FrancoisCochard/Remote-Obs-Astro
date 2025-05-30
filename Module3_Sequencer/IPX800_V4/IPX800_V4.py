@@ -16,7 +16,7 @@ def ReadIPX800Config(Fichier):
         config_data = yaml.safe_load(file)
     return config_data
 
-Fichier = 'IPX800_V4/IPX800_config.yaml'
+Fichier = 'Module3_Sequencer/IPX800_V4/IPX800_config.yaml'
 config_data = ReadIPX800Config(Fichier)
 
 url_base = "http://" + config_data['IPX800_host'] + "/api/xdevices.json?key=apikey&"

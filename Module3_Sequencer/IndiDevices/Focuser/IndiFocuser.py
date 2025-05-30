@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 # Indi stuff
-from IndiDevices.IndiDevice import IndiDevice
+from Module3_Sequencer.IndiDevices.IndiDevice import IndiDevice
 
 class IndiFocuser(IndiDevice):
     """

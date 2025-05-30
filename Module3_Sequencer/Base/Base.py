@@ -6,8 +6,8 @@ import threading
 # Local stuff
 #from pocs import hardware
 from version import __version__
-from utils.config import load_config
-from utils.database import DB
+from Module3_Sequencer.utils.config import load_config
+from Module3_Sequencer.utils.database import DB
 
 # Global vars
 _config = None

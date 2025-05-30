@@ -6,7 +6,7 @@ import json
 import logging
 
 # Indi stuff
-from IndiDevices.Mount.IndiMount import IndiMount
+from Module3_Sequencer.IndiDevices.Mount.IndiMount import IndiMount
 # Astropy stuff
 from astropy import units as u
 from astropy.time import Time
@@ -115,8 +115,8 @@ class Indi10micronMount(IndiMount):
 
     # def park(self):
     #     """
-    #     Timeout is much higher here, because the telescope might need to move to its parking position at a low speed
-    #     :return:
+    #     Timeout is much higher here, print("OK")
+
     #     """
     #     self.logger.debug('Slewing to Park')
     #     self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180)
