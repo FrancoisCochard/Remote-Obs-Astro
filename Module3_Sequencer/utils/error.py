@@ -7,6 +7,11 @@ from astropy.utils.exceptions import AstropyWarning
 # Local
 # from Base.Base import Base
 
+# Ajout FC le 08/06/2025
+from Module3_Sequencer.utils.LoggingUtils import initLogger
+
+# Ajout FC le 08/06/2025
+logger = initLogger("solver")
 
 class Error(AstropyWarning):
 
@@ -18,7 +23,7 @@ class Error(AstropyWarning):
             if exit:
                 self.exit_program(msg)
             else:
-                self.logger.error('{}: {}'.format(self.__class__.__name__, msg))
+                logger.error('{}: {}'.format(self.__class__.__name__, msg)) # FC, 08/06/2025 : je vire le 'self.'
                 self.msg = msg
 
     def exit_program(self, msg='No reason specified'):

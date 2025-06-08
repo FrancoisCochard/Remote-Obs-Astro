@@ -22,8 +22,8 @@ import time  # gère le timing (for the function sleep)
 from Module3_Sequencer.utils.LoggingUtils import initLogger
 import Module3_Sequencer.ObservingSequence.Sequence as sq
 from astropy.coordinates import SkyCoord
-from Module3_Sequencer.Imaging import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
-from Module3_Sequencer.Imaging.Image import Image
+from Module3_Sequencer.Solver import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
+# from Module3_Sequencer.Imaging.Image import Image
 # from Imaging import fits
 
 logger = initLogger("obs")
@@ -57,35 +57,6 @@ vega =  SkyCoord("8h26m55.44s -03d59m26.41s", frame="icrs")
 def hms_coord(SkyCoord):
     return SkyCoord.to_string(style="hmsdms", precision=1)
 
-# Copier-coller de Imaging.py FC, 29/05/2025
-# def solve_field(self, **kwargs):
-#     """ Solve field and populate WCS information
-#         If you use basic catalog for astrometry.net, it is J2K!
-#     Args:
-#         **kwargs (dict): Options to be passed to `get_solve_field`
-#     """
-#     if kwargs.get("use_header_position", False):
-#         kwargs.update(dict(
-#             ra=self.header_pointing.ra.value,
-#             dec=self.header_pointing.dec.value,
-#         ))
-#         if "radius" not in kwargs:
-#             kwargs["radius"] = 1
-#     solve_info = fits_utils.get_solve_field(
-#         self.fits_file,
-#         config=self.config,
-#         **kwargs)
-#     self.wcs_file = solve_info['solved_fits_file']
-#     self.get_wcs_pointing()
-
-#     # Remove some fields
-#     for header in ['COMMENT', 'HISTORY']:
-#         try:
-#             del solve_info[header]
-#         except KeyError:
-#             pass
-
-#     return solve_info
 # ----------------------------------------------------------------------------------------------
 # End of functions definition
 # ----------------------------------------------------------------------------------------------
@@ -209,7 +180,7 @@ class OBS_CLI(cmd.Cmd):
         if len(arg.split()) == 0:  # 1 argument is required
             # exptime = int(arg.split(" ")[0])
             image = "/home/observatoire/TEST-solve/HD133131.fits"
-            FitsImage = Image(image)
+            # FitsImage = Image(image)
             # CenterCoord = FitsImage.solve_field()
             options = [
             '--no-verify',
@@ -218,8 +189,11 @@ class OBS_CLI(cmd.Cmd):
             '--corr', 'none',
             # '--wcs', 'yes',
             ]
-            fits_utils.solve_field(image, solve_opts=options, verbose=True)
-            print(f"Coordonnées du centre de l'image : {image}")
+            # fits_utils.get_solve_field(image, solve_opts=options, verbose=True)
+            fits_utils.get_solve_field(image)
+            print("SOLVE terminé")
+            wcs_info = fits_utils.get_wcsinfo(image, verbose=True)
+            print(f"Coordonnées du centre de l'image : {wcs_info}")
         else:
             print("Requires no argument... for the moment") 
 

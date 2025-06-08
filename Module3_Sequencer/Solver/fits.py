@@ -5,7 +5,7 @@ import subprocess
 from warnings import warn
 
 # Numerical/image stugg
-import numpy as np
+# import numpy as np
 import skimage.io as io
 
 # Astropy
@@ -29,10 +29,12 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
         verbose(bool, optional):    Show output, defaults to False.
     """
     verbose = kwargs.get('verbose', False)
+    verbose = True # Ajout FC
     if verbose:
         print("Entering solve_field")
+        # print("Kwargs : ", kwargs.get('overwrite', True))
 
-    solve_field_script = "{}/scripts/solve_field.sh".format(os.getcwd())
+    solve_field_script = "{}/Module3_Sequencer/Solver/solve_field.sh".format(os.getcwd())
 
     if not os.path.exists(solve_field_script):  # pragma: no cover
         raise error.InvalidSystemCommand(f"Can't find solve-field: {solve_field_script}")
@@ -48,7 +50,13 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
             '--crpix-center',
             '--match', 'none',
             '--corr', 'none',
-            '--wcs', 'none',
+            '--radius', '1.0',
+            # '--wcs', 'none',
+            '--ra', '248.0',
+            '--dec', '79.1',
+            '--scale-units', 'arcsecperpix',
+            '--scale-low', '0.5',
+            '--scale-high', '1.0',
         ]
 
         if kwargs.get('overwrite', True):
@@ -382,13 +390,13 @@ def write_fits(data, header, filename, logger, exposure_event=None):
         if exposure_event is not None:
             exposure_event.set()
 
-def update_thumbnail(file_path, latest_path):
-    try:
-        with fits.open(file_path, 'readonly') as f:
-            hdu = f[0]
-            io.imsave(latest_path, hdu.data.astype(np.uint8))
-    except Exception as e:
-        warn(f"Exception while trying to save thumbnail: {e}")
+# def update_thumbnail(file_path, latest_path):
+#     try:
+#         with fits.open(file_path, 'readonly') as f:
+#             hdu = f[0]
+#             io.imsave(latest_path, hdu.data.astype(np.uint8))
+#     except Exception as e:
+#         warn(f"Exception while trying to save thumbnail: {e}")
 
 def gen_hips(hips_dir, fits_path):
     if os.path.exists(hips_dir):
