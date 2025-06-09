@@ -19,7 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="The five modules" href="FiveModules.html" /> 
+    <link rel="next" title="The five modules" href="FiveModules.html" />
+    <link rel="prev" title="How to Contribute" href="Contribute.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,8 +47,13 @@
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="GetStarted.html">Get started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Contribute.html">How to Contribute</a></li>
-<li class="toctree-l1"><a class="reference internal" href="FiveModules.html">The five modules</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Basic principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FiveModules.html">The five modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Modules/Module1.html">Module 1: Dome / Shelter manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Modules/Module2.html">Module 2: Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Modules/Module3.html">Module 3: Sequencer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Modules/Module4.html">Module 4: Data Reduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Modules/Module5.html">Module 5: Display, share and archive</a></li>
 </ul>
 
         </div>
@@ -76,7 +82,7 @@
              
   <section id="basic-principles">
 <h1>Basic principles<a class="headerlink" href="#basic-principles" title="Permalink to this heading"></a></h1>
-<p>The project is based on important principles. Here they are.</p>
+<p>The project is based on few principles:</p>
 <ul class="simple">
 <li><p>We use only Open Source tools:</p>
 <ul>
@@ -85,12 +91,14 @@
 <li><p>Rest API interfaces (to split front-end and back-end)</p></li>
 <li><p>User interfaces in (JavaScript / TypeScript)</p></li>
 <li><p>INDI server and devices (INDI is for Linux what ASCOM is for Windows)</p></li>
+<li><p>Sphinx for the documentation</p></li>
 <li><p>Few standard Python libraries :</p>
 <ul>
+<li><p>Astropy, for all Astronomy related stuff</p></li>
 <li><p>FastAPI for the Rest API interfaces</p></li>
 <li><p>MQTT and TIG (Telegraf / InfluxDB / Grafana) to reacord real time data</p></li>
 <li><p>Logging for the loggers (all actions are recorded)</p></li>
-<li><p>PyTransitions (for finite states machine)</p></li>
+<li><p>PyTransitions (for Finite States Machine)</p></li>
 </ul>
 </li>
 </ul>
@@ -105,7 +113,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="FiveModules.html" class="btn btn-neutral float-left" title="The five modules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Contribute.html" class="btn btn-neutral float-left" title="How to Contribute" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="FiveModules.html" class="btn btn-neutral float-right" title="The five modules" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

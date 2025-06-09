@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _MainPage:
+
 Welcome to the Spectro Robotic Observatory for Astronomy
 ========================================================
 
@@ -14,7 +16,7 @@ This project is based on Open Source tools only.
 Robotic observation means that **no human action** is required. From opening the dome (or shelter) to process the data and sharing the result, all is automated. 
 
 The project is developed by the community: any contribution from you is welcome.
-Our intention is to propose a system that can be adapted from small to biggest telescopes.
+Our intention is to propose a system that can be adapted from smallest to biggest telescopes.
 
 The system is made of 5 independant modules:
 
@@ -31,8 +33,13 @@ The system is made of 5 independant modules:
    ./intro.rst
    ./GetStarted.rst
    ./Contribute.rst
-   ./FiveModules.rst
    ./Principles.rst
+   ./FiveModules.rst
+   ./Modules/Module1.rst
+   ./Modules/Module2.rst
+   ./Modules/Module3.rst
+   ./Modules/Module4.rst
+   ./Modules/Module5.rst
 
 Indices and tables
 ==================
