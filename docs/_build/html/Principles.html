@@ -84,28 +84,34 @@
 <h1>Basic principles<a class="headerlink" href="#basic-principles" title="Permalink to this heading"></a></h1>
 <p>The project is based on few principles:</p>
 <ul class="simple">
+<li><p>An observation is a consistent set of images and data, collected in an Observation File (yaml format)… or json? YAML pour les commentaires ?</p></li>
+<li><p>All images and spectra are in FTIS format (which is THE format for astronomy files).</p></li>
 <li><p>We use only Open Source tools:</p>
 <ul>
-<li><p>Linux</p></li>
-<li><p>Python (3.10 or above) as much as possible</p></li>
-<li><p>Rest API interfaces (to split front-end and back-end)</p></li>
-<li><p>User interfaces in (JavaScript / TypeScript)</p></li>
-<li><p>INDI server and devices (INDI is for Linux what ASCOM is for Windows)</p></li>
-<li><p>Sphinx for the documentation</p></li>
+<li><p>Linux.</p></li>
+<li><p>Python (3.10 or above) as much as possible.</p></li>
+<li><p>Git for revision control and sharing the code.</p></li>
+<li><p>Rest API interfaces (to split front-end and back-end).</p></li>
+<li><p>User interfaces in (JavaScript / TypeScript).</p></li>
+<li><p>INDI server and devices (INDI is for Linux what ASCOM is for Windows).</p></li>
+<li><p>Sphinx for the documentation.</p></li>
 <li><p>Few standard Python libraries :</p>
 <ul>
-<li><p>Astropy, for all Astronomy related stuff</p></li>
-<li><p>FastAPI for the Rest API interfaces</p></li>
-<li><p>MQTT and TIG (Telegraf / InfluxDB / Grafana) to reacord real time data</p></li>
-<li><p>Logging for the loggers (all actions are recorded)</p></li>
-<li><p>PyTransitions (for Finite States Machine)</p></li>
+<li><p>Astropy, for all Astronomy related stuff.</p></li>
+<li><p>FastAPI for the Rest API interfaces.</p></li>
+<li><p>MQTT and TIG (Telegraf / InfluxDB / Grafana) to reacord real time data.</p></li>
+<li><p>Logging for the loggers (all actions are recorded).</p></li>
+<li><p>PyTransitions (for Finite States Machine).</p></li>
+<li><p>Cmd.cmd (for getting a command line interface (CLI), useful for debugging).</p></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><p>The dome or shelter can open and close whatever is the telescope position.</p></li>
-<li><p>Each module can be installed locally or remotely (client-server architecture)</p></li>
-<li><p>We use Kstars for monitoring the actions (very useful for debugging)</p></li>
+<li><p>Each module can be installed locally or remotely (client-server architecture).</p></li>
+<li><p>There is a single configuration file (in yaml format) for each module.</p></li>
+<li><p>We can use Kstars for monitoring the actions (very useful for debugging).</p></li>
+<li><p>We love the concept of continuous improvement ; a small step every day.</p></li>
 </ul>
 </section>
 

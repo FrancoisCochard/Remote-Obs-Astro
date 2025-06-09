@@ -18,14 +18,6 @@ Robotic observation means that **no human action** is required. From opening the
 The project is developed by the community: any contribution from you is welcome.
 Our intention is to propose a system that can be adapted from smallest to biggest telescopes.
 
-The system is made of 5 independant modules:
-
-* Module 1: The dome/shelter control
-* Module 2: Shelduler (what is the next target to observe)
-* Module 3: Sequencer (run the actual observation)
-* Module 4: Data reduction (to get a scientific result)
-* Module 5: Display and share the results
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -40,6 +32,7 @@ The system is made of 5 independant modules:
    ./Modules/Module3.rst
    ./Modules/Module4.rst
    ./Modules/Module5.rst
+   ./ObsFileFormat.rst
 
 Indices and tables
 ==================
