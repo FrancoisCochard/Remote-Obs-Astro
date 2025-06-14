@@ -19,6 +19,7 @@ from astropy.wcs import WCS
 import os.path
 from astropy import units as u
 import Module3_Sequencer.ObservingSequence.Low_level_operations as lowlev  # lowlev means 'Low Level Operation', or a basic operation in an observing sequence.
+from Module3_Sequencer.Solver import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
 
 # --------------------
 # GENERAL functions
@@ -75,8 +76,21 @@ def StopAutoguiding(ObsData):
     return "OK"
 
 # --------------------
+# PLATE SOLVING functions
+# --------------------
+
+def PlateSolveImage(ObsData,Image):
+    # This function returns the coordinates of the image center
+    Image_center = fits_utils.get_solve_field(Image)
+    print("SOLVE terminé")
+    wcs_info = fits_utils.get_wcsinfo(Image, verbose=True)
+    print(f"Coordonnées du centre de l'image : {wcs_info}")
+    return "OK"
+
+# --------------------
 # TARGET POINTING functions
 # --------------------
+
 def QuickPointing(Mount, TargetCoord):
     # TargetCoord = SkyCoord(RA, DEC, frame="icrs")
     # print(f"Target : {TargetCoord}")
@@ -233,43 +247,11 @@ def StopCoolingCamera(camera):
 # Cette partie a vocation à disparaître !
 # --------------------------
 
-
-
-# def TakeGuideImage(ObsData, image_name):
-#     print("Ho...")
-#     camID = ObsData["Devices"]["guiding_camera"]
-#     if camID.is_connected:
-#         print("Ca va ")
-#         camID.prepare_shoot()
-#         camID.setExpTimeSec(2)
-#         print("Je vais démarrer la pose")
-#         camID.shoot_async()
-#         print("J'ai lancé le shoot_async")
-#         camID.synchronize_with_image_reception()
-#         print("Terminé le synchronize")
-#         fitsIm = camID.get_received_image()
-#         print("Image reçue !")
-#         ImName = image_name or "TESTAEFFACER.fits"
-#         fitsIm.writeto(ImName, overwrite=True)
-#     else:
-#         print("Device pas connecté")
-#     return "OK"
-
-
 def F1(devices_list, ObsData):
     print("F1 - début")
     time.sleep(3)
     print("F1 - fin")
     return "OK"
-
-
-# def TakeOneGuidingImage(devices_list, ObsData):
-#     print("Acquisition Guidage - début")
-#     camera = devices_list["ScienceCam"]
-#     TakeGuideImage(camera)
-#     print("Acquisition - fin")
-#     return "OK"
-
 
 def F3(devices_list, ObsData):
     print("F3 - début")

@@ -73,22 +73,22 @@ sequence = {
 # This ObsData is given as the single parameter to all the operations of an observation.
 # ObsData = {"Observatory": {}, "Devices": {}, "Observation": {}}
 ObsData = {"Devices": {}}
-# ObsData["Observatory"] = {
-#     "site": "St-Pancrasse",
-#     "observer": "F. Cochard",
-#     "instrument": "UVEX 600",
-#     # A mettre dans un fichier de config...
-# }
-# ObsData["Observation"] = {
-#     "nb": 3,
-#     "exptime": 5,
-#     "x1": 100,
-#     "y1": 250,
-#     "x2": 1500,
-#     "y2": 1400,
-#     "seq": "BeUVEX",
-#     "obsfilename": "toto.yaml",
-# }
+ObsData["Observatory"] = {
+    "site": "St-Pancrasse",
+    "observer": "F. Cochard",
+    "instrument": "UVEX 600",
+    # A mettre dans un fichier de config...
+}
+ObsData["Observation"] = {
+    "nb": 3,
+    "exptime": 5,
+    "x1": 100,
+    "y1": 250,
+    "x2": 1500,
+    "y2": 1400,
+    "seq": "BeUVEX",
+    "obsfilename": "toto.yaml",
+}
 
 
 class ProcessObs:

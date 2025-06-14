@@ -22,7 +22,7 @@ import time  # gère le timing (for the function sleep)
 from Module3_Sequencer.utils.LoggingUtils import initLogger
 import Module3_Sequencer.ObservingSequence.Sequence as sq
 from astropy.coordinates import SkyCoord
-from Module3_Sequencer.Solver import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
+# from Module3_Sequencer.Solver import fits as fits_utils # FC, 29/05/2025 pour récupérer la fonction solve-field
 # from Module3_Sequencer.Imaging.Image import Image
 # from Imaging import fits
 
@@ -178,22 +178,9 @@ class OBS_CLI(cmd.Cmd):
     def do_solve_image(self,arg):
         """Faire une astrométrie sur une image"""
         if len(arg.split()) == 0:  # 1 argument is required
-            # exptime = int(arg.split(" ")[0])
             image = "/home/observatoire/TEST-solve/HD133131.fits"
-            # FitsImage = Image(image)
-            # CenterCoord = FitsImage.solve_field()
-            options = [
-            '--no-verify',
-            '--crpix-center',
-            '--match', 'none',
-            '--corr', 'none',
-            # '--wcs', 'yes',
-            ]
-            # fits_utils.get_solve_field(image, solve_opts=options, verbose=True)
-            fits_utils.get_solve_field(image)
-            print("SOLVE terminé")
-            wcs_info = fits_utils.get_wcsinfo(image, verbose=True)
-            print(f"Coordonnées du centre de l'image : {wcs_info}")
+            center_coord = sq.hilev.PlateSolveImage(sq.ObsData, image)
+            print(f"Coordonnées du centre de l'image : {center_coord}")
         else:
             print("Requires no argument... for the moment") 
 
