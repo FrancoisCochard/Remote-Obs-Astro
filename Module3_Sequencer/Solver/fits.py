@@ -38,6 +38,17 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
 
     if not os.path.exists(solve_field_script):  # pragma: no cover
         raise error.InvalidSystemCommand(f"Can't find solve-field: {solve_field_script}")
+    
+    #---------------------
+    # Looking for target RA-DEC in the file header
+    with fits.open(fname) as Image:
+        # Add a test if RA & DEC keywords are not present in the image header!
+        RA = Image[0].header['RA']
+        DEC = Image[0].header['DEC']
+        if verbose:
+            print(f"Image RA & DEC : {RA}, {DEC}")
+        Image.close()
+    #---------------------
 
     # Add the options for solving the field
     if solve_opts is not None:
@@ -52,8 +63,10 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
             '--corr', 'none',
             '--radius', '1.0',
             # '--wcs', 'none',
-            '--ra', '248.0',
-            '--dec', '79.1',
+            # '--ra', '248.0',
+            # '--dec', '79.1',
+            '--ra', str(RA),
+            '--dec', str(DEC),
             '--scale-units', 'arcsecperpix',
             '--scale-low', '0.5',
             '--scale-high', '1.0',

@@ -1,328 +1,333 @@
-name: Remote observatory
+name: St-Pan observatory
 observatory:
-    module: Observatory
-    investigator: gnthibault
-    latitude: 43.93447527626349  # Degrees
-    longitude: 5.710523353974106 # Degrees
-    elevation: 650.0 # Meters
+    module: Sequencer
+    investigator: F.Cochard
+    latitude: 45.28949810712241  # Degrees (St-Pancrasse)
+    longitude: 5.855384596742089 # Degrees (St-Pancrasse)
+    elevation: 950.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
+
+observations:
+    datafolder: ~/Documents/Observations/ # Must end by /. Note: a subfolder will be created for each observing night
+    instrument: UVEX-600
+
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
-    utc_offset: 1 # Hours
-    horizon: # Degrees
-        0 : 0
-        90 : 0
-        180 : 0
-        270 : 0
-    twilight_horizon: -18 # Degrees
-    timezone: Europe/Paris
-    # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
-    # Greenwich Mean Time ( GMT+1 ).
-    gmt_offset: 60 # Minutes
-#    webcam:
-#        rtsp_url: rtsp://user:password@192.168.0.16
-    scope_controller:
-        module: DummyScopeController #IndiArduiScopeController
-        port: /dev/ttyACM0
-        controller_name: Arduino
-        indi_driver_connect_delay_s: 5
-        indi_camera_driver_name: Canon DSLR
-        indi_mount_driver_name: Losmandy Gemini
-        indi_client :
-            indi_host : localhost
-            indi_port : 7624
-    dome_controller:
-        module : IndiDomeController
-        dome_movement_timeout_s: 300
-        dome_name: Dome Simulator
-        indi_client :
-            indi_host : 192.168.144.32
-            indi_port : 7624
-directories:
-    base: /var/RemoteObservatory
-    images: images
-    webcam: webcams
-    data: data
-    resources: resources/
-    targets: resources/targets
-    mounts: resources/mounts
-db: 
-    name: /var/RemoteObservatory/DB
-    type: file
-ntp:
-    ntpserver: time.google.com
-scheduler:
-    #module: DefaultScheduler
-    module: SpectroScheduler
-    #target_file: targets.yaml
-    target_file: spectral_targets.yaml
-spectroscope_controller:
-    module: IndiSpectroController
-calibration:
-    #module: ImagingCalibration
-    module: SpectralCalibration
-    spectral_calib:
-        nb: 2
-        sec: 5
-        gain: 150
-        offset: 30
-        temperature: 15
-    flat:
-        nb: 2
-        sec: 5
-        gain: 150
-        offset: 30
-        temperature: 15
-    dark:
-        dark_nb: 2
-    controller:
-        module: DummySpectroController
-        device_name: dummy
-        #module: IndiSpectroController
-        #device_name: spox
-mount:
-    #module: IndiG11
-    #mount_name: Losmandy Gemini
-    #~ module: IndiAbstractMount
-    module: Indi10Micron
-    #~ mount_name : Telescope Simulator
-    mount_name : 10micron
-    equatorial_eod: J2000 # JNOW
-    is_simulator: true
-    indi_client :
-        #~ indi_host : localhost
-        indi_host : 192.168.144.32
-        indi_port : 7624
+#     utc_offset: 1 # Hours
+#     horizon: # Degrees
+#         0 : 0
+#         90 : 0
+#         180 : 0
+#         270 : 0
+#     twilight_horizon: -18 # Degrees
+#     timezone: Europe/Paris
+#     # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
+#     # Greenwich Mean Time ( GMT+1 ).
+#     gmt_offset: 60 # Minutes
+# #    webcam:
+# #        rtsp_url: rtsp://user:password@192.168.0.16
+#     scope_controller:
+#         module: DummyScopeController #IndiArduiScopeController
+#         port: /dev/ttyACM0
+#         controller_name: Arduino
+#         indi_driver_connect_delay_s: 5
+#         indi_camera_driver_name: Canon DSLR
+#         indi_mount_driver_name: Losmandy Gemini
+#         indi_client :
+#             indi_host : localhost
+#             indi_port : 7624
+#     dome_controller:
+#         module : IndiDomeController
+#         dome_movement_timeout_s: 300
+#         dome_name: Dome Simulator
+#         indi_client :
+#             indi_host : 192.168.144.32
+#             indi_port : 7624
+# directories:
+#     base: /var/RemoteObservatory
+#     images: images
+#     webcam: webcams
+#     data: data
+#     resources: resources/
+#     targets: resources/targets
+#     mounts: resources/mounts
+# db: 
+#     name: /var/RemoteObservatory/DB
+#     type: file
+# ntp:
+#     ntpserver: time.google.com
+# scheduler:
+#     #module: DefaultScheduler
+#     module: SpectroScheduler
+#     #target_file: targets.yaml
+#     target_file: spectral_targets.yaml
+# spectroscope_controller:
+#     module: IndiSpectroController
+# calibration:
+#     #module: ImagingCalibration
+#     module: SpectralCalibration
+#     spectral_calib:
+#         nb: 2
+#         sec: 5
+#         gain: 150
+#         offset: 30
+#         temperature: 15
+#     flat:
+#         nb: 2
+#         sec: 5
+#         gain: 150
+#         offset: 30
+#         temperature: 15
+#     dark:
+#         dark_nb: 2
+#     controller:
+#         module: DummySpectroController
+#         device_name: dummy
+#         #module: IndiSpectroController
+#         #device_name: spox
+# mount:
+#     #module: IndiG11
+#     #mount_name: Losmandy Gemini
+#     #~ module: IndiAbstractMount
+#     module: Indi10Micron
+#     #~ mount_name : Telescope Simulator
+#     mount_name : 10micron
+#     equatorial_eod: J2000 # JNOW
+#     is_simulator: true
+#     indi_client :
+#         #~ indi_host : localhost
+#         indi_host : 192.168.144.32
+#         indi_port : 7624
 
-cameras:
-    -
-        #module: IndiAbstractCameraSimulator
-        module: IndiASICameraNonCool
-        #camera_name : Guide Simulator
-        camera_name : ZWO CCD ASI174MM Mini   
-        do_acquisition: false
-        SIMULATOR_SETTINGS: # 290MM
-            SIM_XRES: 1936 #
-            SIM_YRES: 1096 #
-            SIM_XSIZE: 2.9 #2.9
-            SIM_YSIZE: 2.9 #2.9
-            SIM_MAXVAL: 65000
-            SIM_SATURATION: 1
-            SIM_LIMITINGMAG: 17
-            SIM_NOISE: 0
-            SIM_SKYGLOW: 19.5
-            SIM_OAGOFFSET: 0
-            SIM_POLAR: 0
-            SIM_POLARDRIFT: 0
-            SIM_ROTATION: 0
-            SIM_KING_GAMMA: 0
-            SIM_KING_THETA: 0
-    #        SIM_PEPERIOD: 0
-    #        SIM_PEMAX: 0
-            SIM_TIME_FACTOR: 1
-        SCOPE_INFO: # 200/800 newtonian
-            FOCAL_LENGTH: 800
-            APERTURE: 200
-        sampling_arcsec: 0.751668
-        subsample_astrometry: 1
-        do_guiding: true
-        do_pointing: true
-        pointing_seconds: 10
-        do_adjust_pointing: true
-        adjust_center_x: 965
-        adjust_center_y: 687
-        adjust_roi_search_size: 30
-        adjust_pointing_seconds: 10
-        do_autofocus: false
-        autofocus_seconds: 5
-        autofocus_roi_size : 760 # ATTENTION : on doit mettre des multiples de 8 ! (bug redécouvert Thibault + François le 22/06/2023)
-        autofocus_merit_function: half_flux_radius #vollath_F4
-        focuser:
-            module: IndiFocuser
-            # focuser_name: Focuser Simulator
-            focuser_name: FocusLynx F1
-            port: /dev/serial/by-id/usb-Optec__Inc._Optec_USB_Serial_Cable_OP5AORA9-if00-port0 # /dev/ttyUSB0
-            focus_range:
-                min: 10200
-                max: 11400
-            autofocus_step:
-                fine: 300
-                coarse: 300
-            autofocus_range:
-                fine: 2000
-                coarse: 2000
-            indi_client:
-                indi_host: 192.168.144.32 # localhost
-                indi_port: 7624
-        indi_client :
-            indi_host : 192.168.144.32 # localhost
-            indi_port : 7624
-            use_unique_client: True # Modif FC le 27/08/2023, sur proposition de Thibault, pour réduire le temps d'enregistrement des images
-    -
-        module: IndiASICamera
-        #~ module: IndiZwoASI183ProCamera
-        camera_name : ZWO CCD ASI183MM Pro # CCD Simulator
-        do_acquisition: true
-        working_temperature: 10
-        SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 1500 #5496
-            SIM_YRES: 1500 #3672
-            SIM_XSIZE: 2.4
-            SIM_YSIZE: 2.4
-            SIM_MAXVAL: 65000
-            SIM_SATURATION: 1
-            SIM_LIMITINGMAG: 17
-            SIM_NOISE: 0
-            SIM_SKYGLOW: 19.5
-            SIM_OAGOFFSET: 0
-            SIM_POLAR: 0
-            SIM_POLARDRIFT: 0
-            SIM_ROTATION: 0
-    #        SIM_KING_GAMMA: 0
-    #        SIM_KING_THETA: 0
-            SIM_PEPERIOD: 0
-            SIM_PEMAX: 0
-            SIM_TIME_FACTOR: 1
-        SCOPE_INFO: # 200/800 newtonian
-            FOCAL_LENGTH: 800
-            APERTURE: 200
-        subsample_astrometry: 4
-        do_guiding: false
-        do_pointing: false
-        pointing_seconds: 5
-        do_adjust_pointing: false
-        adjust_center_x: 947
-        adjust_center_y: 687
-        adjust_roi_search_size: 50
-        adjust_pointing_seconds: 5
-        do_autofocus: false
-        autofocus_seconds: 5
-        autofocus_roi_size : 750
-        autofocus_merit_function : half_flux_radius #vollath_F4
+# cameras:
+#     -
+#         #module: IndiAbstractCameraSimulator
+#         module: IndiASICameraNonCool
+#         #camera_name : Guide Simulator
+#         camera_name : ZWO CCD ASI174MM Mini   
+#         do_acquisition: false
+#         SIMULATOR_SETTINGS: # 290MM
+#             SIM_XRES: 1936 #
+#             SIM_YRES: 1096 #
+#             SIM_XSIZE: 2.9 #2.9
+#             SIM_YSIZE: 2.9 #2.9
+#             SIM_MAXVAL: 65000
+#             SIM_SATURATION: 1
+#             SIM_LIMITINGMAG: 17
+#             SIM_NOISE: 0
+#             SIM_SKYGLOW: 19.5
+#             SIM_OAGOFFSET: 0
+#             SIM_POLAR: 0
+#             SIM_POLARDRIFT: 0
+#             SIM_ROTATION: 0
+#             SIM_KING_GAMMA: 0
+#             SIM_KING_THETA: 0
+#     #        SIM_PEPERIOD: 0
+#     #        SIM_PEMAX: 0
+#             SIM_TIME_FACTOR: 1
+#         SCOPE_INFO: # 200/800 newtonian
+#             FOCAL_LENGTH: 800
+#             APERTURE: 200
+#         sampling_arcsec: 0.751668
+#         subsample_astrometry: 1
+#         do_guiding: true
+#         do_pointing: true
+#         pointing_seconds: 10
+#         do_adjust_pointing: true
+#         adjust_center_x: 965
+#         adjust_center_y: 687
+#         adjust_roi_search_size: 30
+#         adjust_pointing_seconds: 10
+#         do_autofocus: false
+#         autofocus_seconds: 5
+#         autofocus_roi_size : 760 # ATTENTION : on doit mettre des multiples de 8 ! (bug redécouvert Thibault + François le 22/06/2023)
+#         autofocus_merit_function: half_flux_radius #vollath_F4
+#         focuser:
+#             module: IndiFocuser
+#             # focuser_name: Focuser Simulator
+#             focuser_name: FocusLynx F1
+#             port: /dev/serial/by-id/usb-Optec__Inc._Optec_USB_Serial_Cable_OP5AORA9-if00-port0 # /dev/ttyUSB0
+#             focus_range:
+#                 min: 10200
+#                 max: 11400
+#             autofocus_step:
+#                 fine: 300
+#                 coarse: 300
+#             autofocus_range:
+#                 fine: 2000
+#                 coarse: 2000
+#             indi_client:
+#                 indi_host: 192.168.144.32 # localhost
+#                 indi_port: 7624
+#         indi_client :
+#             indi_host : 192.168.144.32 # localhost
+#             indi_port : 7624
+#             use_unique_client: True # Modif FC le 27/08/2023, sur proposition de Thibault, pour réduire le temps d'enregistrement des images
+#     -
+#         module: IndiASICamera
+#         #~ module: IndiZwoASI183ProCamera
+#         camera_name : ZWO CCD ASI183MM Pro # CCD Simulator
+#         do_acquisition: true
+#         working_temperature: 10
+#         SIMULATOR_SETTINGS: # 180mm
+#             SIM_XRES: 1500 #5496
+#             SIM_YRES: 1500 #3672
+#             SIM_XSIZE: 2.4
+#             SIM_YSIZE: 2.4
+#             SIM_MAXVAL: 65000
+#             SIM_SATURATION: 1
+#             SIM_LIMITINGMAG: 17
+#             SIM_NOISE: 0
+#             SIM_SKYGLOW: 19.5
+#             SIM_OAGOFFSET: 0
+#             SIM_POLAR: 0
+#             SIM_POLARDRIFT: 0
+#             SIM_ROTATION: 0
+#     #        SIM_KING_GAMMA: 0
+#     #        SIM_KING_THETA: 0
+#             SIM_PEPERIOD: 0
+#             SIM_PEMAX: 0
+#             SIM_TIME_FACTOR: 1
+#         SCOPE_INFO: # 200/800 newtonian
+#             FOCAL_LENGTH: 800
+#             APERTURE: 200
+#         subsample_astrometry: 4
+#         do_guiding: false
+#         do_pointing: false
+#         pointing_seconds: 5
+#         do_adjust_pointing: false
+#         adjust_center_x: 947
+#         adjust_center_y: 687
+#         adjust_roi_search_size: 50
+#         adjust_pointing_seconds: 5
+#         do_autofocus: false
+#         autofocus_seconds: 5
+#         autofocus_roi_size : 750
+#         autofocus_merit_function : half_flux_radius #vollath_F4
         
-        do_filter_wheel: false
-        filter_wheel:
-            module: IndiFilterWheel
-            filterwheel_name: Filter Simulator
-            filter_list:
-                Luminance: 1
-                Red: 2
-                Green: 3
-                Blue: 4
-                H_Alpha: 5
-                OIII: 6
-                SII: 7
-                LPR: 8
-            indi_client:
-                indi_host: localhost
-                indi_port: 7624
-        indi_client :
-            indi_host : 192.168.144.32
-            indi_port : 7624
-            use_unique_client: True # Modif FC le 27/08/2023, sur proposition de Thibault, pour réduire le temps d'enregistrement des images
-pointer:
-    module: DifferentialPointer #DifferentialPointer #IterativeSync
-    gen_hips: False
-    timeout_seconds: 450
-    max_iterations: 5
-    max_pointing_error_seconds: 2
-offset_pointer:
-    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
-    timeout_seconds: 300
-    max_identification_error_seconds: 1
-    sync_mount_upon_solve: False
-    use_guider_adjust: True
-    on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
-    max_iterations: 5
-    max_pointing_error_seconds: 2
-guider:
-    module : GuiderPHD2
-    #~ host : localhost
-    host : 192.168.144.32
-    port : 4400
-    #profile_id : 1 # For IRL setup
-    do_calibration : False
-    profile_name : St-Pancrasse
-    exposure_time_sec : 0.5
-    settle :
-        pixels : 3
-        time : 10
-        timeout : 360
-    dither :
-        pixels : 0.0
-        ra_only : False
-weather_service :
-    #module : IndiOpenWeatherMap
-    #service_name: OpenWeatherMap
-    module : IndiWeather
-    service_name : Weather Simulator
-    key_path : /var/RemoteObservatory/keys.json
-    delay_sec : 60
-    observatory:
-        latitude: 43.56 # Degrees
-        longitude: 5.43 # Degrees
-        elevation: 150.0 # Meters
-    limits :
-        MAX_WEATHER_WIND_SPEED_KPH : 25
-        MAX_WEATHER_WIND_GUST_KPH : 30
-        MAX_WEATHER_CLOUD_COVER : 5
-    indi_client :
-        indi_host : 192.168.144.32
-        indi_port : 7624
-vizualization_service:
-        module: SceneVizualization
-        delay_sky_update_s: 1
-        delay_moving_objects_s: 0.05
-        show_stars: False
-        gps_coord:
-            latitude: 45.67
-            longitude: 5.67
-time_service :
-    module : HostTimeService
-messaging_publisher:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
-    mqtt_host: localhost
-    mqtt_port: 1883
-    com_mode: publisher
-    msg_port: 6510
-messaging_subscriber:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
-    mqtt_host: localhost
-    mqtt_port: 1883
-    com_mode: subscriber
-    cmd_port: 6500
-paws_subscriber:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
-    mqtt_host: localhost
-    mqtt_port: 1883
-    com_mode: subscriber
-    cmd_port: 6511
-paws_publisher:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
-    mqtt_host: localhost
-    mqtt_port: 1883
-    com_mode: publisher
-    msg_port: 6500
+#         do_filter_wheel: false
+#         filter_wheel:
+#             module: IndiFilterWheel
+#             filterwheel_name: Filter Simulator
+#             filter_list:
+#                 Luminance: 1
+#                 Red: 2
+#                 Green: 3
+#                 Blue: 4
+#                 H_Alpha: 5
+#                 OIII: 6
+#                 SII: 7
+#                 LPR: 8
+#             indi_client:
+#                 indi_host: localhost
+#                 indi_port: 7624
+#         indi_client :
+#             indi_host : 192.168.144.32
+#             indi_port : 7624
+#             use_unique_client: True # Modif FC le 27/08/2023, sur proposition de Thibault, pour réduire le temps d'enregistrement des images
+# pointer:
+#     module: DifferentialPointer #DifferentialPointer #IterativeSync
+#     gen_hips: False
+#     timeout_seconds: 450
+#     max_iterations: 5
+#     max_pointing_error_seconds: 2
+# offset_pointer:
+#     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
+#     timeout_seconds: 300
+#     max_identification_error_seconds: 1
+#     sync_mount_upon_solve: False
+#     use_guider_adjust: True
+#     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
+#     max_iterations: 5
+#     max_pointing_error_seconds: 2
+# guider:
+#     module : GuiderPHD2
+#     #~ host : localhost
+#     host : 192.168.144.32
+#     port : 4400
+#     #profile_id : 1 # For IRL setup
+#     do_calibration : False
+#     profile_name : St-Pancrasse
+#     exposure_time_sec : 0.5
+#     settle :
+#         pixels : 3
+#         time : 10
+#         timeout : 360
+#     dither :
+#         pixels : 0.0
+#         ra_only : False
+# weather_service :
+#     #module : IndiOpenWeatherMap
+#     #service_name: OpenWeatherMap
+#     module : IndiWeather
+#     service_name : Weather Simulator
+#     key_path : /var/RemoteObservatory/keys.json
+#     delay_sec : 60
+#     observatory:
+#         latitude: 43.56 # Degrees
+#         longitude: 5.43 # Degrees
+#         elevation: 150.0 # Meters
+#     limits :
+#         MAX_WEATHER_WIND_SPEED_KPH : 25
+#         MAX_WEATHER_WIND_GUST_KPH : 30
+#         MAX_WEATHER_CLOUD_COVER : 5
+#     indi_client :
+#         indi_host : 192.168.144.32
+#         indi_port : 7624
+# vizualization_service:
+#         module: SceneVizualization
+#         delay_sky_update_s: 1
+#         delay_moving_objects_s: 0.05
+#         show_stars: False
+#         gps_coord:
+#             latitude: 45.67
+#             longitude: 5.67
+# time_service :
+#     module : HostTimeService
+# messaging_publisher:
+#     module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+#     mqtt_host: localhost
+#     mqtt_port: 1883
+#     com_mode: publisher
+#     msg_port: 6510
+# messaging_subscriber:
+#     module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+#     mqtt_host: localhost
+#     mqtt_port: 1883
+#     com_mode: subscriber
+#     cmd_port: 6500
+# paws_subscriber:
+#     module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+#     mqtt_host: localhost
+#     mqtt_port: 1883
+#     com_mode: subscriber
+#     cmd_port: 6511
+# paws_publisher:
+#     module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+#     mqtt_host: localhost
+#     mqtt_port: 1883
+#     com_mode: publisher
+#     msg_port: 6500
 
-#independant_services:
-#    -
-#        module: NasaGCNService
-#        delay_sec: 60
-## If not provided, sourced from env NASA_GCN_CLIENT_ID and NASA_GCN_CLIENT_SECRET
-##        client_info:
-##            client_id:
-##            client_secret:
-#        messaging_publisher:
-#            module: PanMessagingMQTT
-#            mqtt_host: localhost
-#            mqtt_port: 1883
-#            com_mode: publisher
+# #independant_services:
+# #    -
+# #        module: NasaGCNService
+# #        delay_sec: 60
+# ## If not provided, sourced from env NASA_GCN_CLIENT_ID and NASA_GCN_CLIENT_SECRET
+# ##        client_info:
+# ##            client_id:
+# ##            client_secret:
+# #        messaging_publisher:
+# #            module: PanMessagingMQTT
+# #            mqtt_host: localhost
+# #            mqtt_port: 1883
+# #            com_mode: publisher
 
-#Enable to output POCS messages to social accounts
-# social_accounts:
-#     twitter:
-#         consumer_key: [your_consumer_key]
-#         consumer_secret: [your_consumer_secret]
-#         access_token: [your_access_token]
-#         access_token_secret: [your_access_token_secret]
-state_machine: simple_state_table.yaml
+# #Enable to output POCS messages to social accounts
+# # social_accounts:
+# #     twitter:
+# #         consumer_key: [your_consumer_key]
+# #         consumer_secret: [your_consumer_secret]
+# #         access_token: [your_access_token]
+# #         access_token_secret: [your_access_token_secret]
+# state_machine: simple_state_table.yaml

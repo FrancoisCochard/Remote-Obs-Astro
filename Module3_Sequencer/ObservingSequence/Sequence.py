@@ -28,6 +28,8 @@
 import threading
 import importlib
 import yaml
+from datetime import datetime as dt
+import os
 from Module3_Sequencer.IPX800_V4.IPX800_V4 import StartAllPSU, StopAllPSU
 from Module3_Sequencer.utils.LoggingUtils import initLogger
 import Module3_Sequencer.ObservingSequence.High_level_operations as hilev  # hilev means 'High Level Operation', or a rich operation in an observing sequence.
@@ -203,6 +205,35 @@ def DisconnectDevices():
         device.disconnect_device()
         message = "Device disonnexion: " + str(device)
         logger.info(message)
+
+
+def CurrentSessionFolder():
+    # This functions defines the folder name for the current observing session.
+    # One folder per observing day, from noon to noon (one folder per night)
+    # It creates the folder if it does not exist.
+    # General data folder is defined in the config.yaml file.
+    # A new subfolder is created each year (eg Observations_2025/)
+    
+    now_time = dt.now()
+    # A REPRENDRE (chercher l'info dans le fichier de conf)
+    # data_folder = ObsData["observations"]["datafolder"]
+    data_folder = "/tmp/Obs/"
+    current_year = now_time.year
+    year_folder = data_folder + "Observations_" + str(current_year)
+    # We create the yearly fodler if it does not already exists.
+    if not os.path.exists(year_folder):
+        os.makedirs(year_folder)
+    #We start the night folder at noon (if we're before noon, the session folder is the yesterday's one)
+    if now_time.hour >= 12:
+        session_day = now_time.day
+    else:
+        session_day = now_time.day - 1
+    full_date = now_time.strftime("%Y_%m_") + str(session_day)
+    session_folder = year_folder + "/" + full_date
+    if not os.path.exists(session_folder):
+        os.makedirs(session_folder)
+    session_folder += "/"
+    return session_folder
 
 
 def PointingTEST(TargetCoord):
