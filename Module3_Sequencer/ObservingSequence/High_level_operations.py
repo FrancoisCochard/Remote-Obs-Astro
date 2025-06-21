@@ -84,8 +84,9 @@ def PlateSolveImage(ObsData,Image):
     Image_center = fits_utils.get_solve_field(Image)
     print("SOLVE terminé")
     wcs_info = fits_utils.get_wcsinfo(Image, verbose=True)
-    print(f"Coordonnées du centre de l'image : {wcs_info}")
-    return "OK"
+    RA_solved = wcs_info.get("ra_tangent")
+    DEC_solved = wcs_info.get("dec_tangent")
+    return RA_solved, DEC_solved
 
 # --------------------
 # TARGET POINTING functions

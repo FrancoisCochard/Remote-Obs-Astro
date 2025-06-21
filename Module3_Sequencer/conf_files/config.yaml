@@ -7,6 +7,10 @@ observatory:
     elevation: 950.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
 
+    # ATTENTION : PAS ENCORE PRIS EN COMPTE !
+    guide_sampling: 0.75 # approximate guinding image sampling, in arcsec per pixel. Used for plate solve speed-up.
+    pointing_error: 1.0 # Max pointing error of the mount. Used for plate solve speed-up.
+
 observations:
     datafolder: ~/Documents/Observations/ # Must end by /. Note: a subfolder will be created for each observing night
     instrument: UVEX-600

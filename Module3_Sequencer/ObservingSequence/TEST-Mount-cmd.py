@@ -177,7 +177,6 @@ class OBS_CLI(cmd.Cmd):
 
     def do_solve_image(self,arg):
         """Faire une astrométrie sur une image"""
-        print(sq.CurrentSessionFolder())
         if len(arg.split()) == 0:  # 1 argument is required
             image = "/home/observatoire/TEST-solve/HD133131.fits"
             center_coord = sq.hilev.PlateSolveImage(sq.ObsData, image)
